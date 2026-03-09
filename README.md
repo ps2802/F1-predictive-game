@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# F1 Predictive Game
 
-## Getting Started
+Next.js App Router project with Supabase auth and race prediction workflow.
 
-First, run the development server:
+## Required folders
+
+- `app/login`
+- `app/signup`
+- `app/dashboard`
+- `app/predict/[raceId]`
+- `lib/supabase`
+- `supabase/migrations`
+
+## Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Add environment variables:
+
+```bash
+cp .env.example .env.local
+```
+
+Update `.env.local` with your Supabase values.
+
+3. Run app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Supabase schema
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Apply SQL files in `supabase/migrations` in order:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `202603100001_init.sql`
+- `202603100002_seed_races.sql`
