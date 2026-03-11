@@ -33,6 +33,14 @@ Update `.env.local` with your Supabase values.
 npm run dev
 ```
 
+4. Seed 2026 races:
+
+```bash
+npm run seed:races
+```
+
+This command requires `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`.
+
 ## Supabase schema
 
 Apply SQL files in `supabase/migrations` in order:

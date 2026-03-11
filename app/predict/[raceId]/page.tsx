@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { drivers, races } from "@/lib/races";
 
 type PodiumPrediction = {
@@ -39,38 +38,23 @@ export default function PredictRacePage() {
     setLoading(true);
     setMessage("");
 
-    const supabase = createSupabaseBrowserClient();
-
-    if (!supabase) {
-      setMessage("Supabase env vars missing. Prediction not submitted.");
-      setLoading(false);
-      return;
-    }
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      setMessage("You need to login before submitting predictions.");
-      setLoading(false);
-      return;
-    }
-
-    const { error } = await supabase.from("predictions").upsert(
-      {
-        user_id: user.id,
-        race_id: raceId,
-        first_driver: prediction.first,
-        second_driver: prediction.second,
-        third_driver: prediction.third,
+    const response = await fetch("/api/predictions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      { onConflict: "user_id,race_id" },
-    );
+      body: JSON.stringify({
+        raceId,
+        firstDriver: prediction.first,
+        secondDriver: prediction.second,
+        thirdDriver: prediction.third,
+      }),
+    });
 
-    if (error) {
-      setMessage(error.message);
+    const payload = (await response.json()) as { error?: string };
+
+    if (!response.ok) {
+      setMessage(payload.error ?? "Failed to save prediction.");
       setLoading(false);
       return;
     }
