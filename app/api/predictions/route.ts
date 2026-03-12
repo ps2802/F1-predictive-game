@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
   const { data: race, error: raceError } = await supabase
     .from("races")
-    .select("race_date")
+    .select("race_starts_at")
     .eq("id", raceId)
     .single();
 
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Race not found." }, { status: 404 });
   }
 
-  const raceStart = new Date(race.race_date).getTime();
+  const raceStart = new Date(race.race_starts_at).getTime();
   if (Number.isNaN(raceStart)) {
     return NextResponse.json({ error: "Invalid race date." }, { status: 500 });
   }
