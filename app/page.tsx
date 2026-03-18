@@ -74,7 +74,7 @@ export default function WaitlistPage() {
         {/* Logo */}
         <header className="gl-header">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/gridlock-logo.svg" alt="Gridlock" className="gl-logo" draggable={false} />
+          <img src="/gridlock-logo.png" alt="Gridlock" className="gl-logo" draggable={false} />
         </header>
 
         {/* Copy */}
