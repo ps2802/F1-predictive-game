@@ -101,14 +101,14 @@ h1, h2, h3 { margin-top: 0; }
   justify-content: center;
   width: 28px;
   height: 28px;
-  color: rgba(255,255,255,.28);
+  color: rgba(255,255,255,.21);
   border-radius: 3px;
   transition: color .2s ease;
 }
 
 @media (pointer: fine) {
   .gl-social-link:hover {
-    color: rgba(255,255,255,.72);
+    color: rgba(255,255,255,.62);
   }
 }
 
@@ -343,7 +343,7 @@ h1, h2, h3 { margin-top: 0; }
   border-radius: 50%;
   background: #E10600;
   flex-shrink: 0;
-  animation: blink 1.6s ease-in-out infinite;
+  /* static — no blink; eyebrow dot already owns that rhythm */
 }
 
 .gl-feed-track {
@@ -383,7 +383,7 @@ h1, h2, h3 { margin-top: 0; }
   font-size: .68rem;
   font-weight: 300;
   line-height: 1.45;
-  color: rgba(255,255,255,.38);
+  color: rgba(255,255,255,.28);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -424,7 +424,7 @@ h1, h2, h3 { margin-top: 0; }
 
 @media (pointer: fine) {
   .gl-right:hover {
-    filter: saturate(0.07) contrast(1.4) brightness(1.06);
+    filter: saturate(0.12) contrast(1.22) brightness(1.05);
   }
 }
 
@@ -434,7 +434,7 @@ h1, h2, h3 { margin-top: 0; }
   position: absolute;
   left: 0; right: 0;
   height: 1px;
-  background: rgba(255,255,255,.22);
+  background: rgba(255,255,255,.18);
   top: -2px;
   z-index: 6;
   pointer-events: none;
@@ -449,8 +449,8 @@ h1, h2, h3 { margin-top: 0; }
 
 @keyframes gl-scan-sweep {
   0%   { opacity: 0;   top: 0;    }
-  6%   { opacity: 0.5; }
-  88%  { opacity: 0.1; }
+  6%   { opacity: 0.3; }
+  88%  { opacity: 0.06; }
   100% { opacity: 0;   top: 100%; }
 }
 
@@ -649,7 +649,7 @@ h1, h2, h3 { margin-top: 0; }
   font-size: .67rem;
   font-weight: 600;
   letter-spacing: .06em;
-  color: rgba(255,255,255,.32);
+  color: rgba(255,255,255,.24);
 }
 
 .gl-hud-divider {
@@ -711,7 +711,7 @@ h1, h2, h3 { margin-top: 0; }
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.14);
   opacity: 0;
   pointer-events: none;
   z-index: 9999;
