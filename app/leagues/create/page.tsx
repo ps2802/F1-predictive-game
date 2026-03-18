@@ -87,12 +87,13 @@ export default function CreateLeaguePage() {
             <input
               className="auth-input"
               type="number"
-              min="0"
-              step="0.01"
-              placeholder="0 for free"
-              value={entryFee}
-              onChange={(e) => setEntryFee(e.target.value)}
+              value="0"
+              disabled
+              style={{ opacity: 0.4, cursor: "not-allowed" }}
             />
+            <span style={{ fontSize: "0.75rem", color: "var(--gl-muted, #888)" }}>
+              Paid entry coming soon — all leagues are free during beta
+            </span>
           </label>
 
           <label className="auth-label">
@@ -106,12 +107,6 @@ export default function CreateLeaguePage() {
               onChange={(e) => setMaxUsers(e.target.value)}
             />
           </label>
-
-          {parseFloat(entryFee) > 0 && (
-            <div className="league-fee-note">
-              ⚡ Payout is skill-weighted: higher score = larger share of the prize pool.
-            </div>
-          )}
 
           {error && <p className="predict-error">{error}</p>}
 
