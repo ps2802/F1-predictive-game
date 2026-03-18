@@ -556,6 +556,7 @@ h1, h2, h3 { margin-top: 0; }
   position: absolute;
   top: 50%;
   left: 50%;
+  transform: translate(-50%, -50%);
   width: 94%;
   height: 94%;
   object-fit: contain;
@@ -703,12 +704,6 @@ h1, h2, h3 { margin-top: 0; }
      • ::after  = front wing (32 px wide, below body)
      Both wings transition in smoothly with the body morph.
 ═══════════════════════════════════════════════════════════════ */
-@media (pointer: fine) {
-  .gl-root,
-  .gl-root * {
-    cursor: none !important;
-  }
-}
 
 .gl-cursor {
   position: fixed;

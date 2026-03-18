@@ -396,9 +396,6 @@ export default function WaitlistPage() {
   return (
     <div className="gl-root">
 
-      {/* Custom F1 cursor — desktop only */}
-      <F1Cursor />
-
       {/* Circuit track background */}
       <TrackBackground />
 
