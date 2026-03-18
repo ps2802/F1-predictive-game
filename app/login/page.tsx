@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams?.get("redirect") ?? null;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -36,6 +38,19 @@ export default function LoginPage() {
       return;
     }
 
+    if (redirect) {
+      router.push(redirect);
+      return;
+    }
+    // Check if user needs onboarding (no username yet)
+    const supabaseCheck = createSupabaseBrowserClient();
+    if (supabaseCheck) {
+      const { data: { user: u } } = await supabaseCheck.auth.getUser();
+      if (u) {
+        const { data: prof } = await supabaseCheck.from("profiles").select("username").eq("id", u.id).single();
+        if (!prof?.username) { router.push("/onboarding"); return; }
+      }
+    }
     router.push("/dashboard");
   }
 

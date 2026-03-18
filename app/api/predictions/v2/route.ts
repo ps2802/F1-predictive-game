@@ -1,0 +1,107 @@
+import { NextResponse } from "next/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+type Answers = Record<string, string[]>; // question_id → option_id[]
+
+export async function POST(request: Request) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase)
+    return NextResponse.json({ error: "Supabase env vars missing." }, { status: 500 });
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { raceId, answers } = (await request.json()) as {
+    raceId: string;
+    answers: Answers;
+  };
+
+  if (!raceId || !answers)
+    return NextResponse.json({ error: "Missing raceId or answers." }, { status: 400 });
+
+  // Check race is not locked
+  const { data: race } = await supabase
+    .from("races")
+    .select("race_locked, race_starts_at")
+    .eq("id", raceId)
+    .single();
+
+  if (!race)
+    return NextResponse.json({ error: "Race not found." }, { status: 404 });
+
+  if (race.race_locked)
+    return NextResponse.json({ error: "Predictions locked for this race." }, { status: 403 });
+
+  // Validate all option IDs belong to this race
+  const questionIds = Object.keys(answers);
+  if (questionIds.length === 0)
+    return NextResponse.json({ error: "No answers provided." }, { status: 400 });
+
+  const { data: questions } = await supabase
+    .from("prediction_questions")
+    .select("id, multi_select")
+    .eq("race_id", raceId)
+    .in("id", questionIds);
+
+  if (!questions || questions.length !== questionIds.length)
+    return NextResponse.json({ error: "Invalid question IDs." }, { status: 400 });
+
+  // Upsert prediction row
+  const { data: pred, error: predErr } = await supabase
+    .from("predictions")
+    .upsert(
+      {
+        user_id: user.id,
+        race_id: raceId,
+        status: "draft",
+      },
+      { onConflict: "user_id,race_id" }
+    )
+    .select("id, edit_count")
+    .single();
+
+  if (predErr || !pred)
+    return NextResponse.json({ error: predErr?.message ?? "Failed to create prediction." }, { status: 400 });
+
+  // Delete old answers for these questions then insert new ones
+  await supabase
+    .from("prediction_answers")
+    .delete()
+    .eq("prediction_id", pred.id)
+    .in("question_id", questionIds);
+
+  const answerRows = [];
+  for (const [questionId, optionIds] of Object.entries(answers)) {
+    for (let i = 0; i < optionIds.length; i++) {
+      if (optionIds[i]) {
+        answerRows.push({
+          prediction_id: pred.id,
+          question_id: questionId,
+          option_id: optionIds[i],
+          pick_order: i + 1,
+        });
+      }
+    }
+  }
+
+  if (answerRows.length > 0) {
+    const { error: ansErr } = await supabase
+      .from("prediction_answers")
+      .insert(answerRows);
+    if (ansErr)
+      return NextResponse.json({ error: ansErr.message }, { status: 400 });
+  }
+
+  // Save prediction version snapshot
+  await supabase.from("prediction_versions").insert({
+    prediction_id: pred.id,
+    version_number: (pred.edit_count ?? 0) + 1,
+    answers_json: answers,
+    edit_cost: 0,
+  });
+
+  return NextResponse.json({ success: true, predictionId: pred.id });
+}
