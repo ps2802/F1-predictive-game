@@ -46,17 +46,20 @@ export async function POST(request: Request) {
     .eq("race_id", raceId)
     .in("id", questionIds);
 
-  if (!questions || questions.length !== questionIds.length)
+  // Validate that every submitted question ID actually belongs to this race
+  const validIds = new Set((questions ?? []).map((q) => q.id));
+  const invalidIds = questionIds.filter((id) => !validIds.has(id));
+  if (invalidIds.length > 0)
     return NextResponse.json({ error: "Invalid question IDs." }, { status: 400 });
 
-  // Upsert prediction row
+  // Upsert prediction row — status 'active' means submitted and ready for scoring
   const { data: pred, error: predErr } = await supabase
     .from("predictions")
     .upsert(
       {
         user_id: user.id,
         race_id: raceId,
-        status: "draft",
+        status: "active",
       },
       { onConflict: "user_id,race_id" }
     )

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   settleRace,
   type PredictionQuestion,
@@ -10,6 +11,7 @@ import {
 
 // Admin-only: trigger race settlement + scoring
 export async function POST(request: Request) {
+  // Authenticate with anon client
   const supabase = await createSupabaseServerClient();
   if (!supabase)
     return NextResponse.json({ error: "Supabase env vars missing." }, { status: 500 });
@@ -25,7 +27,6 @@ export async function POST(request: Request) {
     .select("is_admin")
     .eq("id", user.id)
     .single();
-
   if (!profile?.is_admin)
     return NextResponse.json({ error: "Forbidden: admin only." }, { status: 403 });
 
@@ -33,8 +34,16 @@ export async function POST(request: Request) {
   if (!raceId)
     return NextResponse.json({ error: "Missing raceId." }, { status: 400 });
 
+  // Admin client for all reads/writes (bypasses RLS)
+  const admin = createSupabaseAdminClient();
+  if (!admin)
+    return NextResponse.json(
+      { error: "SUPABASE_SERVICE_ROLE_KEY not configured." },
+      { status: 503 }
+    );
+
   // 1. Load questions
-  const { data: questions } = await supabase
+  const { data: questions } = await admin
     .from("prediction_questions")
     .select("*")
     .eq("race_id", raceId);
@@ -43,7 +52,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No questions found for this race." }, { status: 404 });
 
   // 2. Load results
-  const { data: results } = await supabase
+  const { data: results } = await admin
     .from("race_results")
     .select("question_id, correct_option_id, pick_order")
     .eq("race_id", raceId);
@@ -51,36 +60,41 @@ export async function POST(request: Request) {
   if (!results?.length)
     return NextResponse.json({ error: "No results found. Submit results first." }, { status: 400 });
 
-  // 3. Load popularity snapshots (or compute on-the-fly)
+  // 3. Try pre-frozen popularity snapshots first, then compute on-the-fly
   let snapshots: PopularitySnapshot[] = [];
-  const { data: snapshotData } = await supabase
+  const { data: snapshotData } = await admin
     .from("pick_popularity_snapshots")
     .select("question_id, option_id, popularity_percent")
     .eq("race_id", raceId);
 
   if (snapshotData?.length) {
-    snapshots = snapshotData;
+    snapshots = snapshotData as PopularitySnapshot[];
   } else {
-    // Compute popularity from active predictions
-    const { data: countData } = await supabase.rpc("compute_pick_popularity", {
+    // compute_pick_popularity RPC added in hardening migration
+    const { data: countData } = await admin.rpc("compute_pick_popularity", {
       p_race_id: raceId,
     });
     snapshots = (countData ?? []) as PopularitySnapshot[];
+    // If still empty (no active predictions yet), scoring proceeds with 0 snapshots
+    // which means difficulty = MAX (6.5x) for every correct pick — acceptable as an edge case
   }
 
-  // 4. Load all active predictions with answers
-  const { data: predictions } = await supabase
+  // 4. Load active predictions + answers
+  const { data: predictions } = await admin
     .from("predictions")
     .select("id, user_id, edit_count")
     .eq("race_id", raceId)
     .eq("status", "active");
 
   if (!predictions?.length)
-    return NextResponse.json({ success: true, message: "No active predictions to score.", scores: [] });
+    return NextResponse.json({
+      success: true,
+      message: "No active predictions to score.",
+      scores_computed: 0,
+    });
 
-  // Load all answers in one query
   const predictionIds = predictions.map((p) => p.id);
-  const { data: allAnswers } = await supabase
+  const { data: allAnswers } = await admin
     .from("prediction_answers")
     .select("prediction_id, question_id, option_id, pick_order")
     .in("prediction_id", predictionIds);
@@ -116,22 +130,23 @@ export async function POST(request: Request) {
     calculated_at: new Date().toISOString(),
   }));
 
-  const { error: upsertErr } = await supabase
+  const { error: upsertErr } = await admin
     .from("race_scores")
     .upsert(scoreRows, { onConflict: "user_id,race_id" });
 
   if (upsertErr)
     return NextResponse.json({ error: upsertErr.message }, { status: 400 });
 
-  // 7. Update league_scores
-  const { data: leagueMembers } = await supabase
+  // 7. Update league_scores for all affected users
+  const { data: leagueMembers } = await admin
     .from("league_members")
-    .select("league_id, user_id");
+    .select("league_id, user_id")
+    .in("user_id", scores.map((s) => s.user_id));
 
   const leagueScoreRows = [];
   for (const score of scores) {
-    const leagues = (leagueMembers ?? []).filter((m) => m.user_id === score.user_id);
-    for (const lm of leagues) {
+    const userLeagues = (leagueMembers ?? []).filter((m) => m.user_id === score.user_id);
+    for (const lm of userLeagues) {
       leagueScoreRows.push({
         league_id: lm.league_id,
         user_id: score.user_id,
@@ -142,7 +157,7 @@ export async function POST(request: Request) {
   }
 
   if (leagueScoreRows.length > 0) {
-    await supabase
+    await admin
       .from("league_scores")
       .upsert(leagueScoreRows, { onConflict: "league_id,user_id,race_id" });
   }
