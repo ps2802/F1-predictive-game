@@ -8,6 +8,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -18,7 +19,8 @@ export default function SignupPage() {
     const supabase = createSupabaseBrowserClient();
 
     if (!supabase) {
-      setMessage("Supabase env vars missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+      setMessage("Supabase env vars missing.");
+      setIsError(true);
       setLoading(false);
       return;
     }
@@ -27,49 +29,75 @@ export default function SignupPage() {
 
     if (error) {
       setMessage(error.message);
+      setIsError(true);
       setLoading(false);
       return;
     }
 
-    setMessage("Account created. Check your inbox to verify your email, then login.");
+    setMessage("Account created. Check your inbox to verify your email, then sign in.");
+    setIsError(false);
     setLoading(false);
   }
 
   return (
-    <main>
-      <section className="card" style={{ maxWidth: 520, margin: "2rem auto" }}>
-        <h1>Sign Up</h1>
-        <p className="small">Create your F1 Predictive Game account.</p>
+    <>
+      <div className="gl-stripe" aria-hidden="true" />
+      <div className="gla-auth-root">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/gridlock logo - transparent.png"
+          alt="Gridlock"
+          className="gla-auth-logo"
+          draggable={false}
+        />
 
-        <form className="stack" onSubmit={handleSubmit}>
-          <label className="stack">
-            <span>Email</span>
-            <input className="input" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          </label>
+        <div className="gla-auth-card">
+          <p className="gla-auth-eyebrow">Join the grid</p>
+          <h1 className="gla-auth-title">Create account</h1>
+          <p className="gla-auth-sub">Sign up to start predicting the 2026 season.</p>
 
-          <label className="stack">
-            <span>Password</span>
-            <input
-              className="input"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </label>
+          <form onSubmit={handleSubmit}>
+            <div className="gla-field">
+              <label className="gla-field-label" htmlFor="email">Email</label>
+              <input
+                id="email"
+                className="gla-field-input"
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-          <button className="button" type="submit" disabled={loading}>
-            {loading ? "Creating account..." : "Create account"}
-          </button>
-        </form>
+            <div className="gla-field">
+              <label className="gla-field-label" htmlFor="password">Password</label>
+              <input
+                id="password"
+                className="gla-field-input"
+                type="password"
+                required
+                minLength={6}
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
 
-        {message ? <p className="small">{message}</p> : null}
+            <button className="gla-auth-btn" type="submit" disabled={loading}>
+              {loading ? "Creating account…" : "Create account"}
+            </button>
+          </form>
 
-        <p className="small">
-          Already have an account? <Link href="/login">Go to login</Link>
-        </p>
-      </section>
-    </main>
+          {message && (
+            <p className={`gla-auth-msg ${isError ? "is-error" : "is-success"}`}>{message}</p>
+          )}
+
+          <div className="gla-auth-footer">
+            Already have an account? <Link href="/login">Sign in</Link>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
