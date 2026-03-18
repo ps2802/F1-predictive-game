@@ -271,10 +271,6 @@ function HelmetPanel() {
       {/* Starting grid lines — low-opacity horizontal stripes, bottom third */}
       <div className="gl-grid-lines" />
 
-      {/* Atmospheric glows — toned down vs previous pass */}
-      <div className="gl-glow-deep" />
-      <div className="gl-glow" />
-
       {/* Ghost grid position — barely-there red numeral behind helmet */}
       <div className="gl-hud-pos">01</div>
 
