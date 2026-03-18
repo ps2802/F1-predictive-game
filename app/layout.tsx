@@ -23,7 +23,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
 
   title: {
-    default: "Gridlock — The F1 Prediction Game",
+    // 52 chars — within the 50-60 SEO optimal range
+    default: "Gridlock — F1 Prediction Game · Predict the Grid",
     template: "%s | Gridlock",
   },
   description:
@@ -64,7 +65,7 @@ export const metadata: Metadata = {
     type: "website",
     url: BASE_URL,
     siteName: "Gridlock",
-    title: "Gridlock — The F1 Prediction Game",
+    title: "Gridlock — F1 Prediction Game · Predict the Grid",
     description:
       "Predict the grid. Outsmart the crowd. The F1 prediction game built for people who actually watch qualifying.",
     locale: "en_US",
@@ -83,20 +84,10 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@GridlockLeague",
     creator: "@GridlockLeague",
-    title: "Gridlock — The F1 Prediction Game",
+    title: "Gridlock — F1 Prediction Game · Predict the Grid",
     description:
       "Predict the grid. Outsmart the crowd. The F1 prediction game built for people who actually watch qualifying.",
     images: ["/opengraph-image"],
-  },
-
-  /* ── Icons ── */
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "16x16 32x32", type: "image/x-icon" },
-      { url: "/gridlock-logo.png", sizes: "any", type: "image/png" },
-    ],
-    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
-    shortcut: "/favicon.ico",
   },
 
   /* ── Manifest ── */
