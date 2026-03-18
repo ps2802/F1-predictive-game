@@ -1044,11 +1044,11 @@ h1, h2, h3 { margin-top: 0; }
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 1;
+  z-index: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.72;
+  opacity: 0.9;
   animation: circuit-breathe 6s ease-in-out infinite;
 }
 .gl-circuit-svg {
@@ -1147,6 +1147,7 @@ h1, h2, h3 { margin-top: 0; }
 .gl-helmet-wrap {
   position: absolute;
   inset: 0;
+  z-index: 2;
   will-change: transform;
   transform-origin: 50% 50%;
 }

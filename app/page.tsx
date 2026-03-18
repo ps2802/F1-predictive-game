@@ -277,11 +277,11 @@ function HelmetPanel() {
           {/* Red perspective grid */}
           {[0.15,0.28,0.42,0.58,0.72,0.87].map((y, i) => (
             <line key={`h${i}`} x1="0" y1={y*500} x2="500" y2={y*500}
-              stroke="rgba(225,6,0,0.13)" strokeWidth="1" />
+              stroke="rgba(225,6,0,0.28)" strokeWidth="1.2" />
           ))}
           {[0.1,0.22,0.35,0.5,0.65,0.78,0.9].map((x, i) => (
             <line key={`v${i}`} x1={x*500} y1="0" x2={x*500} y2="500"
-              stroke="rgba(225,6,0,0.10)" strokeWidth="1" />
+              stroke="rgba(225,6,0,0.22)" strokeWidth="1.2" />
           ))}
 
           {/* Circuit track path — oval-ish F1 layout */}
@@ -295,7 +295,7 @@ function HelmetPanel() {
                C 380 400, 330 420, 250 420
                C 170 420, 90 380, 90 310
                Z"
-            stroke="rgba(225,6,0,0.45)"
+            stroke="rgba(225,6,0,0.75)"
             strokeWidth="8"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -310,7 +310,7 @@ function HelmetPanel() {
                C 380 400, 330 420, 250 420
                C 170 420, 90 380, 90 310
                Z"
-            stroke="rgba(255,80,0,0.12)"
+            stroke="rgba(255,80,0,0.22)"
             strokeWidth="22"
             strokeLinecap="round"
             strokeLinejoin="round"
