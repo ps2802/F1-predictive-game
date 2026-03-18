@@ -73,23 +73,8 @@ export default function WaitlistPage() {
 
         {/* Logo */}
         <header className="gl-header">
-          <svg viewBox="0 0 480 220" fill="none" className="gl-logo" aria-label="Gridlock">
-            <path
-              d="M 28 185 L 68 90 Q 160 38 460 5 L 445 26 Q 180 62 108 128 L 418 50 L 406 72 Q 158 108 86 160 Z"
-              fill="#E10600"
-            />
-            <text
-              x="26"
-              y="215"
-              fontFamily="'Arial Black', Impact, sans-serif"
-              fontSize="68"
-              fontWeight="900"
-              fill="white"
-              letterSpacing="2"
-            >
-              GRIDLOCK
-            </text>
-          </svg>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/gridlock-logo.png" alt="Gridlock" className="gl-logo" draggable={false} />
         </header>
 
         {/* Copy */}
