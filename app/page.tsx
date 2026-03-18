@@ -271,6 +271,98 @@ function HelmetPanel() {
       {/* Starting grid lines — low-opacity horizontal stripes, bottom third */}
       <div className="gl-grid-lines" />
 
+      {/* ── Circuit track + lapping F1 car ── */}
+      <div className="gl-circuit" aria-hidden="true">
+        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg" className="gl-circuit-svg">
+          {/* Red perspective grid */}
+          {[0.15,0.28,0.42,0.58,0.72,0.87].map((y, i) => (
+            <line key={`h${i}`} x1="0" y1={y*500} x2="500" y2={y*500}
+              stroke="rgba(225,6,0,0.13)" strokeWidth="1" />
+          ))}
+          {[0.1,0.22,0.35,0.5,0.65,0.78,0.9].map((x, i) => (
+            <line key={`v${i}`} x1={x*500} y1="0" x2={x*500} y2="500"
+              stroke="rgba(225,6,0,0.10)" strokeWidth="1" />
+          ))}
+
+          {/* Circuit track path — oval-ish F1 layout */}
+          <path
+            id="gl-track-path"
+            d="M 90 250
+               C 90 140, 180 80, 250 80
+               C 320 80, 420 120, 420 200
+               C 420 240, 400 260, 370 270
+               C 410 290, 420 320, 400 360
+               C 380 400, 330 420, 250 420
+               C 170 420, 90 380, 90 310
+               Z"
+            stroke="rgba(225,6,0,0.45)"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* Inner track edge */}
+          <path
+            d="M 90 250
+               C 90 140, 180 80, 250 80
+               C 320 80, 420 120, 420 200
+               C 420 240, 400 260, 370 270
+               C 410 290, 420 320, 400 360
+               C 380 400, 330 420, 250 420
+               C 170 420, 90 380, 90 310
+               Z"
+            stroke="rgba(255,80,0,0.12)"
+            strokeWidth="22"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {/* DRS zone marker */}
+          <line x1="250" y1="80" x2="340" y2="80" stroke="rgba(225,6,0,0.55)" strokeWidth="3" strokeDasharray="6 4" />
+
+          {/* Start/finish line */}
+          <line x1="82" y1="242" x2="82" y2="258" stroke="rgba(255,255,255,0.6)" strokeWidth="4" />
+
+          {/* Animated F1 car dot */}
+          <circle r="7" fill="#E10600" filter="url(#car-glow)">
+            <animateMotion
+              dur="3.8s"
+              repeatCount="indefinite"
+              rotate="auto"
+            >
+              <mpath href="#gl-track-path" />
+            </animateMotion>
+          </circle>
+          {/* Car trail */}
+          <circle r="4" fill="rgba(255,100,0,0.55)" filter="url(#car-glow)">
+            <animateMotion
+              dur="3.8s"
+              begin="-0.08s"
+              repeatCount="indefinite"
+              rotate="auto"
+            >
+              <mpath href="#gl-track-path" />
+            </animateMotion>
+          </circle>
+          <circle r="2.5" fill="rgba(255,150,0,0.3)">
+            <animateMotion
+              dur="3.8s"
+              begin="-0.16s"
+              repeatCount="indefinite"
+              rotate="auto"
+            >
+              <mpath href="#gl-track-path" />
+            </animateMotion>
+          </circle>
+
+          <defs>
+            <filter id="car-glow" x="-120%" y="-120%" width="340%" height="340%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+        </svg>
+      </div>
+
       {/* Ghost grid position — barely-there red numeral behind helmet */}
       <div className="gl-hud-pos">01</div>
 

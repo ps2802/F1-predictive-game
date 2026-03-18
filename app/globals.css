@@ -1039,6 +1039,27 @@ h1, h2, h3 { margin-top: 0; }
 }
 
 /* Starting grid lines — subtle horizontal stripes, bottom third */
+/* ── Circuit track behind helmet ── */
+.gl-circuit {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.72;
+  animation: circuit-breathe 6s ease-in-out infinite;
+}
+.gl-circuit-svg {
+  width: 88%;
+  height: 88%;
+}
+@keyframes circuit-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(0.98); }
+  50%       { opacity: 0.85; transform: scale(1.02); }
+}
+
 .gl-grid-lines {
   position: absolute;
   bottom: 0;
