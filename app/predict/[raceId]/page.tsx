@@ -89,10 +89,17 @@ export default function PredictPage() {
 
     const { data: raceRow } = await supabase
       .from("races")
-      .select("race_locked")
+      .select("race_locked, qualifying_starts_at")
       .eq("id", raceId)
       .single();
-    if (raceRow?.race_locked) setIsLocked(true);
+
+    if (raceRow) {
+      const manuallyLocked = raceRow.race_locked === true;
+      const pastDeadline =
+        raceRow.qualifying_starts_at != null &&
+        new Date() >= new Date(raceRow.qualifying_starts_at);
+      if (manuallyLocked || pastDeadline) setIsLocked(true);
+    }
 
     // Load saved answers from localStorage (for anon flow)
     const stored = localStorage.getItem(`picks_${raceId}`);

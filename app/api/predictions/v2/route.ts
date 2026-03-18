@@ -22,17 +22,21 @@ export async function POST(request: Request) {
   if (!raceId || !answers)
     return NextResponse.json({ error: "Missing raceId or answers." }, { status: 400 });
 
-  // Check race is not locked
+  // Check race is not locked (manual flag or qualifying deadline passed)
   const { data: race } = await supabase
     .from("races")
-    .select("race_locked, race_starts_at")
+    .select("race_locked, qualifying_starts_at")
     .eq("id", raceId)
     .single();
 
   if (!race)
     return NextResponse.json({ error: "Race not found." }, { status: 404 });
 
-  if (race.race_locked)
+  const pastDeadline =
+    race.qualifying_starts_at != null &&
+    new Date() >= new Date(race.qualifying_starts_at);
+
+  if (race.race_locked || pastDeadline)
     return NextResponse.json({ error: "Predictions locked for this race." }, { status: 403 });
 
   // Validate all option IDs belong to this race
