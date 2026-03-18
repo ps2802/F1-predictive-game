@@ -330,6 +330,11 @@ h1, h2, h3 { margin-top: 0; }
 }
 .gla-auth-footer a { color: rgba(255,255,255,.55); transition: color .15s; }
 .gla-auth-footer a:hover { color: #fff; }
+.gla-auth-link-btn {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: rgba(255,255,255,.55); font-size: inherit; transition: color .15s;
+}
+.gla-auth-link-btn:hover { color: #fff; }
 
 /* ── Predict form ── */
 .gla-predict-header {
