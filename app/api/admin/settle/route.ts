@@ -9,6 +9,20 @@ import {
   type PopularitySnapshot,
 } from "@/lib/scoring/settleRace";
 
+// Convert prediction_versions.answers_json to PredictionAnswer[] for the scoring engine.
+// answers_json format: { [questionId]: [optionId, optionId, ...] }
+function versionToAnswers(answersJson: Record<string, string[]>): PredictionAnswer[] {
+  const result: PredictionAnswer[] = [];
+  for (const [questionId, optionIds] of Object.entries(answersJson)) {
+    for (let i = 0; i < optionIds.length; i++) {
+      if (optionIds[i]) {
+        result.push({ question_id: questionId, option_id: optionIds[i], pick_order: i + 1 });
+      }
+    }
+  }
+  return result;
+}
+
 // Admin-only: trigger race settlement + scoring
 export async function POST(request: Request) {
   // Authenticate with anon client
@@ -42,6 +56,29 @@ export async function POST(request: Request) {
       { status: 503 }
     );
 
+  // 0. Guard: refuse to settle an unlocked race.
+  // Settlement must only run against a stable, frozen set of predictions.
+  // A race is considered locked if race_locked = true OR qualifying_starts_at has passed.
+  const { data: raceRow } = await admin
+    .from("races")
+    .select("race_locked, qualifying_starts_at")
+    .eq("id", raceId)
+    .single();
+
+  if (!raceRow)
+    return NextResponse.json({ error: "Race not found." }, { status: 404 });
+
+  const deadlinePassed =
+    raceRow.qualifying_starts_at != null &&
+    new Date() >= new Date(raceRow.qualifying_starts_at);
+
+  if (!raceRow.race_locked && !deadlinePassed) {
+    return NextResponse.json(
+      { error: "Race is not locked. Lock the race or wait for the qualifying deadline before settling." },
+      { status: 400 }
+    );
+  }
+
   // 1. Load questions
   const { data: questions } = await admin
     .from("prediction_questions")
@@ -70,16 +107,13 @@ export async function POST(request: Request) {
   if (snapshotData?.length) {
     snapshots = snapshotData as PopularitySnapshot[];
   } else {
-    // compute_pick_popularity RPC added in hardening migration
     const { data: countData } = await admin.rpc("compute_pick_popularity", {
       p_race_id: raceId,
     });
     snapshots = (countData ?? []) as PopularitySnapshot[];
-    // If still empty (no active predictions yet), scoring proceeds with 0 snapshots
-    // which means difficulty = MAX (6.5x) for every correct pick — acceptable as an edge case
   }
 
-  // 4. Load active predictions + answers
+  // 4. Load active predictions
   const { data: predictions } = await admin
     .from("predictions")
     .select("id, user_id, edit_count")
@@ -94,31 +128,41 @@ export async function POST(request: Request) {
     });
 
   const predictionIds = predictions.map((p) => p.id);
-  const { data: allAnswers } = await admin
-    .from("prediction_answers")
-    .select("prediction_id, question_id, option_id, pick_order")
-    .in("prediction_id", predictionIds);
 
-  const answersByPrediction: Record<string, PredictionAnswer[]> = {};
-  for (const ans of allAnswers ?? []) {
-    if (!answersByPrediction[ans.prediction_id]) answersByPrediction[ans.prediction_id] = [];
-    answersByPrediction[ans.prediction_id].push(ans);
+  // 5. Load frozen answer snapshots from prediction_versions.
+  //    Use the highest version_number per prediction — this is the immutable state
+  //    captured at the time of the user's last submission and cannot change retroactively.
+  //    Ordering DESC means the first row per prediction_id is always the latest version.
+  const { data: allVersions } = await admin
+    .from("prediction_versions")
+    .select("prediction_id, version_number, answers_json")
+    .in("prediction_id", predictionIds)
+    .order("version_number", { ascending: false });
+
+  // Pick latest version per prediction
+  const latestByPrediction = new Map<string, Record<string, string[]>>();
+  for (const v of allVersions ?? []) {
+    if (!latestByPrediction.has(v.prediction_id)) {
+      latestByPrediction.set(v.prediction_id, v.answers_json as Record<string, string[]>);
+    }
   }
 
-  // 5. Run scoring engine
+  // 6. Run scoring engine using frozen snapshots
   const { scores } = settleRace({
     raceId,
     questions: questions as PredictionQuestion[],
     results: results as RaceResult[],
     snapshots,
-    userPredictions: predictions.map((p) => ({
-      userId: p.user_id,
-      answers: answersByPrediction[p.id] ?? [],
-      editCount: p.edit_count ?? 0,
-    })),
+    userPredictions: predictions
+      .filter((p) => latestByPrediction.has(p.id)) // skip predictions with no version snapshot
+      .map((p) => ({
+        userId: p.user_id,
+        answers: versionToAnswers(latestByPrediction.get(p.id)!),
+        editCount: p.edit_count ?? 0,
+      })),
   });
 
-  // 6. Upsert race_scores
+  // 7. Upsert race_scores
   const scoreRows = scores.map((s) => ({
     user_id: s.user_id,
     race_id: raceId,
@@ -137,7 +181,7 @@ export async function POST(request: Request) {
   if (upsertErr)
     return NextResponse.json({ error: upsertErr.message }, { status: 400 });
 
-  // 7. Update league_scores for all affected users
+  // 8. Update league_scores for all affected users
   const { data: leagueMembers } = await admin
     .from("league_members")
     .select("league_id, user_id")
