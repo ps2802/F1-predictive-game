@@ -1048,12 +1048,14 @@ h1, h2, h3 { margin-top: 0; }
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: visible;
   opacity: 0.9;
   animation: circuit-breathe 6s ease-in-out infinite;
 }
 .gl-circuit-svg {
   width: 96%;
   height: 96%;
+  overflow: visible;
 }
 @keyframes circuit-breathe {
   0%, 100% { opacity: 0.7; }

@@ -292,27 +292,27 @@ function HelmetPanel() {
           </defs>
 
           {/* Depth rings — barely-there concentric echoes */}
-          <ellipse cx="250" cy="244" rx="210" ry="212" stroke="rgba(225,6,0,0.05)" strokeWidth="1"/>
-          <ellipse cx="250" cy="244" rx="160" ry="162" stroke="rgba(225,6,0,0.04)" strokeWidth="1"/>
+          <ellipse cx="250" cy="250" rx="290" ry="290" stroke="rgba(225,6,0,0.04)" strokeWidth="1"/>
+          <ellipse cx="250" cy="250" rx="240" ry="240" stroke="rgba(225,6,0,0.03)" strokeWidth="1"/>
 
           {/* Track glow bed — wide soft halo */}
           <path
-            d="M 250 45 C 332 45,418 92,438 168 C 453 218,451 274,437 324 C 420 378,376 418,320 434 C 297 441,274 444,250 444 C 226 444,203 441,180 434 C 124 418,80 378,63 324 C 49 274,47 218,62 168 C 82 92,168 45,250 45 Z"
-            stroke="rgba(225,6,0,0.14)"
-            strokeWidth="18"
+            d="M 250 -30 C 360 -30,468 40,494 138 C 514 208,512 278,492 346 C 466 424,408 472,334 488 C 307 496,279 500,250 500 C 221 500,193 496,166 488 C 92 472,34 424,8 346 C -12 278,-14 208,6 138 C 32 40,140 -30,250 -30 Z"
+            stroke="rgba(225,6,0,0.12)"
+            strokeWidth="20"
             filter="url(#track-glow)"
           />
 
           {/* Track centerline — precision hairline */}
           <path
             id="gl-track-path"
-            d="M 250 45 C 332 45,418 92,438 168 C 453 218,451 274,437 324 C 420 378,376 418,320 434 C 297 441,274 444,250 444 C 226 444,203 441,180 434 C 124 418,80 378,63 324 C 49 274,47 218,62 168 C 82 92,168 45,250 45 Z"
-            stroke="rgba(225,6,0,0.6)"
+            d="M 250 -30 C 360 -30,468 40,494 138 C 514 208,512 278,492 346 C 466 424,408 472,334 488 C 307 496,279 500,250 500 C 221 500,193 496,166 488 C 92 472,34 424,8 346 C -12 278,-14 208,6 138 C 32 40,140 -30,250 -30 Z"
+            stroke="rgba(225,6,0,0.65)"
             strokeWidth="1.5"
           />
 
           {/* Start/finish tick — top centre */}
-          <line x1="243" y1="40" x2="257" y2="40" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5"/>
+          <line x1="243" y1="-36" x2="257" y2="-36" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5"/>
 
           {/* Car wide bloom */}
           <circle r="10" fill="rgba(225,6,0,0.2)" filter="url(#car-bloom)">
