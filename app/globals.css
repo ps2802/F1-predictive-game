@@ -87,11 +87,14 @@ h1, h2, h3 { margin-top: 0; }
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  position: relative;
 }
 
-/* Social follow bar */
+/* Social follow bar — absolutely centred in the header */
 .gl-social-bar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: .55rem;
@@ -105,12 +108,13 @@ h1, h2, h3 { margin-top: 0; }
   height: 28px;
   color: rgba(255,255,255,.21);
   border-radius: 3px;
-  transition: color .2s ease;
+  transition: color .15s ease, background .15s ease;
 }
 
 @media (pointer: fine) {
   .gl-social-link:hover {
-    color: rgba(255,255,255,.62);
+    color: #fff;
+    background: #E10600;
   }
 }
 
@@ -342,12 +346,11 @@ h1, h2, h3 { margin-top: 0; }
   margin-bottom: .5rem;
 }
 
-.gl-feed-dot {
-  width: 4px; height: 4px;
-  border-radius: 50%;
-  background: #E10600;
+.gl-feed-threads-icon {
+  display: flex;
+  align-items: center;
+  color: #E10600;
   flex-shrink: 0;
-  /* static — no blink; eyebrow dot already owns that rhythm */
 }
 
 .gl-feed-track {

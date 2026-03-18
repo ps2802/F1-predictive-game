@@ -49,7 +49,7 @@ function SocialFeed() {
   return (
     <div className="gl-feed" aria-label="Latest from @GridlockLeague">
       <div className="gl-feed-label">
-        <span className="gl-feed-dot" aria-hidden="true" />
+        <span className="gl-feed-threads-icon" aria-hidden="true"><IconThreads /></span>
         <span>@GridlockLeague</span>
       </div>
       <div className="gl-feed-track">
