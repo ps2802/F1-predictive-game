@@ -274,92 +274,83 @@ function HelmetPanel() {
       {/* ── Circuit track + lapping F1 car ── */}
       <div className="gl-circuit" aria-hidden="true">
         <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg" className="gl-circuit-svg">
-          {/* Red perspective grid */}
-          {[0.15,0.28,0.42,0.58,0.72,0.87].map((y, i) => (
-            <line key={`h${i}`} x1="0" y1={y*500} x2="500" y2={y*500}
-              stroke="rgba(225,6,0,0.28)" strokeWidth="1.2" />
-          ))}
-          {[0.1,0.22,0.35,0.5,0.65,0.78,0.9].map((x, i) => (
-            <line key={`v${i}`} x1={x*500} y1="0" x2={x*500} y2="500"
-              stroke="rgba(225,6,0,0.22)" strokeWidth="1.2" />
-          ))}
-
-          {/* Circuit track path — oval-ish F1 layout */}
-          <path
-            id="gl-track-path"
-            d="M 90 250
-               C 90 140, 180 80, 250 80
-               C 320 80, 420 120, 420 200
-               C 420 240, 400 260, 370 270
-               C 410 290, 420 320, 400 360
-               C 380 400, 330 420, 250 420
-               C 170 420, 90 380, 90 310
-               Z"
-            stroke="rgba(225,6,0,0.75)"
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Inner track edge */}
-          <path
-            d="M 90 250
-               C 90 140, 180 80, 250 80
-               C 320 80, 420 120, 420 200
-               C 420 240, 400 260, 370 270
-               C 410 290, 420 320, 400 360
-               C 380 400, 330 420, 250 420
-               C 170 420, 90 380, 90 310
-               Z"
-            stroke="rgba(255,80,0,0.22)"
-            strokeWidth="22"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* DRS zone marker */}
-          <line x1="250" y1="80" x2="340" y2="80" stroke="rgba(225,6,0,0.55)" strokeWidth="3" strokeDasharray="6 4" />
-
-          {/* Start/finish line */}
-          <line x1="82" y1="242" x2="82" y2="258" stroke="rgba(255,255,255,0.6)" strokeWidth="4" />
-
-          {/* Animated F1 car dot */}
-          <circle r="7" fill="#E10600" filter="url(#car-glow)">
-            <animateMotion
-              dur="3.8s"
-              repeatCount="indefinite"
-              rotate="auto"
-            >
-              <mpath href="#gl-track-path" />
-            </animateMotion>
-          </circle>
-          {/* Car trail */}
-          <circle r="4" fill="rgba(255,100,0,0.55)" filter="url(#car-glow)">
-            <animateMotion
-              dur="3.8s"
-              begin="-0.08s"
-              repeatCount="indefinite"
-              rotate="auto"
-            >
-              <mpath href="#gl-track-path" />
-            </animateMotion>
-          </circle>
-          <circle r="2.5" fill="rgba(255,150,0,0.3)">
-            <animateMotion
-              dur="3.8s"
-              begin="-0.16s"
-              repeatCount="indefinite"
-              rotate="auto"
-            >
-              <mpath href="#gl-track-path" />
-            </animateMotion>
-          </circle>
-
           <defs>
-            <filter id="car-glow" x="-120%" y="-120%" width="340%" height="340%">
-              <feGaussianBlur stdDeviation="4" result="blur" />
+            {/* Soft luminous bed beneath the track */}
+            <filter id="track-glow" x="-25%" y="-25%" width="150%" height="150%">
+              <feGaussianBlur stdDeviation="6" result="blur"/>
               <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
             </filter>
+            {/* Car tight halo */}
+            <filter id="car-halo" x="-300%" y="-300%" width="700%" height="700%">
+              <feGaussianBlur stdDeviation="5" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            {/* Car wide bloom */}
+            <filter id="car-bloom" x="-400%" y="-400%" width="900%" height="900%">
+              <feGaussianBlur stdDeviation="12"/>
+            </filter>
           </defs>
+
+          {/* Depth rings — barely-there concentric echoes */}
+          <ellipse cx="250" cy="244" rx="210" ry="212" stroke="rgba(225,6,0,0.05)" strokeWidth="1"/>
+          <ellipse cx="250" cy="244" rx="160" ry="162" stroke="rgba(225,6,0,0.04)" strokeWidth="1"/>
+
+          {/* Track glow bed — wide soft halo */}
+          <path
+            d="M 250 45 C 332 45,418 92,438 168 C 453 218,451 274,437 324 C 420 378,376 418,320 434 C 297 441,274 444,250 444 C 226 444,203 441,180 434 C 124 418,80 378,63 324 C 49 274,47 218,62 168 C 82 92,168 45,250 45 Z"
+            stroke="rgba(225,6,0,0.14)"
+            strokeWidth="18"
+            filter="url(#track-glow)"
+          />
+
+          {/* Track centerline — precision hairline */}
+          <path
+            id="gl-track-path"
+            d="M 250 45 C 332 45,418 92,438 168 C 453 218,451 274,437 324 C 420 378,376 418,320 434 C 297 441,274 444,250 444 C 226 444,203 441,180 434 C 124 418,80 378,63 324 C 49 274,47 218,62 168 C 82 92,168 45,250 45 Z"
+            stroke="rgba(225,6,0,0.6)"
+            strokeWidth="1.5"
+          />
+
+          {/* Start/finish tick — top centre */}
+          <line x1="243" y1="40" x2="257" y2="40" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5"/>
+
+          {/* Car wide bloom */}
+          <circle r="10" fill="rgba(225,6,0,0.2)" filter="url(#car-bloom)">
+            <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+              <mpath href="#gl-track-path"/>
+            </animateMotion>
+          </circle>
+
+          {/* Car halo ring */}
+          <circle r="5" fill="rgba(220,30,0,0.55)" filter="url(#car-halo)">
+            <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+              <mpath href="#gl-track-path"/>
+            </animateMotion>
+          </circle>
+
+          {/* Car core — bright white pinpoint */}
+          <circle r="2.5" fill="rgba(255,255,255,0.95)">
+            <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+              <mpath href="#gl-track-path"/>
+            </animateMotion>
+          </circle>
+
+          {/* Wake — fading comet tail */}
+          <circle r="2" fill="rgba(255,70,0,0.4)">
+            <animateMotion dur="6s" begin="-0.14s" repeatCount="indefinite" rotate="auto">
+              <mpath href="#gl-track-path"/>
+            </animateMotion>
+          </circle>
+          <circle r="1.5" fill="rgba(225,6,0,0.22)">
+            <animateMotion dur="6s" begin="-0.28s" repeatCount="indefinite" rotate="auto">
+              <mpath href="#gl-track-path"/>
+            </animateMotion>
+          </circle>
+          <circle r="1" fill="rgba(225,6,0,0.1)">
+            <animateMotion dur="6s" begin="-0.44s" repeatCount="indefinite" rotate="auto">
+              <mpath href="#gl-track-path"/>
+            </animateMotion>
+          </circle>
         </svg>
       </div>
 

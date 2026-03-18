@@ -1052,12 +1052,12 @@ h1, h2, h3 { margin-top: 0; }
   animation: circuit-breathe 6s ease-in-out infinite;
 }
 .gl-circuit-svg {
-  width: 88%;
-  height: 88%;
+  width: 96%;
+  height: 96%;
 }
 @keyframes circuit-breathe {
-  0%, 100% { opacity: 0.55; transform: scale(0.98); }
-  50%       { opacity: 0.85; transform: scale(1.02); }
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1; }
 }
 
 .gl-grid-lines {
