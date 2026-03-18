@@ -78,6 +78,8 @@ h1, h2, h3 { margin-top: 0; }
   padding: 3rem 4rem;
   background: #000;
   border-right: 1px solid rgba(255,255,255,.06);
+  overflow: hidden; /* contain marquee max-content width */
+  min-width: 0;     /* prevent grid cell blowout */
 }
 
 /* ── Header — logo left, social bar right ── */
@@ -348,6 +350,7 @@ h1, h2, h3 { margin-top: 0; }
 
 .gl-feed-track {
   overflow: hidden;
+  width: 100%; /* explicit width so max-content child doesn't dictate track size */
   /* Fade edges for seamless feel */
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 5%, #000 92%, transparent 100%);
   mask-image:         linear-gradient(90deg, transparent 0%, #000 5%, #000 92%, transparent 100%);
@@ -418,6 +421,7 @@ h1, h2, h3 { margin-top: 0; }
   position: relative;
   overflow: hidden;
   background: #050505;
+  min-width: 0; /* prevent grid cell blowout */
   /* Telemetry scan mode on hover */
   transition: filter 1.1s ease;
 }
