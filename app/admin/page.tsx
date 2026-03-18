@@ -189,7 +189,7 @@ export default function AdminPage() {
                       </span>
                     </div>
                     <div className="predict-options">
-                      {q.options.map((opt, oi) => {
+                      {q.options.map((opt) => {
                         const pickIdx = currentPicks.indexOf(opt.id);
                         const selected = pickIdx !== -1;
                         return (

@@ -146,18 +146,18 @@ export default function ProfilePage() {
           <div style={{ marginTop: "2rem" }}>
             <h3 className="league-section-title">Race History</h3>
             <div className="lb-table">
-              <div className="lb-header">
+              <div className="lb-header" style={{ gridTemplateColumns: "1fr 120px 100px" }}>
                 <span>Race</span>
                 <span>Score</span>
                 <span>Date</span>
               </div>
               {raceScores.map((rs) => {
-                const race = races.find((r) => r.id === rs.race_id);
+                const raceData = races.find((r) => r.id === rs.race_id);
                 return (
-                  <div key={rs.race_id} className="lb-row">
-                    <span className="lb-name">{race?.name ?? rs.race_id}</span>
+                  <div key={rs.race_id} className="lb-row" style={{ gridTemplateColumns: "1fr 120px 100px" }}>
+                    <span className="lb-name">{raceData?.name ?? rs.race_id}</span>
                     <span className="lb-score">{Number(rs.total_score).toFixed(1)}</span>
-                    <span className="lb-races" style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)" }}>
+                    <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)" }}>
                       {new Date(rs.calculated_at).toLocaleDateString()}
                     </span>
                   </div>
