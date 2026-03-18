@@ -33,8 +33,6 @@ function IconThreads() {
 
 /* ─────────────────────────────────────────────
    SOCIAL FEED
-   Static data — structured for easy API replacement.
-   Infinite horizontal marquee, pauses on hover.
 ────────────────────────────────────────────── */
 const FEED_ITEMS: { text: string; time: string }[] = [
   { text: "Season 2026. 24 rounds. Every prediction counts. Are you ready?", time: "2h" },
@@ -45,7 +43,7 @@ const FEED_ITEMS: { text: string; time: string }[] = [
 ];
 
 function SocialFeed() {
-  const items = [...FEED_ITEMS, ...FEED_ITEMS]; // doubled for seamless loop
+  const items = [...FEED_ITEMS, ...FEED_ITEMS];
   return (
     <div className="gl-feed" aria-label="Latest from @GridlockLeague">
       <div className="gl-feed-label">
@@ -67,64 +65,7 @@ function SocialFeed() {
 }
 
 /* ─────────────────────────────────────────────
-   F1 PRECISION CURSOR
-   At rest : thin white ring — nearly invisible.
-   On hover (.gl-cursor-target):
-     Ring morphs into a horizontal F1 car body
-     (wide oval, red border) with rear wing above
-     (wider) and front wing below (narrower).
-   Lagged follow via rAF lerp at 12 %/frame.
-────────────────────────────────────────────── */
-function F1Cursor() {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (window.matchMedia("(pointer: coarse)").matches) return;
-
-    const el = ref.current;
-    if (!el) return;
-
-    let mx = 0, my = 0, cx = 0, cy = 0, raf = 0;
-
-    const onMove = (e: MouseEvent) => {
-      mx = e.clientX;
-      my = e.clientY;
-      el.style.opacity = "1";
-    };
-
-    const onOver = (e: MouseEvent) => {
-      el.classList.toggle(
-        "is-locked",
-        !!(e.target as Element).closest(".gl-cursor-target")
-      );
-    };
-
-    const tick = () => {
-      cx += (mx - cx) * 0.12;
-      cy += (my - cy) * 0.12;
-      el.style.transform = `translate(${cx}px,${cy}px) translate(-50%,-50%)`;
-      raf = requestAnimationFrame(tick);
-    };
-
-    window.addEventListener("mousemove", onMove, { passive: true });
-    window.addEventListener("mouseover", onOver, { passive: true });
-    raf = requestAnimationFrame(tick);
-
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseover", onOver);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  return <div ref={ref} className="gl-cursor" aria-hidden="true" />;
-}
-
-/* ─────────────────────────────────────────────
    CIRCUIT TRACK BACKGROUND
-   Abstract F1 circuit linework — sector markers,
-   corner apexes, DRS zone, telemetry trace.
-   All at very low opacity, pointer-events: none.
 ────────────────────────────────────────────── */
 function TrackBackground() {
   return (
@@ -137,76 +78,34 @@ function TrackBackground() {
       <defs>
         <filter id="f-glow" x="-60%" y="-60%" width="220%" height="220%">
           <feGaussianBlur stdDeviation="2.5" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
         <filter id="f-ambient" x="-100%" y="-100%" width="300%" height="300%">
           <feGaussianBlur stdDeviation="5" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>
-
-      {/* ── Outer circuit ribbon ─────────────────────── */}
-      <path
-        d="M 160 148 C 400 55 882 55 1142 202 C 1312 302 1382 462 1296 602 C 1216 726 1042 787 842 783 C 718 781 638 751 558 783 C 480 813 398 843 278 823 C 174 804 76 738 76 618 C 76 474 76 296 160 148 Z"
-        stroke="rgba(255,255,255,0.055)"
-        strokeWidth="1.5"
-        fill="none"
-      />
-
-      {/* ── Inner track limit ────────────────────────── */}
-      <path
-        d="M 226 210 C 424 132 858 130 1082 254 C 1238 338 1298 470 1224 594 C 1149 708 986 759 804 755 C 696 752 624 724 552 754 C 486 780 414 807 308 789 C 218 773 138 716 138 604 C 138 471 138 301 226 210 Z"
-        stroke="rgba(255,255,255,0.03)"
-        strokeWidth="1"
-        fill="none"
-      />
-
-      {/* ── Sector markers ───────────────────────────── */}
+      <path d="M 160 148 C 400 55 882 55 1142 202 C 1312 302 1382 462 1296 602 C 1216 726 1042 787 842 783 C 718 781 638 751 558 783 C 480 813 398 843 278 823 C 174 804 76 738 76 618 C 76 474 76 296 160 148 Z" stroke="rgba(255,255,255,0.055)" strokeWidth="1.5" fill="none" />
+      <path d="M 226 210 C 424 132 858 130 1082 254 C 1238 338 1298 470 1224 594 C 1149 708 986 759 804 755 C 696 752 624 724 552 754 C 486 780 414 807 308 789 C 218 773 138 716 138 604 C 138 471 138 301 226 210 Z" stroke="rgba(255,255,255,0.03)" strokeWidth="1" fill="none" />
       <line x1="1142" y1="202" x2="1082" y2="254" stroke="rgba(225,6,0,0.22)" strokeWidth="1.5" filter="url(#f-ambient)" />
       <line x1="1296" y1="602" x2="1224" y2="594" stroke="rgba(225,6,0,0.22)" strokeWidth="1.5" filter="url(#f-ambient)" />
       <line x1="278"  y1="823" x2="308"  y2="789" stroke="rgba(225,6,0,0.22)" strokeWidth="1.5" filter="url(#f-ambient)" />
-
-      {/* ── DRS zone ─────────────────────────────────── */}
       {[0, 14, 28].map((d, i) => (
         <line key={i} x1={76 + d} y1="340" x2={138 + d} y2="340" stroke="rgba(0,210,170,0.1)" strokeWidth="0.8" />
       ))}
       <line x1="76" y1="340" x2="138" y2="340" stroke="rgba(0,210,170,0.18)" strokeWidth="1" filter="url(#f-glow)" />
-
-      {/* ── Corner apex markers ───────────────────────── */}
       <circle cx="1220" cy="420" r="5" stroke="rgba(255,255,255,0.1)"  strokeWidth="1"   fill="none" filter="url(#f-glow)" />
       <circle cx="107"  cy="618" r="5" stroke="rgba(255,255,255,0.09)" strokeWidth="1"   fill="none" />
       <circle cx="278"  cy="833" r="4" stroke="rgba(255,255,255,0.07)" strokeWidth="0.8" fill="none" />
       <circle cx="160"  cy="148" r="4" stroke="rgba(255,255,255,0.07)" strokeWidth="0.8" fill="none" />
-
-      {/* ── Grid reference nodes ─────────────────────── */}
       {[[160,148],[1142,202],[1296,602],[842,783],[278,823],[76,618],[1220,420],[558,783]].map(([x,y],i) => (
         <circle key={i} cx={x} cy={y} r="2" fill="rgba(255,255,255,0.07)" />
       ))}
-
-      {/* ── Telemetry trace ───────────────────────────── */}
-      <path
-        d="M 76 500 C 200 490 350 470 500 450 C 650 430 750 400 900 385 C 1000 375 1100 390 1200 430 C 1300 465 1380 490 1440 495"
-        stroke="rgba(0,200,165,0.08)"
-        strokeWidth="1"
-        fill="none"
-        strokeDasharray="5 10"
-      />
-
-      {/* ── Pit lane line ────────────────────────────── */}
+      <path d="M 76 500 C 200 490 350 470 500 450 C 650 430 750 400 900 385 C 1000 375 1100 390 1200 430 C 1300 465 1380 490 1440 495" stroke="rgba(0,200,165,0.08)" strokeWidth="1" fill="none" strokeDasharray="5 10" />
       <path d="M 110 470 C 115 430 118 400 116 360" stroke="rgba(255,255,255,0.035)" strokeWidth="1" fill="none" strokeDasharray="3 6" />
-
-      {/* ── Start/finish grid hatching ────────────────── */}
       {[0,1,2,3].map((n) => (
         <line key={n} x1={76} y1={540+n*18} x2={138} y2={540+n*18} stroke="rgba(255,255,255,0.035)" strokeWidth="0.6" />
       ))}
-
-      {/* ── Hairpin highlight ─────────────────────────── */}
       <path d="M 1296 602 C 1340 680 1300 760 1200 783" stroke="rgba(255,255,255,0.06)" strokeWidth="2" fill="none" filter="url(#f-glow)" />
     </svg>
   );
@@ -214,14 +113,6 @@ function TrackBackground() {
 
 /* ─────────────────────────────────────────────
    HELMET PANEL
-   Right panel with:
-   - Starting grid lines (CSS, background)
-   - Ghost position number "01" behind helmet
-   - Dual ambient glow layers (reduced fog)
-   - Idle float + visor shimmer (CSS)
-   - Mouse-reactive perspective tilt (JS, desktop)
-   - F1 HUD overlay: sector times, lap, corner tag
-   - Hover: monochrome telemetry mode + scan sweep
 ────────────────────────────────────────────── */
 function HelmetPanel() {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -229,7 +120,6 @@ function HelmetPanel() {
 
   useEffect(() => {
     if (window.matchMedia("(pointer: coarse)").matches) return;
-
     const panel = panelRef.current;
     const wrap  = wrapRef.current;
     if (!panel || !wrap) return;
@@ -243,21 +133,17 @@ function HelmetPanel() {
       tx =  nx * 8;
       ty = -ny * 5;
     };
-
     const onLeave = () => { tx = 0; ty = 0; };
-
     const tick = () => {
       cx += (tx - cx) * 0.055;
       cy += (ty - cy) * 0.055;
-      wrap.style.transform =
-        `perspective(900px) rotateY(${cx}deg) rotateX(${cy}deg)`;
+      wrap.style.transform = `perspective(900px) rotateY(${cx}deg) rotateX(${cy}deg)`;
       raf = requestAnimationFrame(tick);
     };
 
     panel.addEventListener("mousemove", onMove, { passive: true });
     panel.addEventListener("mouseleave", onLeave);
     raf = requestAnimationFrame(tick);
-
     return () => {
       panel.removeEventListener("mousemove", onMove);
       panel.removeEventListener("mouseleave", onLeave);
@@ -267,64 +153,189 @@ function HelmetPanel() {
 
   return (
     <div className="gl-right" ref={panelRef} aria-hidden="true">
-
-      {/* Starting grid lines — low-opacity horizontal stripes, bottom third */}
       <div className="gl-grid-lines" />
-
-      {/* Atmospheric glows — toned down vs previous pass */}
       <div className="gl-glow-deep" />
       <div className="gl-glow" />
-
-      {/* Ghost grid position — barely-there red numeral behind helmet */}
       <div className="gl-hud-pos">01</div>
-
-      {/* Helmet with parallax tilt */}
       <div className="gl-helmet-wrap" ref={wrapRef}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/gridlock-helmet.png"
-          alt=""
-          className="gl-helmet"
-          draggable={false}
-        />
+        <img src="/gridlock-helmet.png" alt="" className="gl-helmet" draggable={false} />
         <div className="gl-shimmer" aria-hidden="true" />
       </div>
-
-      {/* ── F1 HUD overlay ──────────────────────────── */}
-
-      {/* Corner tag — top-right */}
       <div className="gl-hud-corner">T12 ›</div>
-
-      {/* Sector timing strip — bottom bar */}
       <div className="gl-hud-strip">
-        <div className="gl-hud-sector">
-          <span className="gl-hud-s-label">S1</span>
-          <span className="gl-hud-s-val">28.4</span>
-        </div>
+        <div className="gl-hud-sector"><span className="gl-hud-s-label">S1</span><span className="gl-hud-s-val">28.4</span></div>
         <div className="gl-hud-divider" />
-        <div className="gl-hud-sector">
-          <span className="gl-hud-s-label">S2</span>
-          <span className="gl-hud-s-val">31.1</span>
-        </div>
+        <div className="gl-hud-sector"><span className="gl-hud-s-label">S2</span><span className="gl-hud-s-val">31.1</span></div>
         <div className="gl-hud-divider" />
-        <div className="gl-hud-sector">
-          <span className="gl-hud-s-label">S3</span>
-          <span className="gl-hud-s-val">22.8</span>
-        </div>
+        <div className="gl-hud-sector"><span className="gl-hud-s-label">S3</span><span className="gl-hud-s-val">22.8</span></div>
         <div className="gl-hud-divider" />
-        <div className="gl-hud-sector">
-          <span className="gl-hud-s-label">LAP</span>
-          <span className="gl-hud-s-val">01/57</span>
-        </div>
+        <div className="gl-hud-sector"><span className="gl-hud-s-label">LAP</span><span className="gl-hud-s-val">01/57</span></div>
       </div>
-
     </div>
   );
 }
 
 /* ─────────────────────────────────────────────
+   HOW TO RACE — design-heavy F1 section
+────────────────────────────────────────────── */
+function HowToSection() {
+  const timingRows = [
+    { pos: 'P1', drv: 'VER', w: 100 },
+    { pos: 'P2', drv: 'NOR', w: 85 },
+    { pos: 'P3', drv: 'LEC', w: 73 },
+    { pos: 'P4', drv: 'HAM', w: 61 },
+    { pos: 'P5', drv: 'RUS', w: 50 },
+  ];
+  const standingsRows = [
+    { pos: 'P1', name: 'YOU',     pts: '312', you: true  },
+    { pos: 'P2', name: 'JAY_F1', pts: '270', you: false },
+    { pos: 'P3', name: 'APEX99', pts: '258', you: false },
+    { pos: 'P4', name: 'GRIDKNG',pts: '241', you: false },
+  ];
+
+  return (
+    <section className="gl-howto">
+      {/* faint circuit arc decoration */}
+      <svg className="gl-howto-arc" viewBox="0 0 800 400" aria-hidden="true">
+        <path d="M 0 380 C 200 320 400 260 600 300 C 700 320 760 360 800 380" stroke="rgba(225,6,0,0.07)" strokeWidth="1.5" fill="none" strokeDasharray="6 12" />
+        <path d="M 800 20 C 600 80 350 100 100 60" stroke="rgba(255,255,255,0.03)" strokeWidth="1" fill="none" />
+        <circle cx="600" cy="300" r="4" fill="none" stroke="rgba(225,6,0,0.12)" strokeWidth="1" />
+        <circle cx="100" cy="60" r="3" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+      </svg>
+
+      <div className="gl-howto-inner">
+
+        {/* ── Section header ── */}
+        <div className="gl-howto-head">
+          <div className="gl-howto-eyebrow">
+            <span className="gl-dot" />
+            The Race Weekend
+          </div>
+          <h2 className="gl-howto-h2">How to <em>Race.</em></h2>
+          <p className="gl-howto-sub">Three rounds. Zero luck required.</p>
+        </div>
+
+        {/* ── 3-step grid ── */}
+        <div className="gl-howto-grid">
+
+          {/* 01 — QUALIFYING */}
+          <div className="gl-step">
+            <div className="gl-step-head">
+              <span className="gl-step-num">01</span>
+              <span className="gl-step-badge">Qualifying</span>
+            </div>
+            <h3 className="gl-step-title">Predict<br />the Grid</h3>
+            <p className="gl-step-desc">
+              Before the lights go out, call the starting positions.
+              Top 10. Every slot. Lock in before qualifying ends.
+            </p>
+            <div className="gl-step-viz">
+              <div className="gl-viz-timing">
+                <div className="gl-vt-header">
+                  <span>POS</span><span>DRIVER</span><span>DELTA</span>
+                </div>
+                {timingRows.map((r) => (
+                  <div key={r.pos} className="gl-vt-row">
+                    <span className="gl-vt-pos">{r.pos}</span>
+                    <div className="gl-vt-track">
+                      <div className="gl-vt-bar" style={{ width: `${r.w}%` }} />
+                    </div>
+                    <span className="gl-vt-drv">{r.drv}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 02 — RACE DAY */}
+          <div className="gl-step">
+            <div className="gl-step-head">
+              <span className="gl-step-num">02</span>
+              <span className="gl-step-badge">Race Day</span>
+            </div>
+            <h3 className="gl-step-title">Watch It<br />Unfold</h3>
+            <p className="gl-step-desc">
+              Score in real time as positions change. Safety cars,
+              pit stops, fastest laps — every delta counts.
+            </p>
+            <div className="gl-step-viz">
+              <div className="gl-viz-delta">
+                <div className="gl-vd-row gl-vd--pos">
+                  <span className="gl-vd-arrow">▲</span>
+                  <span className="gl-vd-pts">+12 PTS</span>
+                  <span className="gl-vd-label">CORRECT CALL</span>
+                </div>
+                <div className="gl-vd-row gl-vd--neu">
+                  <span className="gl-vd-arrow">▬</span>
+                  <span className="gl-vd-pts">±0 PTS</span>
+                  <span className="gl-vd-label">CLOSE CALL</span>
+                </div>
+                <div className="gl-vd-row gl-vd--neg">
+                  <span className="gl-vd-arrow">▼</span>
+                  <span className="gl-vd-pts">−4 PTS</span>
+                  <span className="gl-vd-label">MISSED CALL</span>
+                </div>
+                <div className="gl-vd-drs">
+                  <span className="gl-vd-drs-pill">DRS</span>
+                  <span>Fastest lap bonus available</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 03 — STANDINGS */}
+          <div className="gl-step">
+            <div className="gl-step-head">
+              <span className="gl-step-num">03</span>
+              <span className="gl-step-badge">Standings</span>
+            </div>
+            <h3 className="gl-step-title">Outsmart<br />the Crowd</h3>
+            <p className="gl-step-desc">
+              Skill over consensus, always. 24 rounds. Rise through
+              the leaderboard. Take P1 at the final flag.
+            </p>
+            <div className="gl-step-viz">
+              <div className="gl-viz-standings">
+                <div className="gl-vs-header">
+                  <span>POS</span><span>DRIVER</span><span>PTS</span>
+                </div>
+                {standingsRows.map((r) => (
+                  <div key={r.pos} className={`gl-vs-row${r.you ? ' gl-vs--you' : ''}`}>
+                    <span className="gl-vs-pos">{r.pos}</span>
+                    <span className="gl-vs-name">{r.name}</span>
+                    <span className="gl-vs-pts">{r.pts}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+        </div>{/* end gl-howto-grid */}
+
+        {/* ── Bottom strip ── */}
+        <div className="gl-howto-strip">
+          <div className="gl-howto-stats">
+            <span>20 DRIVERS</span>
+            <span className="gl-telem-sep" />
+            <span>24 ROUNDS</span>
+            <span className="gl-telem-sep" />
+            <span>SEASON 2026</span>
+          </div>
+          <div className="gl-tyres">
+            <span className="gl-tyre gl-tyre--s" title="Soft">S</span>
+            <span className="gl-tyre gl-tyre--m" title="Medium">M</span>
+            <span className="gl-tyre gl-tyre--h" title="Hard">H</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────
    WAITLIST FORM
-   Unchanged — still POSTs to /api/waitlist
 ────────────────────────────────────────────── */
 function WaitlistForm() {
   const [email, setEmail] = useState("");
@@ -370,16 +381,12 @@ function WaitlistForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="your@email.com"
-            className="gl-input gl-cursor-target"
+            className="gl-input"
             required
             disabled={status === "loading"}
             autoComplete="email"
           />
-          <button
-            type="submit"
-            className="gl-btn gl-cursor-target"
-            disabled={status === "loading"}
-          >
+          <button type="submit" className="gl-btn" disabled={status === "loading"}>
             {status === "loading" ? <span className="gl-spinner" /> : "JOIN THE GRID"}
           </button>
         </div>
@@ -390,104 +397,96 @@ function WaitlistForm() {
 }
 
 /* ─────────────────────────────────────────────
-   WAITLIST PAGE
+   PAGE
 ────────────────────────────────────────────── */
 export default function WaitlistPage() {
+  useEffect(() => {
+    const prev = document.body.style.background;
+    document.body.style.background = "#000";
+    return () => { document.body.style.background = prev; };
+  }, []);
+
   return (
     <div className="gl-root">
 
-      {/* Circuit track background */}
-      <TrackBackground />
-
-      {/* Red speed stripe */}
+      {/* Fixed red stripe — always visible when scrolling */}
       <div className="gl-stripe" aria-hidden="true" />
 
-      {/* ── Left panel ── */}
-      <div className="gl-left">
+      {/* ── HERO — full viewport height ── */}
+      <section className="gl-hero">
+        <TrackBackground />
 
-        {/* Header: logo left · social icons right */}
-        <header className="gl-header">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/gridlock logo - transparent.png"
-            alt="Gridlock"
-            className="gl-logo gl-cursor-target"
-            draggable={false}
-          />
-          <nav className="gl-social-bar" aria-label="Follow Gridlock">
-            <a
-              href="https://x.com/Gridlockleague"
-              className="gl-social-link gl-cursor-target"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Follow on X"
-            >
-              <IconX />
-            </a>
-            <a
-              href="https://www.instagram.com/gridlockleague/"
-              className="gl-social-link gl-cursor-target"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Follow on Instagram"
-            >
-              <IconInstagram />
-            </a>
-            <a
-              href="https://www.threads.com/@gridlockleague"
-              className="gl-social-link gl-cursor-target"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Follow on Threads"
-            >
-              <IconThreads />
-            </a>
-          </nav>
-        </header>
+        {/* Left panel */}
+        <div className="gl-left">
 
-        {/* Copy */}
-        <main className="gl-copy">
-          <div className="gl-eyebrow">
-            <span className="gl-dot" />
-            2026 SEASON · COMING SOON
+          {/* Logo + social below */}
+          <header className="gl-header">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/gridlock logo - transparent.png"
+              alt="Gridlock"
+              className="gl-logo"
+              draggable={false}
+            />
+            <nav className="gl-social-bar" aria-label="Follow Gridlock">
+              <a href="https://x.com/Gridlockleague" className="gl-social-link" target="_blank" rel="noopener noreferrer" aria-label="Follow on X">
+                <IconX />
+              </a>
+              <a href="https://www.instagram.com/gridlockleague/" className="gl-social-link" target="_blank" rel="noopener noreferrer" aria-label="Follow on Instagram">
+                <IconInstagram />
+              </a>
+              <a href="https://www.threads.com/@gridlockleague" className="gl-social-link" target="_blank" rel="noopener noreferrer" aria-label="Follow on Threads">
+                <IconThreads />
+              </a>
+            </nav>
+          </header>
+
+          {/* Copy */}
+          <main className="gl-copy">
+            <div className="gl-eyebrow">
+              <span className="gl-dot" />
+              2026 SEASON · COMING SOON
+            </div>
+
+            <h1 className="gl-h1">
+              The F1<br />
+              prediction<br />
+              <em>game.</em>
+            </h1>
+
+            <p className="gl-sub">
+              Predict the grid. Outsmart the crowd.<br />
+              Skill over consensus — always.
+            </p>
+
+            <div className="gl-telem-bar" aria-hidden="true">
+              <span>20 DRIVERS</span>
+              <span className="gl-telem-sep" />
+              <span>24 ROUNDS</span>
+              <span className="gl-telem-sep" />
+              <span>SEASON 2026</span>
+            </div>
+
+            <WaitlistForm />
+            <p className="gl-note">No spam. Just race day.</p>
+          </main>
+
+          {/* Scroll hint */}
+          <div className="gl-scroll-hint" aria-hidden="true">
+            <span>HOW TO RACE</span>
+            <span className="gl-scroll-arrow">↓</span>
           </div>
 
-          <h1 className="gl-h1">
-            The F1<br />
-            prediction<br />
-            <em>game.</em>
-          </h1>
+          <SocialFeed />
+          <footer className="gl-footer">© 2026 Gridlock</footer>
+        </div>
 
-          <p className="gl-sub">
-            Predict the grid. Outsmart the crowd.<br />
-            Skill over consensus — always.
-          </p>
+        {/* Right panel — helmet + HUD */}
+        <HelmetPanel />
+      </section>
 
-          {/* Telemetry data bar — F1 identity anchor */}
-          <div className="gl-telem-bar" aria-hidden="true">
-            <span>20 DRIVERS</span>
-            <span className="gl-telem-sep" />
-            <span>24 ROUNDS</span>
-            <span className="gl-telem-sep" />
-            <span>SEASON 2026</span>
-          </div>
-
-          <WaitlistForm />
-
-          <p className="gl-note">No spam. Just race day.</p>
-        </main>
-
-        {/* Social proof feed — compact marquee */}
-        <SocialFeed />
-
-        {/* Footer */}
-        <footer className="gl-footer">
-          © 2026 Gridlock
-        </footer>
-      </div>
-
-      {/* ── Right panel — helmet + F1 HUD ── */}
-      <HelmetPanel />
+      {/* ── HOW TO RACE — scrolls below hero ── */}
+      <HowToSection />
 
     </div>
   );
