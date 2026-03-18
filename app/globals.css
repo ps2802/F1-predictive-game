@@ -75,35 +75,34 @@ h1, h2, h3 { margin-top: 0; }
   z-index: 2;
   display: flex;
   flex-direction: column;
-  padding: 2.75rem 3.5rem;
+  padding: 3rem 4rem;
   background: #000;
-  /* Subtle right-edge fade into the right panel */
   border-right: 1px solid rgba(255,255,255,.06);
 }
 
 /* Logo */
 .gl-header { flex-shrink: 0; }
-.gl-logo { width: 180px; height: auto; display: block; }
 
-/* Main copy — vertically centred */
+/* Main copy — vertically centred, max-width keeps text tight on wide displays */
 .gl-copy {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 2rem 0;
+  max-width: 500px;
 }
 
 .gl-eyebrow {
   display: flex;
   align-items: center;
   gap: .55rem;
-  font-size: .68rem;
+  font-size: .67rem;
   font-weight: 700;
-  letter-spacing: .22em;
+  letter-spacing: .18em;
   text-transform: uppercase;
   color: #E10600;
-  margin-bottom: 1.6rem;
+  margin-bottom: 1.4rem;
 }
 .gl-dot {
   width: 6px; height: 6px;
@@ -119,12 +118,13 @@ h1, h2, h3 { margin-top: 0; }
 
 .gl-h1 {
   font-family: var(--font-titillium);
-  font-size: clamp(3.4rem, 5.5vw, 5.8rem);
+  font-size: clamp(3.2rem, 5.2vw, 5.6rem);
   font-weight: 900;
-  line-height: .95;
-  letter-spacing: -.02em;
+  line-height: .92;
+  letter-spacing: -.025em;
   text-transform: uppercase;
-  margin: 0 0 1.75rem;
+  /* 1.3rem below headline vs 1.4rem below eyebrow — deliberate hierarchy */
+  margin: 0 0 1.3rem;
   color: #fff;
 }
 .gl-h1 em {
@@ -133,12 +133,13 @@ h1, h2, h3 { margin-top: 0; }
 }
 
 .gl-sub {
-  font-size: clamp(.9rem, 1.2vw, 1.05rem);
+  font-size: clamp(.88rem, 1.15vw, 1.02rem);
   font-weight: 300;
-  line-height: 1.7;
-  color: rgba(255,255,255,.55);
-  margin: 0 0 2.25rem;
-  max-width: 380px;
+  line-height: 1.72;
+  color: rgba(255,255,255,.52);
+  /* max-width matches form (420px) so sub text and CTA share the same right edge */
+  margin: 0 0 1.9rem;
+  max-width: 420px;
 }
 
 /* Form */
@@ -163,9 +164,10 @@ h1, h2, h3 { margin-top: 0; }
   color: #fff;
   font-family: var(--font-titillium);
   font-size: .9rem;
-  padding: .85rem 1.1rem;
+  padding: .9rem 1.1rem;
+  line-height: 1;
 }
-.gl-input::placeholder { color: rgba(255,255,255,.25); }
+.gl-input::placeholder { color: rgba(255,255,255,.28); }
 
 .gl-btn {
   flex-shrink: 0;
@@ -174,16 +176,17 @@ h1, h2, h3 { margin-top: 0; }
   font-family: var(--font-titillium);
   font-size: .72rem;
   font-weight: 700;
-  letter-spacing: .14em;
+  letter-spacing: .15em;
   text-transform: uppercase;
-  padding: .85rem 1.4rem;
+  padding: .9rem 1.5rem;
   border: none;
   cursor: pointer;
   transition: background .15s;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 130px;
+  min-width: 136px;
+  line-height: 1;
 }
 .gl-btn:hover:not(:disabled) { background: #c00500; }
 .gl-btn:disabled { opacity: .6; cursor: not-allowed; }
@@ -198,20 +201,60 @@ h1, h2, h3 { margin-top: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .gl-success {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: .6rem;
-  font-size: .85rem;
+  gap: .65rem;
+  font-size: .83rem;
   font-weight: 600;
   color: #4ade80;
-  letter-spacing: .04em;
-  padding: .85rem 0;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: .9rem 0;
+  overflow: hidden;
+  /* Slide-in from right on mount */
+  animation: success-enter .55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+/* Speed-line sweep — single pass across the row, like a car crossing the line */
+.gl-success::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(74, 222, 128, .14) 45%,
+    rgba(74, 222, 128, .22) 52%,
+    rgba(74, 222, 128, .14) 59%,
+    transparent 100%
+  );
+  animation: success-flash .7s .25s ease-out both;
+  pointer-events: none;
+}
+@keyframes success-enter {
+  from { opacity: 0; transform: translateX(10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes success-flash {
+  from { transform: translateX(-110%); }
+  to   { transform: translateX(110%); }
+}
+
+/* Sector-green beacon burst on the dot */
 .gl-success-dot {
   width: 8px; height: 8px;
   border-radius: 50%;
   background: #4ade80;
   flex-shrink: 0;
+  animation: dot-beacon .65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes dot-beacon {
+  0%   { transform: scale(0);   opacity: 0;
+         box-shadow: 0 0 0 0 rgba(74,222,128,.8); }
+  45%  { transform: scale(1.6); opacity: 1;
+         box-shadow: 0 0 0 6px rgba(74,222,128,.25); }
+  100% { transform: scale(1);   opacity: 1;
+         box-shadow: 0 0 0 0   rgba(74,222,128,0); }
 }
 
 .gl-error {
@@ -223,18 +266,19 @@ h1, h2, h3 { margin-top: 0; }
 }
 
 .gl-note {
-  margin: .9rem 0 0;
-  font-size: .68rem;
+  margin: .75rem 0 0;
+  font-size: .67rem;
   letter-spacing: .1em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.2);
+  color: rgba(255,255,255,.18);
 }
 
-/* Footer */
+/* Footer — same label scale as .gl-note for visual consistency */
 .gl-footer {
   flex-shrink: 0;
-  font-size: .7rem;
-  letter-spacing: .08em;
+  padding-top: 1.25rem;
+  font-size: .67rem;
+  letter-spacing: .1em;
   color: rgba(255,255,255,.18);
   text-transform: uppercase;
 }
@@ -246,63 +290,124 @@ h1, h2, h3 { margin-top: 0; }
   background: #050505;
 }
 
-/* Atmospheric red glow */
-.gl-glow {
+/* Deep ambient glow — wide, slow, offset phase from main glow */
+.gl-glow-deep {
   position: absolute;
-  top: 10%;
-  left: -10%;
-  right: -10%;
-  bottom: 10%;
+  top: -25%; left: -25%; right: -25%; bottom: -25%;
   background: radial-gradient(
-    ellipse at 55% 50%,
-    rgba(225, 6, 0, .22) 0%,
-    rgba(225, 6, 0, .08) 35%,
-    transparent 65%
+    ellipse at 50% 56%,
+    rgba(225, 6, 0, .11) 0%,
+    rgba(225, 6, 0, .04) 45%,
+    transparent 68%
   );
   pointer-events: none;
-  animation: glow-pulse 5s ease-in-out infinite alternate;
+  animation: glow-deep-pulse 11s ease-in-out infinite;
 }
-@keyframes glow-pulse {
-  from { opacity: .7; transform: scale(1); }
-  to   { opacity: 1;  transform: scale(1.08); }
+@keyframes glow-deep-pulse {
+  0%, 100% { opacity: .45; transform: scale(.97); }
+  55%       { opacity: .85; transform: scale(1.04); }
 }
 
-/* Subtle vignette edge */
+/* Main atmospheric glow — tracks float rhythm */
+.gl-glow {
+  position: absolute;
+  top: 5%; left: -15%; right: -15%; bottom: 5%;
+  background: radial-gradient(
+    ellipse at 52% 48%,
+    rgba(225, 6, 0, .26) 0%,
+    rgba(225, 6, 0, .10) 38%,
+    transparent 62%
+  );
+  pointer-events: none;
+  animation: glow-pulse 8s ease-in-out infinite;
+}
+@keyframes glow-pulse {
+  0%, 100% { opacity: .62; transform: scale(1)    translateY(0); }
+  50%       { opacity: 1;   transform: scale(1.08) translateY(-6px); }
+}
+
+/* Vignette — stronger left-edge seam, soft top/bottom fade */
 .gl-right::after {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to right,  rgba(0,0,0,.45) 0%, transparent 25%),
-    linear-gradient(to bottom, rgba(0,0,0,.3) 0%, transparent 20%),
-    linear-gradient(to top,    rgba(0,0,0,.5) 0%, transparent 30%);
+    linear-gradient(to right,  rgba(0,0,0,.55) 0%, transparent 22%),
+    linear-gradient(to bottom, rgba(0,0,0,.35) 0%, transparent 18%),
+    linear-gradient(to top,    rgba(0,0,0,.5)  0%, transparent 28%);
   pointer-events: none;
   z-index: 2;
 }
 
-/* Helmet */
+/* Helmet tilt wrapper — receives mouse-parallax transform from JS */
+.gl-helmet-wrap {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+  /* transform-origin at visual centre of helmet */
+  transform-origin: 48% 50%;
+}
+
+/* Helmet image — premium idle float, no rotation (tilt comes from JS) */
 .gl-helmet {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-48%, -50%);
-  width: 95%;
-  height: 95%;
+  width: 92%;
+  height: 92%;
   object-fit: contain;
   object-position: center;
   z-index: 1;
   filter:
-    drop-shadow(0 0 60px rgba(225,6,0,.25))
-    drop-shadow(0 30px 80px rgba(0,0,0,.9));
-  animation: float 6s ease-in-out infinite;
+    drop-shadow(0 0 55px rgba(225,6,0,.24))
+    drop-shadow(0 32px 80px rgba(0,0,0,.92));
+  animation: helmet-idle 9s ease-in-out infinite;
   user-select: none;
+  will-change: transform;
 }
-@keyframes float {
-  0%, 100% { transform: translate(-48%, -50%) rotate(-1deg); }
-  50%       { transform: translate(-48%, -53%) rotate(1deg); }
+
+/* Multi-stop float — lingers at apex before falling back.
+   Feels weighted, cinematic, not bouncy. */
+@keyframes helmet-idle {
+  0%   { transform: translate(-48%, -50%) translateY(0px)    scale(1); }
+  20%  { transform: translate(-48%, -50%) translateY(-7px)   scale(1.003); }
+  45%  { transform: translate(-48%, -50%) translateY(-17px)  scale(1.007); }
+  55%  { transform: translate(-48%, -50%) translateY(-18px)  scale(1.007); }
+  80%  { transform: translate(-48%, -50%) translateY(-9px)   scale(1.003); }
+  100% { transform: translate(-48%, -50%) translateY(0px)    scale(1); }
+}
+
+/* Visor shimmer — rare glint, sweeps once every ~14 s */
+.gl-shimmer {
+  position: absolute;
+  top: 10%; left: 5%; right: 5%; bottom: 10%;
+  pointer-events: none;
+  /* z-index 3 so shimmer clears the vignette overlay (z-index 2 on ::after) */
+  z-index: 3;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    transparent 38%,
+    rgba(255,255,255,.07) 46%,
+    rgba(255,235,200,.05) 50%,
+    transparent 58%,
+    transparent 100%
+  );
+  animation: shimmer-sweep 14s ease-in-out infinite;
+  opacity: 0;
+}
+@keyframes shimmer-sweep {
+  0%   { opacity: 0;  transform: translateX(-110%) skewX(-12deg); }
+  4%   { opacity: 1; }
+  9%   { opacity: 0;  transform: translateX(110%)  skewX(-12deg); }
+  100% { opacity: 0;  transform: translateX(110%)  skewX(-12deg); }
 }
 
 /* ── Responsive ── */
+@media (max-width: 900px) {
+  .gl-left { padding: 2.5rem 3rem; }
+}
+
 @media (max-width: 768px) {
   .gl-root {
     position: relative;
@@ -312,20 +417,164 @@ h1, h2, h3 { margin-top: 0; }
     overflow: auto;
   }
   .gl-left {
-    padding: 2rem 1.5rem;
+    padding: 2rem 1.75rem 1.75rem;
     border-right: none;
     border-bottom: 1px solid rgba(255,255,255,.06);
   }
+  .gl-copy {
+    padding: 1.5rem 0;
+    max-width: 100%;
+  }
   .gl-right {
-    height: 55vw;
-    min-height: 240px;
+    height: 60vw;
+    min-height: 260px;
+    max-height: 420px;
     flex-shrink: 0;
   }
-  .gl-h1 { font-size: clamp(3rem, 10vw, 4.5rem); }
-  .gl-copy { padding: 1.5rem 0; }
+  .gl-h1 {
+    font-size: clamp(2.8rem, 9.5vw, 4.2rem);
+    line-height: .94;
+    margin-bottom: 1.1rem;
+  }
+  .gl-eyebrow { margin-bottom: 1.1rem; }
+  .gl-sub { max-width: 100%; margin-bottom: 1.6rem; }
+  .gl-footer { padding-top: 1rem; }
 }
 
 @media (max-width: 420px) {
+  .gl-left { padding: 1.75rem 1.25rem 1.5rem; }
   .gl-form-row { flex-direction: column; }
-  .gl-btn { min-width: unset; padding: .85rem; }
+  .gl-btn { min-width: unset; padding: .9rem; }
+  .gl-logo { width: 148px; }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .gl-helmet,
+  .gl-glow,
+  .gl-glow-deep,
+  .gl-shimmer,
+  .gl-dot,
+  .gl-success,
+  .gl-success::after,
+  .gl-success-dot { animation: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CIRCUIT TRACK BACKGROUND
+   Full-bleed SVG behind all content. pointer-events: none.
+═══════════════════════════════════════════════════════════════ */
+.gl-track-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  /* Sits behind left and right panels but above the black base */
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LOGO
+   Crisp rendering on dark background. Subtle hover scale.
+═══════════════════════════════════════════════════════════════ */
+.gl-logo {
+  width: 168px;
+  height: auto;
+  display: block;
+  /* Let browser use default bilinear filtering for a smooth vector-style logo */
+  transition: transform .22s ease, filter .22s ease;
+}
+/* Subtle lift on hover — keeps it premium, not bouncy */
+@media (pointer: fine) {
+  .gl-logo:hover {
+    transform: scale(1.025);
+    filter: drop-shadow(0 0 8px rgba(225,6,0,0.18));
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   F1 PRECISION CURSOR
+   Hide native cursor on desktop; show custom lagged ring.
+   Ring shrinks + turns red when hovering .gl-cursor-target.
+═══════════════════════════════════════════════════════════════ */
+@media (pointer: fine) {
+  .gl-root,
+  .gl-root * {
+    cursor: none !important;
+  }
+}
+
+.gl-cursor {
+  /* Fixed so it's outside the normal layout */
+  position: fixed;
+  top: 0;
+  left: 0;
+  /* Ring dimensions at rest */
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  /* Start invisible; JS reveals it on first mousemove */
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform;
+  /* Smooth size/colour transitions */
+  transition:
+    width 0.18s ease,
+    height 0.18s ease,
+    border-color 0.18s ease,
+    border-width 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+/* Precision-lock state — hovering an interactive element */
+.gl-cursor.is-locked {
+  width: 22px;
+  height: 22px;
+  border-color: rgba(225, 6, 0, 0.85);
+  border-width: 1.5px;
+  background: radial-gradient(circle, rgba(225,6,0,0.1) 0%, transparent 60%);
+  box-shadow: 0 0 10px rgba(225, 6, 0, 0.22);
+}
+
+/* Four crosshair ticks rendered via pseudo-elements */
+.gl-cursor::before,
+.gl-cursor::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: transparent;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+/* Horizontal arm ticks */
+.gl-cursor::before {
+  width: 1px;
+  height: 1px;
+  transform: translate(-50%, -50%);
+  box-shadow:
+    -13px 0 0 1px rgba(225,6,0,0.8),
+     13px 0 0 1px rgba(225,6,0,0.8);
+}
+/* Vertical arm ticks */
+.gl-cursor::after {
+  width: 1px;
+  height: 1px;
+  transform: translate(-50%, -50%);
+  box-shadow:
+    0 -13px 0 1px rgba(225,6,0,0.8),
+    0  13px 0 1px rgba(225,6,0,0.8);
+}
+.gl-cursor.is-locked::before,
+.gl-cursor.is-locked::after {
+  opacity: 1;
+}
+
+/* ── On mobile: cursor is hidden, no track bg layout shift ── */
+@media (pointer: coarse) {
+  .gl-cursor { display: none; }
 }
