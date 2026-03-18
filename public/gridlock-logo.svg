@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 260" fill="none">
+  <!-- Red aerodynamic wing sweep -->
+  <path d="M 28 210 L 72 105 Q 160 48 460 12 L 445 32 Q 185 72 110 138 L 420 58 L 408 80 Q 160 118 88 175 Z" fill="#E10600"/>
+  <!-- GRIDLOCK wordmark -->
+  <text x="28" y="252" font-family="Arial Black, 'Arial Narrow', Impact, sans-serif" font-size="72" font-weight="900" fill="white" letter-spacing="3">GRIDLOCK</text>
+</svg>
