@@ -147,6 +147,11 @@ export default function AdminPage() {
         <div className="gla-nav-right">
           <Link className="gla-nav-link" href="/dashboard">Dashboard</Link>
           <span className="gla-nav-link" style={{ color: "var(--gl-red)" }}>Admin</span>
+          <button className="gla-nav-link" onClick={async () => {
+            const supabase = createSupabaseBrowserClient();
+            if (supabase) await supabase.auth.signOut();
+            router.push("/login");
+          }}>Sign out</button>
         </div>
       </nav>
 

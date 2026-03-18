@@ -54,6 +54,11 @@ export default function WalletPage() {
         <div className="gla-nav-right">
           <Link className="gla-nav-link" href="/dashboard">Races</Link>
           <Link className="gla-nav-link" href="/profile">Profile</Link>
+          <button className="gla-nav-link" onClick={async () => {
+            const supabase = createSupabaseBrowserClient();
+            if (supabase) await supabase.auth.signOut();
+            router.push("/login");
+          }}>Sign out</button>
         </div>
       </nav>
 
