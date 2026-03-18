@@ -1,14 +1,5 @@
 import type { Metadata } from "next";
-import { Titillium_Web } from "next/font/google";
 import "./globals.css";
-
-const titillium = Titillium_Web({
-  subsets: ["latin"],
-  weight: ["200", "300", "400", "600", "700", "900"],
-  style: ["normal", "italic"],
-  variable: "--font-titillium",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "Gridlock",
@@ -27,7 +18,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={titillium.variable}>
+    <html lang="en">
+      <head>
+        {/* Titillium Web loaded at runtime — not build-time — so CI environments work without network access */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

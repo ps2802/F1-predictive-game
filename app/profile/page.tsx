@@ -1,0 +1,195 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { races } from "@/lib/races";
+
+type Profile = {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+  balance_usdc: number;
+  is_admin: boolean;
+  email: string;
+  created_at: string;
+};
+
+type RaceScore = {
+  race_id: string;
+  total_score: number;
+  calculated_at: string;
+};
+
+export default function ProfilePage() {
+  const router = useRouter();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [raceScores, setRaceScores] = useState<RaceScore[]>([]);
+  const [totalScore, setTotalScore] = useState(0);
+  const [username, setUsername] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const supabase = createSupabaseBrowserClient();
+      if (!supabase) return;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) { router.push("/login"); return; }
+
+      const res = await fetch("/api/profile");
+      if (res.ok) {
+        const data = await res.json();
+        setProfile(data.profile);
+        setUsername(data.profile?.username ?? "");
+        setRaceScores(data.raceScores ?? []);
+        setTotalScore(data.totalScore ?? 0);
+      }
+      setLoading(false);
+    }
+    load();
+  }, [router]);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setSaveMsg("");
+
+    const res = await fetch("/api/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username }),
+    });
+    const data = await res.json();
+    setSaveMsg(res.ok ? "Saved!" : data.error ?? "Failed to save.");
+    setSaving(false);
+  }
+
+  if (loading) {
+    return (
+      <div className="gla-root">
+        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
+          <div className="gl-spinner" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="gla-root">
+      <div className="gl-stripe" aria-hidden="true" />
+      <AppNav isAdmin={profile?.is_admin ?? false} />
+
+      <div className="gla-content">
+        <p className="gla-page-title">Your Profile</p>
+
+        <div className="profile-grid">
+          {/* Stats */}
+          <div className="profile-stats">
+            <div className="profile-stat">
+              <span className="profile-stat-value">{totalScore.toFixed(1)}</span>
+              <span className="profile-stat-label">Season Score</span>
+            </div>
+            <div className="profile-stat">
+              <span className="profile-stat-value">{raceScores.length}</span>
+              <span className="profile-stat-label">Races Predicted</span>
+            </div>
+            <div className="profile-stat">
+              <span className="profile-stat-value">${Number(profile?.balance_usdc ?? 0).toFixed(2)}</span>
+              <span className="profile-stat-label">Balance (USDC)</span>
+            </div>
+          </div>
+
+          {/* Edit username */}
+          <div className="profile-edit-card">
+            <h3 className="profile-card-title">Username</h3>
+            <form onSubmit={handleSave} style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end" }}>
+              <input
+                className="auth-input"
+                style={{ flex: 1 }}
+                placeholder="Choose a username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                minLength={2}
+                maxLength={30}
+              />
+              <button className="gla-race-btn" type="submit" disabled={saving}>
+                {saving ? "..." : "Save"}
+              </button>
+            </form>
+            {saveMsg && (
+              <p style={{ fontSize: "0.8rem", marginTop: "0.5rem", color: saveMsg === "Saved!" ? "#4caf50" : "var(--gl-red)" }}>
+                {saveMsg}
+              </p>
+            )}
+            <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", marginTop: "0.5rem" }}>
+              {profile?.email}
+            </p>
+          </div>
+        </div>
+
+        {/* Deposit CTA */}
+        <div className="wallet-card">
+          <div className="wallet-card-left">
+            <span className="wallet-balance-label">Balance</span>
+            <span className="wallet-balance">${Number(profile?.balance_usdc ?? 0).toFixed(2)} USDC</span>
+          </div>
+          <Link href="/wallet" className="gla-race-btn">Deposit USDC</Link>
+        </div>
+
+        {/* Race scores history */}
+        {raceScores.length > 0 && (
+          <div style={{ marginTop: "2rem" }}>
+            <h3 className="league-section-title">Race History</h3>
+            <div className="lb-table">
+              <div className="lb-header" style={{ gridTemplateColumns: "1fr 120px 100px" }}>
+                <span>Race</span>
+                <span>Score</span>
+                <span>Date</span>
+              </div>
+              {raceScores.map((rs) => {
+                const raceData = races.find((r) => r.id === rs.race_id);
+                return (
+                  <div key={rs.race_id} className="lb-row" style={{ gridTemplateColumns: "1fr 120px 100px" }}>
+                    <span className="lb-name">{raceData?.name ?? rs.race_id}</span>
+                    <span className="lb-score">{Number(rs.total_score).toFixed(1)}</span>
+                    <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)" }}>
+                      {new Date(rs.calculated_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AppNav({ isAdmin }: { isAdmin: boolean }) {
+  const router = useRouter();
+  async function handleLogout() {
+    const supabase = createSupabaseBrowserClient();
+    if (supabase) await supabase.auth.signOut();
+    router.push("/login");
+  }
+  return (
+    <nav className="gla-nav">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/gridlock logo - transparent.png" alt="Gridlock" className="gla-nav-logo" draggable={false} />
+      <div className="gla-nav-right">
+        <Link className="gla-nav-link" href="/dashboard">Races</Link>
+        <Link className="gla-nav-link" href="/leagues">Leagues</Link>
+        <Link className="gla-nav-link" href="/leaderboard">Leaderboard</Link>
+        <Link className="gla-nav-link" href="/profile">Profile</Link>
+        {isAdmin && <Link className="gla-nav-link" href="/admin" style={{ color: "var(--gl-red)" }}>Admin</Link>}
+        <button className="gla-nav-link" onClick={handleLogout}>Sign out</button>
+      </div>
+    </nav>
+  );
+}
