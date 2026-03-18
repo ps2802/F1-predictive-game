@@ -1042,7 +1042,7 @@ h1, h2, h3 { margin-top: 0; }
 /* ── Circuit track behind helmet ── */
 .gl-circuit {
   position: absolute;
-  inset: 0;
+  inset: 0 5%;
   pointer-events: none;
   z-index: 0;
   display: flex;
@@ -1146,7 +1146,7 @@ h1, h2, h3 { margin-top: 0; }
 /* Helmet tilt wrapper */
 .gl-helmet-wrap {
   position: absolute;
-  inset: 0;
+  inset: 0 5%;
   z-index: 2;
   will-change: transform;
   transform-origin: 50% 50%;
