@@ -227,6 +227,31 @@ export default function PredictPage() {
     );
   }
 
+  if (isLocked) {
+    return (
+      <div className="gla-root">
+        <div className="gl-stripe" aria-hidden="true" />
+        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
+          <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>🔒</div>
+          <h1 className="gla-page-title">Predictions Closed</h1>
+          <p className="gla-page-sub" style={{ marginTop: "0.5rem" }}>
+            {race.name} · Round {race.round}
+          </p>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.9rem", marginTop: "1rem" }}>
+            The prediction window for this race has closed.
+          </p>
+          <Link
+            href="/dashboard"
+            className="gla-race-btn"
+            style={{ marginTop: "2rem", display: "inline-block" }}
+          >
+            Back to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (saved) {
     return (
       <div className="gla-root">
@@ -300,12 +325,6 @@ export default function PredictPage() {
 
       {/* Questions */}
       <div className="predict-body">
-        {isLocked && (
-          <div className="predict-locked-banner">
-            🔒 Predictions are locked for this race
-          </div>
-        )}
-
         {currentQuestions.length === 0 ? (
           <div className="predict-empty">
             <p>No {currentCategory} questions available yet.</p>
