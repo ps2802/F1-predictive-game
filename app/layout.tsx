@@ -11,12 +11,12 @@ const titillium = Titillium_Web({
 });
 
 export const metadata: Metadata = {
-  title: "Gridlock — The F1 Prediction Game",
+  title: "Gridlock",
   description:
-    "Predict the grid. Compete against rivals. The skill-based F1 prediction platform coming in 2026.",
+    "The F1 prediction game. Predict the grid. Outsmart the crowd. Coming 2026.",
   openGraph: {
-    title: "Gridlock — The F1 Prediction Game",
-    description: "Predict the grid. Compete against rivals.",
+    title: "Gridlock",
+    description: "The F1 prediction game. Coming 2026.",
     type: "website",
   },
 };
