@@ -89,8 +89,8 @@ h1, h2, h3 { margin-top: 0; }
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 2.5rem 0;
-  max-width: 520px;
+  padding: 2rem 0;
+  max-width: 500px;
 }
 
 .gl-eyebrow {
@@ -123,7 +123,8 @@ h1, h2, h3 { margin-top: 0; }
   line-height: .92;
   letter-spacing: -.025em;
   text-transform: uppercase;
-  margin: 0 0 1.5rem;
+  /* 1.3rem below headline vs 1.4rem below eyebrow — deliberate hierarchy */
+  margin: 0 0 1.3rem;
   color: #fff;
 }
 .gl-h1 em {
@@ -136,8 +137,9 @@ h1, h2, h3 { margin-top: 0; }
   font-weight: 300;
   line-height: 1.72;
   color: rgba(255,255,255,.52);
-  margin: 0 0 2rem;
-  max-width: 360px;
+  /* max-width matches form (420px) so sub text and CTA share the same right edge */
+  margin: 0 0 1.9rem;
+  max-width: 420px;
 }
 
 /* Form */
@@ -165,7 +167,7 @@ h1, h2, h3 { margin-top: 0; }
   padding: .9rem 1.1rem;
   line-height: 1;
 }
-.gl-input::placeholder { color: rgba(255,255,255,.22); }
+.gl-input::placeholder { color: rgba(255,255,255,.28); }
 
 .gl-btn {
   flex-shrink: 0;
@@ -271,11 +273,12 @@ h1, h2, h3 { margin-top: 0; }
   color: rgba(255,255,255,.18);
 }
 
-/* Footer */
+/* Footer — same label scale as .gl-note for visual consistency */
 .gl-footer {
   flex-shrink: 0;
-  font-size: .7rem;
-  letter-spacing: .08em;
+  padding-top: 1.25rem;
+  font-size: .67rem;
+  letter-spacing: .1em;
   color: rgba(255,255,255,.18);
   text-transform: uppercase;
 }
@@ -323,15 +326,15 @@ h1, h2, h3 { margin-top: 0; }
   50%       { opacity: 1;   transform: scale(1.08) translateY(-6px); }
 }
 
-/* Subtle vignette edge */
+/* Vignette — stronger left-edge seam, soft top/bottom fade */
 .gl-right::after {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to right,  rgba(0,0,0,.45) 0%, transparent 25%),
-    linear-gradient(to bottom, rgba(0,0,0,.3) 0%, transparent 20%),
-    linear-gradient(to top,    rgba(0,0,0,.5) 0%, transparent 30%);
+    linear-gradient(to right,  rgba(0,0,0,.55) 0%, transparent 22%),
+    linear-gradient(to bottom, rgba(0,0,0,.35) 0%, transparent 18%),
+    linear-gradient(to top,    rgba(0,0,0,.5)  0%, transparent 28%);
   pointer-events: none;
   z-index: 2;
 }
@@ -379,7 +382,8 @@ h1, h2, h3 { margin-top: 0; }
   position: absolute;
   top: 10%; left: 5%; right: 5%; bottom: 10%;
   pointer-events: none;
-  z-index: 2;
+  /* z-index 3 so shimmer clears the vignette overlay (z-index 2 on ::after) */
+  z-index: 3;
   background: linear-gradient(
     120deg,
     transparent 0%,
@@ -413,7 +417,7 @@ h1, h2, h3 { margin-top: 0; }
     overflow: auto;
   }
   .gl-left {
-    padding: 2rem 1.75rem;
+    padding: 2rem 1.75rem 1.75rem;
     border-right: none;
     border-bottom: 1px solid rgba(255,255,255,.06);
   }
@@ -424,16 +428,24 @@ h1, h2, h3 { margin-top: 0; }
   .gl-right {
     height: 60vw;
     min-height: 260px;
+    max-height: 420px;
     flex-shrink: 0;
   }
-  .gl-h1 { font-size: clamp(2.8rem, 9.5vw, 4.2rem); line-height: .94; }
-  .gl-sub { max-width: 100%; }
+  .gl-h1 {
+    font-size: clamp(2.8rem, 9.5vw, 4.2rem);
+    line-height: .94;
+    margin-bottom: 1.1rem;
+  }
+  .gl-eyebrow { margin-bottom: 1.1rem; }
+  .gl-sub { max-width: 100%; margin-bottom: 1.6rem; }
+  .gl-footer { padding-top: 1rem; }
 }
 
 @media (max-width: 420px) {
-  .gl-left { padding: 1.75rem 1.25rem; }
+  .gl-left { padding: 1.75rem 1.25rem 1.5rem; }
   .gl-form-row { flex-direction: column; }
   .gl-btn { min-width: unset; padding: .9rem; }
+  .gl-logo { width: 148px; }
 }
 
 /* ── Reduced motion ── */
