@@ -227,6 +227,76 @@ function TrackBackground() {
 }
 
 /* ─────────────────────────────────────────────
+   HELMET PANEL
+   Right panel with:
+   - Dual ambient glow layers (CSS, offset phases)
+   - Idle float + visor shimmer (CSS)
+   - Mouse-reactive perspective tilt (JS, desktop only)
+     Max tilt: ±4° rotateY, ±2.5° rotateX. Lerp 5.5%/frame
+     → cinematic lag, settles to 0 on mouse leave.
+───────────────────────────────────────────── */
+function HelmetPanel() {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const wrapRef  = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (window.matchMedia("(pointer: coarse)").matches) return;
+
+    const panel = panelRef.current;
+    const wrap  = wrapRef.current;
+    if (!panel || !wrap) return;
+
+    let tx = 0, ty = 0, cx = 0, cy = 0, raf = 0;
+
+    const onMove = (e: MouseEvent) => {
+      const r  = panel.getBoundingClientRect();
+      const nx = (e.clientX - r.left)  / r.width  - 0.5;  // –0.5 … 0.5
+      const ny = (e.clientY - r.top)   / r.height - 0.5;
+      tx =  nx * 8;   // ±4 deg rotateY
+      ty = -ny * 5;   // ±2.5 deg rotateX (inverted = natural tilt)
+    };
+
+    const onLeave = () => { tx = 0; ty = 0; };
+
+    const tick = () => {
+      cx += (tx - cx) * 0.055;  // cinematic slow lerp
+      cy += (ty - cy) * 0.055;
+      wrap.style.transform =
+        `perspective(900px) rotateY(${cx}deg) rotateX(${cy}deg)`;
+      raf = requestAnimationFrame(tick);
+    };
+
+    panel.addEventListener("mousemove", onMove, { passive: true });
+    panel.addEventListener("mouseleave", onLeave);
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      panel.removeEventListener("mousemove", onMove);
+      panel.removeEventListener("mouseleave", onLeave);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return (
+    <div className="gl-right" ref={panelRef} aria-hidden="true">
+      <div className="gl-glow-deep" />
+      <div className="gl-glow" />
+      <div className="gl-helmet-wrap" ref={wrapRef}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/gridlock-helmet.png"
+          alt=""
+          className="gl-helmet"
+          draggable={false}
+        />
+        {/* Rare visor shimmer — sweeps once every ~14 s */}
+        <div className="gl-shimmer" aria-hidden="true" />
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
    WAITLIST FORM
    Unchanged — still POSTs to /api/waitlist
 ───────────────────────────────────────────── */
@@ -352,17 +422,8 @@ export default function WaitlistPage() {
         </footer>
       </div>
 
-      {/* ── Right panel — helmet ── */}
-      <div className="gl-right" aria-hidden="true">
-        <div className="gl-glow" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/gridlock-helmet.png"
-          alt=""
-          className="gl-helmet"
-          draggable={false}
-        />
-      </div>
+      {/* ── Right panel — helmet with parallax tilt ── */}
+      <HelmetPanel />
 
     </div>
   );
