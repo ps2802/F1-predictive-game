@@ -170,7 +170,7 @@ export async function POST(request: Request) {
     base_score: s.base_score,
     difficulty_score: s.difficulty_score,
     edit_penalty: s.edit_penalty,
-    breakdown_json: s.breakdown,
+    breakdown_json: { questions: s.breakdown, chaos_bonus: s.chaos_bonus },
     calculated_at: new Date().toISOString(),
   }));
 
