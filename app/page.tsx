@@ -289,44 +289,34 @@ function HelmetPanel() {
           </defs>
 
           {/*
-            F1 circuit layout — clockwise from S/F line (top):
-            • Main straight   → top clear area (above helmet)
-            • Turn 1 sweeper  → top-right corner
-            • Chicane T3-T5   → right clear area (right of helmet)
-            • Fast section    → right side
-            • BR hairpin      → below-right (overflow visible)
-            • Bottom straight → below helmet
-            • BL 90° corner   → bottom-left
-            • Left straight   → left clear area (left of helmet)
-            • Final sweeper   → top-left, back to S/F
+            Smooth closed oval hugging the helmet silhouette at a
+            consistent ~25 px gap. Four G1-continuous cubic bezier
+            segments, one per quadrant. No kinks, no fake features.
+            Clockwise from top-centre (S/F tick at top).
           */}
 
-          {/* Track surface band — subtle width indicator */}
+          {/* Track surface band */}
           <path
-            d="M 110,-70 L 400,-70 C 478,-70 530,-22 535,72 C 537,114 512,136 486,148 C 460,160 486,185 498,215 C 510,245 485,268 455,280 C 522,302 538,358 520,408 C 530,445 540,505 490,520 C 440,535 375,510 360,472 L 65,472 C 35,472 22,452 22,420 L 22,70 C 22,10 55,-75 110,-70 Z"
+            d="M 250,38 C 365,34 448,108 455,228 C 462,350 395,468 250,480 C 105,468 38,350 45,228 C 52,108 135,34 250,38 Z"
             stroke="rgba(225,6,0,0.07)" strokeWidth="10"
           />
 
-          {/* Track glow bed */}
+          {/* Glow bed */}
           <path
-            d="M 110,-70 L 400,-70 C 478,-70 530,-22 535,72 C 537,114 512,136 486,148 C 460,160 486,185 498,215 C 510,245 485,268 455,280 C 522,302 538,358 520,408 C 530,445 540,505 490,520 C 440,535 375,510 360,472 L 65,472 C 35,472 22,452 22,420 L 22,70 C 22,10 55,-75 110,-70 Z"
+            d="M 250,38 C 365,34 448,108 455,228 C 462,350 395,468 250,480 C 105,468 38,350 45,228 C 52,108 135,34 250,38 Z"
             stroke="rgba(225,6,0,0.18)" strokeWidth="16"
             filter="url(#track-glow)"
           />
 
-          {/* Track centerline — precision hairline */}
+          {/* Centerline — precision hairline */}
           <path
             id="gl-track-path"
-            d="M 110,-70 L 400,-70 C 478,-70 530,-22 535,72 C 537,114 512,136 486,148 C 460,160 486,185 498,215 C 510,245 485,268 455,280 C 522,302 538,358 520,408 C 530,445 540,505 490,520 C 440,535 375,510 360,472 L 65,472 C 35,472 22,452 22,420 L 22,70 C 22,10 55,-75 110,-70 Z"
+            d="M 250,38 C 365,34 448,108 455,228 C 462,350 395,468 250,480 C 105,468 38,350 45,228 C 52,108 135,34 250,38 Z"
             stroke="rgba(225,6,0,0.72)" strokeWidth="1.5"
           />
 
-          {/* DRS zone — dotted overlay on main straight */}
-          <line x1="175" y1="-70" x2="360" y2="-70"
-            stroke="rgba(225,6,0,0.35)" strokeWidth="1.5" strokeDasharray="5 4"/>
-
-          {/* Start/Finish line */}
-          <line x1="120" y1="-77" x2="120" y2="-63"
+          {/* Start/Finish tick — top centre, perpendicular to track */}
+          <line x1="243" y1="32" x2="257" y2="32"
             stroke="rgba(255,255,255,0.55)" strokeWidth="1.5"/>
 
           {/* Car wide bloom */}
