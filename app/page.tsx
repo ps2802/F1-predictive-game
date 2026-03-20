@@ -121,6 +121,224 @@ function F1Cursor() {
 }
 
 /* ─────────────────────────────────────────────
+   F1 CAR — top-down ghost silhouette
+   Spans full page behind all content.
+   Black strokes at low opacity on red bg.
+────────────────────────────────────────────── */
+function F1CarBackground() {
+  return (
+    <svg
+      className="gl-f1-car-bg"
+      viewBox="0 0 1440 900"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
+      <defs>
+        <filter id="cf-glow" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+
+      {/*
+        Top-down F1 car.
+        Local space: nose tip → right (+X), cockpit → origin area.
+        transform centres the car at (640, 455), rotated -10 deg
+        so the nose sweeps upper-right toward the helmet panel.
+      */}
+      <g transform="translate(640,455) rotate(-10)" opacity="0.13">
+
+        {/* ── FLOOR / underfloor outline (outermost reference) ── */}
+        <path
+          d="M 420,-35 L -330,-50 L -360,-38 L -360,38 L -330,50 L 420,35 Z"
+          stroke="rgba(0,0,0,0.35)" strokeWidth="0.8"
+          fill="none" strokeDasharray="10 8"
+        />
+
+        {/* ── MAIN BODY (monocoque + sidepods) ── */}
+        <path
+          d="
+            M 400,0
+            C 390,-12 372,-22 330,-32
+            L 180,-52
+            C 120,-62 60,-78 -40,-88
+            L -140,-88
+            C -195,-88 -230,-78 -255,-58
+            L -270,-42
+            L -270,42
+            L -255,58
+            C -230,78 -195,88 -140,88
+            L -40,88
+            C 60,78 120,62 180,52
+            L 330,32
+            C 372,22 390,12 400,0 Z
+          "
+          stroke="rgba(0,0,0,0.75)" strokeWidth="1.8"
+          fill="rgba(0,0,0,0.07)"
+        />
+
+        {/* ── NOSE CONE (tapers to point from body front) ── */}
+        <path
+          d="
+            M 400,0
+            C 418,-6 438,-4 480,0
+            C 438,4 418,6 400,0 Z
+          "
+          stroke="rgba(0,0,0,0.7)" strokeWidth="1.5"
+          fill="rgba(0,0,0,0.08)"
+        />
+
+        {/* ── COCKPIT SURROUND ── */}
+        <ellipse cx="70" cy="0" rx="92" ry="44"
+          stroke="rgba(0,0,0,0.65)" strokeWidth="1.6" fill="rgba(0,0,0,0.09)" />
+        {/* Cockpit inner opening */}
+        <ellipse cx="60" cy="0" rx="70" ry="30"
+          stroke="rgba(0,0,0,0.4)" strokeWidth="1" fill="rgba(0,0,0,0.06)" />
+
+        {/* ── HALO safety device ── */}
+        {/* Left leg */}
+        <path d="M 120,-44 C 105,-64 72,-72 40,-68 C 10,-64 -20,-52 -36,-44"
+          stroke="rgba(0,0,0,0.8)" strokeWidth="3.5" fill="none"
+          strokeLinecap="round" filter="url(#cf-glow)" />
+        {/* Right leg */}
+        <path d="M 120,44 C 105,64 72,72 40,68 C 10,64 -20,52 -36,44"
+          stroke="rgba(0,0,0,0.8)" strokeWidth="3.5" fill="none"
+          strokeLinecap="round" />
+        {/* Centre pillar */}
+        <line x1="42" y1="-68" x2="42" y2="68"
+          stroke="rgba(0,0,0,0.85)" strokeWidth="4.5"
+          strokeLinecap="round" filter="url(#cf-glow)" />
+
+        {/* ── AIR INTAKE (above cockpit) ── */}
+        <ellipse cx="155" cy="0" rx="28" ry="16"
+          stroke="rgba(0,0,0,0.55)" strokeWidth="1.2" fill="rgba(0,0,0,0.08)" />
+
+        {/* ── SIDEPOD RADIATOR INLETS ── */}
+        <path d="M 240,-52 C 200,-58 160,-68 100,-78 C 60,-84 0,-87 -40,-88
+                 L -40,-72 C 0,-71 60,-68 100,-62 C 160,-52 200,-44 240,-38 Z"
+          stroke="rgba(0,0,0,0.5)" strokeWidth="1" fill="rgba(0,0,0,0.05)" />
+        <path d="M 240,52 C 200,58 160,68 100,78 C 60,84 0,87 -40,88
+                 L -40,72 C 0,71 60,68 100,62 C 160,52 200,44 240,38 Z"
+          stroke="rgba(0,0,0,0.5)" strokeWidth="1" fill="rgba(0,0,0,0.05)" />
+
+        {/* ── VENTURI TUNNEL EDGES ── */}
+        <path d="M 320,-38 C 200,-44 60,-54 -150,-64"
+          stroke="rgba(0,0,0,0.28)" strokeWidth="1" fill="none" />
+        <path d="M 320,38 C 200,44 60,54 -150,64"
+          stroke="rgba(0,0,0,0.28)" strokeWidth="1" fill="none" />
+
+        {/* ── FRONT SUSPENSION WISHBONES ── */}
+        <line x1="330" y1="-32" x2="352" y2="-130"
+          stroke="rgba(0,0,0,0.45)" strokeWidth="1.2" />
+        <line x1="330" y1="32"  x2="352" y2="130"
+          stroke="rgba(0,0,0,0.45)" strokeWidth="1.2" />
+        <line x1="380" y1="-18" x2="352" y2="-130"
+          stroke="rgba(0,0,0,0.3)" strokeWidth="0.9" />
+        <line x1="380" y1="18"  x2="352" y2="130"
+          stroke="rgba(0,0,0,0.3)" strokeWidth="0.9" />
+
+        {/* ── REAR SUSPENSION WISHBONES ── */}
+        <line x1="-255" y1="-58" x2="-262" y2="-135"
+          stroke="rgba(0,0,0,0.45)" strokeWidth="1.2" />
+        <line x1="-255" y1="58"  x2="-262" y2="135"
+          stroke="rgba(0,0,0,0.45)" strokeWidth="1.2" />
+        <line x1="-270" y1="-30" x2="-262" y2="-135"
+          stroke="rgba(0,0,0,0.3)" strokeWidth="0.9" />
+        <line x1="-270" y1="30"  x2="-262" y2="135"
+          stroke="rgba(0,0,0,0.3)" strokeWidth="0.9" />
+
+        {/* ── FRONT WHEELS ── */}
+        {/* Tyre outer */}
+        <ellipse cx="352" cy="-178" rx="30" ry="58"
+          stroke="rgba(0,0,0,0.7)" strokeWidth="1.8" fill="rgba(0,0,0,0.09)" />
+        <ellipse cx="352" cy="178" rx="30" ry="58"
+          stroke="rgba(0,0,0,0.7)" strokeWidth="1.8" fill="rgba(0,0,0,0.09)" />
+        {/* Rim highlight */}
+        <ellipse cx="352" cy="-178" rx="16" ry="36"
+          stroke="rgba(0,0,0,0.35)" strokeWidth="1" fill="none" />
+        <ellipse cx="352" cy="178" rx="16" ry="36"
+          stroke="rgba(0,0,0,0.35)" strokeWidth="1" fill="none" />
+
+        {/* ── REAR WHEELS ── */}
+        <ellipse cx="-262" cy="-190" rx="34" ry="65"
+          stroke="rgba(0,0,0,0.7)" strokeWidth="1.8" fill="rgba(0,0,0,0.09)" />
+        <ellipse cx="-262" cy="190" rx="34" ry="65"
+          stroke="rgba(0,0,0,0.7)" strokeWidth="1.8" fill="rgba(0,0,0,0.09)" />
+        {/* Rim */}
+        <ellipse cx="-262" cy="-190" rx="18" ry="42"
+          stroke="rgba(0,0,0,0.35)" strokeWidth="1" fill="none" />
+        <ellipse cx="-262" cy="190" rx="18" ry="42"
+          stroke="rgba(0,0,0,0.35)" strokeWidth="1" fill="none" />
+
+        {/* ── REAR DIFFUSER ── */}
+        <path d="M -270,-42 L -310,-50 L -330,-42 L -330,42 L -310,50 L -270,42"
+          stroke="rgba(0,0,0,0.55)" strokeWidth="1.4" fill="rgba(0,0,0,0.06)" />
+        {/* Diffuser fins */}
+        {[-30,-15,0,15,30].map((dy, i) => (
+          <line key={i}
+            x1="-270" y1={dy} x2="-325" y2={dy}
+            stroke="rgba(0,0,0,0.25)" strokeWidth="0.7" />
+        ))}
+
+        {/* ── REAR WING ── */}
+        {/* Main element */}
+        <rect x="-348" y="-188" width="52" height="376"
+          stroke="rgba(0,0,0,0.72)" strokeWidth="1.8"
+          fill="rgba(0,0,0,0.07)" rx="2" />
+        {/* Second element (DRS) */}
+        <rect x="-312" y="-182" width="32" height="364"
+          stroke="rgba(0,0,0,0.5)" strokeWidth="1.2"
+          fill="rgba(0,0,0,0.05)" rx="2" />
+        {/* Endplates */}
+        <path d="M -356,-188 L -280,-188 L -280,-210 L -356,-210 Z"
+          stroke="rgba(0,0,0,0.65)" strokeWidth="1.4" fill="rgba(0,0,0,0.06)" />
+        <path d="M -356,188 L -280,188 L -280,210 L -356,210 Z"
+          stroke="rgba(0,0,0,0.65)" strokeWidth="1.4" fill="rgba(0,0,0,0.06)" />
+        {/* Rear wing beam / swan neck */}
+        <line x1="-290" y1="-188" x2="-290" y2="188"
+          stroke="rgba(0,0,0,0.4)" strokeWidth="5" strokeLinecap="round" />
+        {/* Exhaust outlets */}
+        <circle cx="-272" cy="-56" r="9"
+          stroke="rgba(0,0,0,0.55)" strokeWidth="1.2" fill="rgba(0,0,0,0.06)" />
+        <circle cx="-272" cy="56" r="9"
+          stroke="rgba(0,0,0,0.55)" strokeWidth="1.2" fill="rgba(0,0,0,0.06)" />
+
+        {/* ── FRONT WING ── */}
+        {/* Main plane */}
+        <rect x="400" y="-148" width="58" height="296"
+          stroke="rgba(0,0,0,0.7)" strokeWidth="1.8"
+          fill="rgba(0,0,0,0.07)" rx="3" />
+        {/* Cascade flaps */}
+        <rect x="420" y="-142" width="30" height="284"
+          stroke="rgba(0,0,0,0.45)" strokeWidth="1" fill="none" rx="2" />
+        <rect x="438" y="-136" width="16" height="272"
+          stroke="rgba(0,0,0,0.3)" strokeWidth="0.8" fill="none" rx="2" />
+        {/* Endplates */}
+        <path d="M 394,-148 L 468,-148 L 468,-168 L 394,-168 Z"
+          stroke="rgba(0,0,0,0.65)" strokeWidth="1.4" fill="rgba(0,0,0,0.06)" />
+        <path d="M 394,148 L 468,148 L 468,168 L 394,168 Z"
+          stroke="rgba(0,0,0,0.65)" strokeWidth="1.4" fill="rgba(0,0,0,0.06)" />
+        {/* Nose-wing pillar */}
+        <rect x="448" y="-14" width="32" height="28"
+          stroke="rgba(0,0,0,0.5)" strokeWidth="1" fill="rgba(0,0,0,0.05)" rx="2" />
+
+        {/* ── TYRE MARKS / speed lines (wake) ── */}
+        {[-3,-1,1,3].map((dy, i) => (
+          <line key={i}
+            x1={-380 - i * 18} y1={dy * 8}
+            x2={-380 - i * 18 - 40} y2={dy * 8}
+            stroke="rgba(0,0,0,0.12)" strokeWidth="1.2"
+          />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+/* ─────────────────────────────────────────────
    CIRCUIT TRACK BACKGROUND
    Abstract F1 circuit linework — sector markers,
    corner apexes, DRS zone, telemetry trace.
@@ -479,6 +697,9 @@ function WaitlistForm() {
 export default function WaitlistPage() {
   return (
     <div className="gl-root">
+
+      {/* F1 car top-down ghost silhouette */}
+      <F1CarBackground />
 
       {/* Circuit track background */}
       <TrackBackground />
