@@ -515,18 +515,22 @@ h1, h2, h3 { margin-top: 0; }
   inset: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: #000;
-  color: #fff;
+  background-color: #CC0007;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(135deg, rgba(0,0,0,.05) 0px, rgba(0,0,0,.05) 1px, transparent 1px, transparent 9px);
+  background-size: 200px 200px, 9px 9px;
+  color: #000;
   font-family: var(--font-titillium);
   overflow: hidden;
 }
 
-/* Red speed stripe across top */
+/* Speed stripe across top */
 .gl-stripe {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
-  background: #E10600;
+  background: #000;
   z-index: 10;
 }
 
@@ -537,8 +541,8 @@ h1, h2, h3 { margin-top: 0; }
   display: flex;
   flex-direction: column;
   padding: 3rem 4rem;
-  background: #000;
-  border-right: 1px solid rgba(255,255,255,.06);
+  background: transparent;
+  border-right: 1px solid rgba(0,0,0,.12);
   min-width: 0;
   overflow: hidden;
 }
@@ -564,15 +568,15 @@ h1, h2, h3 { margin-top: 0; }
   justify-content: center;
   width: 28px;
   height: 28px;
-  color: #E10600;
+  color: rgba(0,0,0,.65);
   border-radius: 3px;
   transition: color .18s ease;
 }
 
 @media (pointer: fine) {
-  .gl-social-link:hover { color: #fff; }
+  .gl-social-link:hover { color: #000; }
 }
-.gl-social-link:active { color: #fff; }
+.gl-social-link:active { color: #000; }
 
 /* ── Main copy — vertically centred ── */
 .gl-copy {
@@ -594,13 +598,13 @@ h1, h2, h3 { margin-top: 0; }
   font-weight: 700;
   letter-spacing: .18em;
   text-transform: uppercase;
-  color: #E10600;
+  color: #000;
   margin-bottom: 1.4rem;
 }
 .gl-dot {
   width: 6px; height: 6px;
   border-radius: 50%;
-  background: #E10600;
+  background: #000;
   flex-shrink: 0;
   animation: blink 1.6s ease-in-out infinite;
 }
@@ -617,18 +621,18 @@ h1, h2, h3 { margin-top: 0; }
   letter-spacing: -.025em;
   text-transform: uppercase;
   margin: 0 0 1.3rem;
-  color: #fff;
+  color: #000;
 }
 .gl-h1 em {
   font-style: normal;
-  color: #E10600;
+  color: #000;
 }
 
 .gl-sub {
   font-size: clamp(.88rem, 1.15vw, 1.02rem);
   font-weight: 300;
   line-height: 1.72;
-  color: rgba(255,255,255,.52);
+  color: rgba(0,0,0,.65);
   margin: 0 0 1rem;
   max-width: 420px;
 }
@@ -643,14 +647,14 @@ h1, h2, h3 { margin-top: 0; }
   font-weight: 700;
   letter-spacing: .15em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.18);
+  color: rgba(0,0,0,.42);
 }
 
 .gl-telem-sep {
   display: inline-block;
   width: 16px;
   height: 1px;
-  background: rgba(255,255,255,.1);
+  background: rgba(0,0,0,.2);
   flex-shrink: 0;
 }
 
@@ -660,30 +664,30 @@ h1, h2, h3 { margin-top: 0; }
 .gl-form-row {
   display: flex;
   gap: 0;
-  border: 1px solid rgba(255,255,255,.15);
+  border: 1px solid rgba(0,0,0,.28);
   border-radius: 3px;
   overflow: hidden;
   transition: border-color .2s;
 }
-.gl-form-row:focus-within { border-color: #E10600; }
+.gl-form-row:focus-within { border-color: #000; }
 
 .gl-input {
   flex: 1;
   min-width: 0;
-  background: rgba(255,255,255,.05);
+  background: rgba(0,0,0,.1);
   border: none;
   outline: none;
-  color: #fff;
+  color: #000;
   font-family: var(--font-titillium);
   font-size: .9rem;
   padding: .9rem 1.1rem;
   line-height: 1;
 }
-.gl-input::placeholder { color: rgba(255,255,255,.28); }
+.gl-input::placeholder { color: rgba(0,0,0,.38); }
 
 .gl-btn {
   flex-shrink: 0;
-  background: #E10600;
+  background: #000;
   color: #fff;
   font-family: var(--font-titillium);
   font-size: .72rem;
@@ -700,7 +704,7 @@ h1, h2, h3 { margin-top: 0; }
   min-width: 136px;
   line-height: 1;
 }
-.gl-btn:hover:not(:disabled) { background: #c00500; }
+.gl-btn:hover:not(:disabled) { background: #1a1a1a; }
 .gl-btn:disabled { opacity: .6; cursor: not-allowed; }
 
 .gl-spinner {
@@ -779,14 +783,14 @@ h1, h2, h3 { margin-top: 0; }
   font-size: .67rem;
   letter-spacing: .1em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.18);
+  color: rgba(0,0,0,.4);
 }
 
 /* ── Social feed — compact horizontal marquee ── */
 .gl-feed {
   flex-shrink: 0;
   padding: .7rem 0 .85rem;
-  border-top: 1px solid rgba(255,255,255,.05);
+  border-top: 1px solid rgba(0,0,0,.12);
   overflow: hidden;
 }
 
@@ -798,14 +802,14 @@ h1, h2, h3 { margin-top: 0; }
   font-weight: 700;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.55);
+  color: rgba(0,0,0,.55);
   margin-bottom: .5rem;
 }
 
 .gl-feed-dot {
   width: 4px; height: 4px;
   border-radius: 50%;
-  background: #E10600;
+  background: #000;
   flex-shrink: 0;
   /* static — no blink; eyebrow dot already owns that rhythm */
 }
@@ -813,8 +817,8 @@ h1, h2, h3 { margin-top: 0; }
 .gl-feed-track {
   overflow: hidden;
   /* Fade edges for seamless feel */
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 5%, #000 92%, transparent 100%);
-  mask-image:         linear-gradient(90deg, transparent 0%, #000 5%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,1) 5%, rgba(0,0,0,1) 92%, transparent 100%);
+  mask-image:         linear-gradient(90deg, transparent 0%, rgba(0,0,0,1) 5%, rgba(0,0,0,1) 92%, transparent 100%);
 }
 
 .gl-feed-inner {
@@ -838,16 +842,16 @@ h1, h2, h3 { margin-top: 0; }
   flex-direction: column;
   gap: .2rem;
   padding: .38rem .6rem;
-  border: 1px solid rgba(255,255,255,.14);
+  border: 1px solid rgba(0,0,0,.2);
   border-radius: 3px;
-  background: rgba(255,255,255,.04);
+  background: rgba(0,0,0,.08);
 }
 
 .gl-feed-text {
   font-size: .68rem;
   font-weight: 300;
   line-height: 1.45;
-  color: rgba(255,255,255,.62);
+  color: rgba(0,0,0,.72);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -858,7 +862,7 @@ h1, h2, h3 { margin-top: 0; }
   font-size: .56rem;
   font-weight: 700;
   letter-spacing: .08em;
-  color: rgba(255,255,255,.38);
+  color: rgba(0,0,0,.45);
   text-transform: uppercase;
 }
 
@@ -868,7 +872,7 @@ h1, h2, h3 { margin-top: 0; }
   padding-top: .9rem;
   font-size: .67rem;
   letter-spacing: .1em;
-  color: rgba(255,255,255,.38);
+  color: rgba(0,0,0,.45);
   text-transform: uppercase;
 }
 
@@ -1138,7 +1142,7 @@ h1, h2, h3 { margin-top: 0; }
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to right,  rgba(0,0,0,.55) 0%, transparent 22%),
+    linear-gradient(to right,  rgba(180,0,5,.55) 0%, transparent 22%),
     linear-gradient(to bottom, rgba(0,0,0,.35) 0%, transparent 18%),
     linear-gradient(to top,    rgba(0,0,0,.5)  0%, transparent 28%);
   pointer-events: none;
@@ -1393,7 +1397,7 @@ h1, h2, h3 { margin-top: 0; }
   .gl-left {
     padding: 2rem 1.75rem 1.75rem;
     border-right: none;
-    border-bottom: 1px solid rgba(255,255,255,.06);
+    border-bottom: 1px solid rgba(0,0,0,.12);
   }
   .gl-copy {
     padding: 1.25rem 0;
