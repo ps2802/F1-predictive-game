@@ -154,13 +154,13 @@ export default function ProfilePage() {
               {raceScores.map((rs) => {
                 const raceData = races.find((r) => r.id === rs.race_id);
                 return (
-                  <div key={rs.race_id} className="lb-row" style={{ gridTemplateColumns: "1fr 120px 100px" }}>
+                  <Link key={rs.race_id} href={`/scores/${rs.race_id}`} className="lb-row" style={{ gridTemplateColumns: "1fr 120px 100px", textDecoration: "none", display: "grid", cursor: "pointer" }}>
                     <span className="lb-name">{raceData?.name ?? rs.race_id}</span>
                     <span className="lb-score">{Number(rs.total_score).toFixed(1)}</span>
                     <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)" }}>
                       {new Date(rs.calculated_at).toLocaleDateString()}
                     </span>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
