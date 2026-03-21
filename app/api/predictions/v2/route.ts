@@ -102,13 +102,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: ansErr.message }, { status: 400 });
   }
 
-  // Save prediction version snapshot
-  await supabase.from("prediction_versions").insert({
+  // Save prediction version snapshot (audit trail — failure does not block the response)
+  const { error: versionErr } = await supabase.from("prediction_versions").insert({
     prediction_id: pred.id,
     version_number: (pred.edit_count ?? 0) + 1,
     answers_json: answers,
     edit_cost: 0,
   });
+  if (versionErr) {
+    console.error("prediction_versions insert failed:", versionErr.message);
+  }
 
   return NextResponse.json({ success: true, predictionId: pred.id });
 }

@@ -132,13 +132,12 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Deposit CTA */}
+        {/* Balance */}
         <div className="wallet-card">
           <div className="wallet-card-left">
             <span className="wallet-balance-label">Balance</span>
             <span className="wallet-balance">${Number(profile?.balance_usdc ?? 0).toFixed(2)} USDC</span>
           </div>
-          <Link href="/wallet" className="gla-race-btn">Deposit USDC</Link>
         </div>
 
         {/* Race scores history */}

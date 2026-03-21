@@ -8,32 +8,22 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 export default function WalletPage() {
   const router = useRouter();
   const [balance, setBalance] = useState<number | null>(null);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push("/login"); return; }
-      const res = await fetch("/api/wallet/deposit");
-      if (res.ok) {
-        const data = await res.json();
-        setBalance(data.balance_usdc ?? 0);
-        setWalletAddress(data.wallet_address);
-      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("balance_usdc")
+        .eq("id", user.id)
+        .single();
+      setBalance(profile?.balance_usdc ?? 0);
       setLoading(false);
     });
   }, [router]);
-
-  function copyAddress() {
-    if (!walletAddress) return;
-    navigator.clipboard.writeText(walletAddress).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
 
   if (loading) {
     return (
@@ -72,45 +62,12 @@ export default function WalletPage() {
           <span className="wallet-balance">${Number(balance ?? 0).toFixed(2)} USDC</span>
         </div>
 
-        {/* Deposit section */}
+        {/* Beta notice */}
         <div className="wallet-deposit-card">
-          <h3 className="wallet-deposit-title">Deposit USDC (Solana)</h3>
+          <h3 className="wallet-deposit-title">Deposits &amp; Withdrawals</h3>
           <p className="wallet-deposit-desc">
-            Send USDC on Solana to your deposit address. Balance updates automatically within ~60 seconds.
+            Gridlock is currently in free beta. Paid league entry, deposits, and withdrawals will be available in a future update.
           </p>
-
-          {walletAddress ? (
-            <div className="wallet-address-box">
-              <code className="wallet-address">{walletAddress}</code>
-              <button className="league-copy-btn" onClick={copyAddress}>
-                {copied ? "Copied!" : "Copy"}
-              </button>
-            </div>
-          ) : (
-            <div className="wallet-no-address">
-              <p>Wallet address not set up yet.</p>
-              <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.4)", marginTop: "0.25rem" }}>
-                Wallet provisioning via Moongate will be available soon.
-              </p>
-            </div>
-          )}
-
-          <div className="wallet-notes">
-            <p>⚠️ Only send USDC on Solana (SPL token). Other tokens will not be credited.</p>
-            <p>🔒 Minimum deposit: $1.00 USDC</p>
-            <p>⏱ Credits appear within 1–2 minutes after confirmation.</p>
-          </div>
-        </div>
-
-        {/* Withdraw section */}
-        <div className="wallet-deposit-card" style={{ marginTop: "1rem" }}>
-          <h3 className="wallet-deposit-title">Withdraw</h3>
-          <p className="wallet-deposit-desc">
-            Withdrawals are reviewed within 24 hours for security. Minimum: $5.00 USDC.
-          </p>
-          <button className="gla-race-btn" style={{ opacity: 0.5, cursor: "not-allowed" }} disabled>
-            Request Withdrawal (coming soon)
-          </button>
         </div>
       </div>
     </div>

@@ -12,21 +12,37 @@ type UserProfile = {
   is_admin: boolean;
 };
 
+type DbRace = {
+  id: string;
+  race_locked: boolean;
+  qualifying_starts_at: string | null;
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [lockedRaceIds, setLockedRaceIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push("/login"); return; }
-      const { data } = await supabase
-        .from("profiles")
-        .select("username, balance_usdc, is_admin")
-        .eq("id", user.id)
-        .single();
-      setProfile(data);
+
+      const [{ data: profileData }, { data: dbRaces }] = await Promise.all([
+        supabase.from("profiles").select("username, balance_usdc, is_admin").eq("id", user.id).single(),
+        supabase.from("races").select("id, race_locked, qualifying_starts_at"),
+      ]);
+
+      setProfile(profileData);
+
+      const now = new Date();
+      const locked = new Set<string>();
+      for (const r of (dbRaces ?? []) as DbRace[]) {
+        const pastDeadline = r.qualifying_starts_at != null && now >= new Date(r.qualifying_starts_at);
+        if (r.race_locked || pastDeadline) locked.add(r.id);
+      }
+      setLockedRaceIds(locked);
     });
   }, [router]);
 
@@ -52,7 +68,8 @@ export default function DashboardPage() {
 
         <div className="gla-race-grid">
           {races.map((race) => {
-            const isClosed = race.status === "closed";
+            // A race is locked if: DB says so, OR hardcoded status is "closed" (fallback for races not yet in DB)
+            const isClosed = lockedRaceIds.has(race.id) || race.status === "closed";
             return (
               <article className="gla-race-card" key={race.id}>
                 <p className="gla-race-round">Round {race.round}</p>
