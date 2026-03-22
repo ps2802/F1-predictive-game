@@ -40,18 +40,23 @@ The following files were created:
 - `INTEGRATIONS_AUDIT.md` — full audit record
 - `INTEGRATIONS.md` — this file
 
-### Step 2 — UI UX Pro Max (run once, in project directory)
+### Step 2 — UI UX Pro Max (inside Claude Code session)
 
-```bash
-npx uipro-cli
+```
+/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill
+/plugin install ui-ux-pro-max@ui-ux-pro-max-skill
 ```
 
-This installs the UI/UX design skill. Follow any prompts to confirm the installation.
+Alternatively, via CLI (installs globally):
+```bash
+npm install -g uipro-cli
+uipro init --ai claude
+```
 
 ### Step 3 — Superpowers (inside Claude Code session)
 
 ```
-/plugin marketplace add obra/superpowers
+/plugin install superpowers@claude-plugins-official
 ```
 
 Skills installed:

@@ -210,9 +210,9 @@ Before marking any task complete:
 
 | Tool | Type | How installed | Purpose |
 |------|------|--------------|---------|
-| Superpowers | Marketplace skill pack | `/plugin marketplace add obra/superpowers` | TDD, debugging, code review workflows |
-| Claude-Mem | Marketplace memory layer | `/plugin marketplace add thedotmack/claude-mem` | Cross-session memory (ONLY memory layer) |
-| UI UX Pro Max | CLI skill pack | `npx uipro-cli` | Design system generation for F1 UI |
+| Superpowers | Marketplace skill pack | `/plugin install superpowers@claude-plugins-official` | TDD, debugging, code review workflows |
+| Claude-Mem | Marketplace memory layer | `/plugin marketplace add thedotmack/claude-mem` then `/plugin install claude-mem` | Cross-session memory (ONLY memory layer) |
+| UI UX Pro Max | Marketplace skill pack | `/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill` then `/plugin install ui-ux-pro-max@ui-ux-pro-max-skill` | Design system generation for F1 UI |
 | Supabase MCP | MCP server | See `.claude/settings.json` | Database operations via natural language |
 | Context7 MCP | MCP server | See `.claude/settings.json` | Live Next.js/Supabase/React docs |
 | GitHub MCP | MCP server | See `.claude/settings.json` | PR and issue management |
