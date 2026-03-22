@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { races } from "@/lib/races";
+import { usePrivy } from "@privy-io/react-auth";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type UserProfile = {
@@ -60,8 +61,8 @@ export default function DashboardPage() {
             </p>
           </div>
           {profile?.balance_usdc !== undefined && (
-            <Link href="/wallet" className="dash-balance-pill">
-              ${Number(profile.balance_usdc).toFixed(2)} USDC
+            <Link href="/wallet" className="dash-balance-pill" title="Beta Credits — not real money">
+              ₮{Number(profile.balance_usdc).toFixed(2)} · BETA
             </Link>
           )}
         </div>
@@ -103,9 +104,11 @@ export default function DashboardPage() {
 
 function AppNav({ profile }: { profile: UserProfile | null }) {
   const router = useRouter();
+  const { logout } = usePrivy();
   async function handleLogout() {
     const supabase = createSupabaseBrowserClient();
     if (supabase) await supabase.auth.signOut();
+    await logout();
     router.push("/login");
   }
   return (

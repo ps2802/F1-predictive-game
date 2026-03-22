@@ -1,43 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { usePrivy, useLogin } from "@privy-io/react-auth";
+import { handlePrivyLoginComplete } from "@/app/login/page";
 
+/**
+ * /signup — "Join the grid"
+ *
+ * Keeps the distinct route and copy requested for beta. Underneath it uses
+ * the same Privy login flow as /login — Privy itself handles the distinction
+ * between new and returning users. New users are automatically redirected to
+ * /onboarding after their wallet is created.
+ */
 export default function SignupPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [isError, setIsError] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const { getAccessToken } = usePrivy();
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLoading(true);
-    setMessage("");
+  const onComplete = useCallback(async () => {
+    await handlePrivyLoginComplete(getAccessToken, null, router);
+  }, [getAccessToken, router]);
 
-    const supabase = createSupabaseBrowserClient();
-
-    if (!supabase) {
-      setMessage("Supabase env vars missing.");
-      setIsError(true);
-      setLoading(false);
-      return;
-    }
-
-    const { error } = await supabase.auth.signUp({ email, password });
-
-    if (error) {
-      setMessage(error.message);
-      setIsError(true);
-      setLoading(false);
-      return;
-    }
-
-    setMessage("Account created. Check your inbox to verify your email, then sign in.");
-    setIsError(false);
-    setLoading(false);
-  }
+  const { login } = useLogin({ onComplete });
 
   return (
     <>
@@ -54,44 +39,14 @@ export default function SignupPage() {
         <div className="gla-auth-card">
           <p className="gla-auth-eyebrow">Join the grid</p>
           <h1 className="gla-auth-title">Create account</h1>
-          <p className="gla-auth-sub">Sign up to start predicting the 2026 season.</p>
+          <p className="gla-auth-sub">
+            Sign up to start predicting the 2026 season. You&apos;ll get a real
+            Solana wallet and 100 Beta Credits to play with.
+          </p>
 
-          <form onSubmit={handleSubmit}>
-            <div className="gla-field">
-              <label className="gla-field-label" htmlFor="email">Email</label>
-              <input
-                id="email"
-                className="gla-field-input"
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-
-            <div className="gla-field">
-              <label className="gla-field-label" htmlFor="password">Password</label>
-              <input
-                id="password"
-                className="gla-field-input"
-                type="password"
-                required
-                minLength={6}
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-
-            <button className="gla-auth-btn" type="submit" disabled={loading}>
-              {loading ? "Creating account…" : "Create account"}
-            </button>
-          </form>
-
-          {message && (
-            <p className={`gla-auth-msg ${isError ? "is-error" : "is-success"}`}>{message}</p>
-          )}
+          <button className="gla-auth-btn" onClick={login}>
+            Get started
+          </button>
 
           <div className="gla-auth-footer">
             Already have an account? <Link href="/login">Sign in</Link>

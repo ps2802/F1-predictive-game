@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { usePrivy } from "@privy-io/react-auth";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { races } from "@/lib/races";
 
@@ -99,8 +100,8 @@ export default function ProfilePage() {
               <span className="profile-stat-label">Races Predicted</span>
             </div>
             <div className="profile-stat">
-              <span className="profile-stat-value">${Number(profile?.balance_usdc ?? 0).toFixed(2)}</span>
-              <span className="profile-stat-label">Balance (USDC)</span>
+              <span className="profile-stat-value">₮{Number(profile?.balance_usdc ?? 0).toFixed(2)}</span>
+              <span className="profile-stat-label">Beta Credits</span>
             </div>
           </div>
 
@@ -132,12 +133,15 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Balance */}
+        {/* Beta Credits */}
         <div className="wallet-card">
           <div className="wallet-card-left">
-            <span className="wallet-balance-label">Balance</span>
-            <span className="wallet-balance">${Number(profile?.balance_usdc ?? 0).toFixed(2)} USDC</span>
+            <span className="wallet-balance-label">Beta Credits</span>
+            <span className="wallet-balance">₮{Number(profile?.balance_usdc ?? 0).toFixed(2)}</span>
           </div>
+          <Link href="/wallet" className="gla-nav-link" style={{ fontSize: "0.8rem", alignSelf: "center" }}>
+            View wallet →
+          </Link>
         </div>
 
         {/* Race scores history */}
@@ -172,9 +176,11 @@ export default function ProfilePage() {
 
 function AppNav({ isAdmin }: { isAdmin: boolean }) {
   const router = useRouter();
+  const { logout } = usePrivy();
   async function handleLogout() {
     const supabase = createSupabaseBrowserClient();
     if (supabase) await supabase.auth.signOut();
+    await logout();
     router.push("/login");
   }
   return (
