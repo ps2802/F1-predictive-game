@@ -61,8 +61,8 @@ export default function DashboardPage() {
             </p>
           </div>
           {profile?.balance_usdc !== undefined && (
-            <Link href="/wallet" className="dash-balance-pill" title="Beta Credits — not real money">
-              ₮{Number(profile.balance_usdc).toFixed(2)} · BETA
+            <Link href="/wallet" className="dash-balance-pill" title="Test USDC · Not real money">
+              ₮{Number(profile.balance_usdc).toFixed(2)}&nbsp;[BETA]
             </Link>
           )}
         </div>

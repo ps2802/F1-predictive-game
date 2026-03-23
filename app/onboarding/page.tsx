@@ -12,6 +12,7 @@ function OnboardingForm() {
   const [username, setUsername] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [showBetaNotice, setShowBetaNotice] = useState(false);
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -37,7 +38,8 @@ function OnboardingForm() {
       setError(data.error ?? "Failed to save username.");
       setSaving(false);
     } else {
-      router.push(redirect);
+      setShowBetaNotice(true);
+      setTimeout(() => router.push(redirect), 2000);
     }
   }
 
@@ -54,6 +56,13 @@ function OnboardingForm() {
         <p className="gla-page-sub">
           This is how you&apos;ll appear on leaderboards. You can change it anytime.
         </p>
+
+        {showBetaNotice && (
+          <div style={{ marginTop: "1.5rem", padding: "0.875rem 1rem", borderRadius: "8px", background: "rgba(232,0,45,0.1)", border: "1px solid rgba(232,0,45,0.25)", fontSize: "0.875rem", color: "rgba(255,255,255,0.85)", textAlign: "left" }}>
+            <strong style={{ color: "var(--gl-red)" }}>₮100 Test USDC credited.</strong>{" "}
+            You&apos;ve been credited 100 Test USDC to use during the Gridlock beta. This is not real money — explore freely.
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} style={{ marginTop: "2rem", textAlign: "left" }}>
           <input

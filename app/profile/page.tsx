@@ -101,7 +101,7 @@ export default function ProfilePage() {
             </div>
             <div className="profile-stat">
               <span className="profile-stat-value">₮{Number(profile?.balance_usdc ?? 0).toFixed(2)}</span>
-              <span className="profile-stat-label">Beta Credits</span>
+              <span className="profile-stat-label">Test USDC · Beta only</span>
             </div>
           </div>
 
@@ -136,7 +136,7 @@ export default function ProfilePage() {
         {/* Beta Credits */}
         <div className="wallet-card">
           <div className="wallet-card-left">
-            <span className="wallet-balance-label">Beta Credits</span>
+            <span className="wallet-balance-label">Test USDC · Beta only</span>
             <span className="wallet-balance">₮{Number(profile?.balance_usdc ?? 0).toFixed(2)}</span>
           </div>
           <Link href="/wallet" className="gla-nav-link" style={{ fontSize: "0.8rem", alignSelf: "center" }}>
