@@ -9,30 +9,33 @@ import { handlePrivyLoginComplete } from "@/app/login/page";
 /**
  * /signup — "Join the grid"
  *
- * Keeps the distinct route and copy requested for beta. Underneath it uses
- * the same Privy login flow as /login — Privy itself handles the distinction
- * between new and returning users. New users are automatically redirected to
- * /onboarding after their wallet is created.
+ * Uses the same Privy modal as /login. Privy handles the distinction between
+ * new and returning users internally. New users are redirected to /onboarding
+ * where they pick a username; returning users go to /dashboard.
+ *
+ * There is no email/password form here. The only auth entry point is Privy.
  */
 export default function SignupPage() {
   const router = useRouter();
   const { getAccessToken } = usePrivy();
   const [error, setError] = useState<string | null>(null);
 
-  // Privy v3: onComplete receives { user, isNewUser, wasAlreadyAuthenticated, ... }
-  const onComplete = useCallback(async ({ user }: { user: User }) => {
-    console.log("[Privy] signup complete for", user.id);
-    setError(null);
-    try {
-      await handlePrivyLoginComplete(getAccessToken, null, router);
-    } catch (err) {
-      console.error("[Privy] post-signup sync failed", err);
-      setError("Sign-up failed. Please try again.");
-    }
-  }, [getAccessToken, router]);
+  const onComplete = useCallback(
+    async ({ user }: { user: User }) => {
+      console.log("[Privy] signup complete:", user.id);
+      setError(null);
+      try {
+        await handlePrivyLoginComplete(getAccessToken, null, router);
+      } catch (err) {
+        console.error("[Privy] post-signup sync failed:", err);
+        setError("Sign-up failed. Please try again.");
+      }
+    },
+    [getAccessToken, router]
+  );
 
   const onError = useCallback((err: unknown) => {
-    console.error("[Privy] signup error", err);
+    console.error("[Privy] signup error:", err);
     setError("Sign-up failed. Please try again.");
   }, []);
 
@@ -58,13 +61,13 @@ export default function SignupPage() {
             Solana wallet and 100 Beta Credits to play with.
           </p>
 
+          {/* This button is the ONLY entry point for authentication.
+              Clicking it opens the Privy modal — no email/password form. */}
           <button className="gla-auth-btn" onClick={login}>
             Get started
           </button>
 
-          {error && (
-            <p className="gla-auth-msg is-error">{error}</p>
-          )}
+          {error && <p className="gla-auth-msg is-error">{error}</p>}
 
           <div className="gla-auth-footer">
             Already have an account? <Link href="/login">Sign in</Link>

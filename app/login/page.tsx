@@ -7,11 +7,20 @@ import { usePrivy, useLogin, type User } from "@privy-io/react-auth";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /**
- * Shared post-login handler used by both /login and /signup.
- * After Privy authenticates the user this:
- *   1. Exchanges the Privy token for a Supabase session via /api/auth/privy-sync
- *   2. Establishes the Supabase session client-side (so all existing API routes work)
- *   3. Redirects to onboarding (new users) or dashboard (returning users)
+ * handlePrivyLoginComplete
+ *
+ * Shared post-login handler called by /login and /signup after Privy
+ * authenticates the user. It:
+ *   1. Exchanges the Privy JWT for a Supabase magic-link OTP via
+ *      /api/auth/privy-sync (server-side, keeps all existing API routes
+ *      working without changes).
+ *   2. Establishes a Supabase browser session so supabase.auth.getUser()
+ *      works everywhere.
+ *   3. Redirects: new users → /onboarding, returning users → /dashboard
+ *      (or the original ?redirect= destination).
+ *
+ * Supabase is used here ONLY for session bridging — it is NOT the visible
+ * auth entry point. The user-facing auth UI is exclusively Privy.
  */
 export async function handlePrivyLoginComplete(
   getAccessToken: () => Promise<string | null>,
@@ -28,8 +37,8 @@ export async function handlePrivyLoginComplete(
   });
 
   if (!res.ok) {
-    console.error("privy-sync failed", await res.text());
-    return;
+    console.error("[privy-sync] failed:", await res.text());
+    throw new Error("privy-sync failed");
   }
 
   const { token, email } = await res.json();
@@ -44,8 +53,8 @@ export async function handlePrivyLoginComplete(
   });
 
   if (error) {
-    console.error("Supabase verifyOtp failed", error.message);
-    return;
+    console.error("[Supabase] verifyOtp failed:", error.message);
+    throw new Error(error.message);
   }
 
   if (redirectTo) {
@@ -53,7 +62,7 @@ export async function handlePrivyLoginComplete(
     return;
   }
 
-  // Check if user still needs to set a username (first login = onboarding).
+  // New users haven't set a username yet → send to onboarding.
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     const { data: prof } = await supabase
@@ -70,27 +79,33 @@ export async function handlePrivyLoginComplete(
   router.push("/dashboard");
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// LoginForm — rendered inside a Suspense boundary (needed for useSearchParams)
+// ─────────────────────────────────────────────────────────────────────────────
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams?.get("redirect") ?? null;
+
   const { getAccessToken } = usePrivy();
   const [error, setError] = useState<string | null>(null);
 
-  // Privy v3: onComplete receives { user, isNewUser, wasAlreadyAuthenticated, ... }
-  const onComplete = useCallback(async ({ user }: { user: User }) => {
-    console.log("[Privy] login complete for", user.id);
-    setError(null);
-    try {
-      await handlePrivyLoginComplete(getAccessToken, redirect, router);
-    } catch (err) {
-      console.error("[Privy] post-login sync failed", err);
-      setError("Sign-in failed. Please try again.");
-    }
-  }, [getAccessToken, redirect, router]);
+  const onComplete = useCallback(
+    async ({ user }: { user: User }) => {
+      console.log("[Privy] login complete:", user.id);
+      setError(null);
+      try {
+        await handlePrivyLoginComplete(getAccessToken, redirect, router);
+      } catch (err) {
+        console.error("[Privy] post-login sync failed:", err);
+        setError("Sign-in failed. Please try again.");
+      }
+    },
+    [getAccessToken, redirect, router]
+  );
 
   const onError = useCallback((err: unknown) => {
-    console.error("[Privy] login error", err);
+    console.error("[Privy] login error:", err);
     setError("Sign-in failed. Please try again.");
   }, []);
 
@@ -115,13 +130,13 @@ function LoginForm() {
             Welcome back. Continue with your email or social account.
           </p>
 
+          {/* This button is the ONLY entry point for authentication.
+              Clicking it opens the Privy modal — no email/password form. */}
           <button className="gla-auth-btn" onClick={login}>
             Sign in
           </button>
 
-          {error && (
-            <p className="gla-auth-msg is-error">{error}</p>
-          )}
+          {error && <p className="gla-auth-msg is-error">{error}</p>}
 
           <div className="gla-auth-footer">
             New to Gridlock? <Link href="/signup">Create an account</Link>
