@@ -431,15 +431,13 @@ function TrackBackground() {
 }
 
 /* ─────────────────────────────────────────────
-   HELMET PANEL
+   DRIVER PANEL
    Right panel with:
    - Starting grid lines (CSS, background)
-   - Ghost position number "01" behind helmet
-   - Dual ambient glow layers (reduced fog)
-   - Idle float + visor shimmer (CSS)
+   - Ghost position number "01" behind driver
+   - Fire/ember glow layers matching the photo
    - Mouse-reactive perspective tilt (JS, desktop)
    - F1 HUD overlay: sector times, lap, corner tag
-   - Hover: monochrome telemetry mode + scan sweep
 ────────────────────────────────────────────── */
 function HelmetPanel() {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -489,108 +487,22 @@ function HelmetPanel() {
       {/* Starting grid lines — low-opacity horizontal stripes, bottom third */}
       <div className="gl-grid-lines" />
 
-      {/* ── Circuit track + lapping F1 car ── */}
-      <div className="gl-circuit" aria-hidden="true">
-        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg" className="gl-circuit-svg">
-          <defs>
-            <filter id="track-glow" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="6" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-            <filter id="car-halo" x="-300%" y="-300%" width="700%" height="700%">
-              <feGaussianBlur stdDeviation="5" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-            <filter id="car-bloom" x="-400%" y="-400%" width="900%" height="900%">
-              <feGaussianBlur stdDeviation="12"/>
-            </filter>
-          </defs>
-
-          {/*
-            Smooth closed oval hugging the helmet silhouette at a
-            consistent ~25 px gap. Four G1-continuous cubic bezier
-            segments, one per quadrant. No kinks, no fake features.
-            Clockwise from top-centre (S/F tick at top).
-          */}
-
-          {/* Track surface band */}
-          <path
-            d="M 250,38 C 365,34 448,108 455,228 C 462,350 395,468 250,480 C 105,468 38,350 45,228 C 52,108 135,34 250,38 Z"
-            stroke="rgba(225,6,0,0.07)" strokeWidth="10"
-          />
-
-          {/* Glow bed */}
-          <path
-            d="M 250,38 C 365,34 448,108 455,228 C 462,350 395,468 250,480 C 105,468 38,350 45,228 C 52,108 135,34 250,38 Z"
-            stroke="rgba(225,6,0,0.18)" strokeWidth="16"
-            filter="url(#track-glow)"
-          />
-
-          {/* Centerline — precision hairline */}
-          <path
-            id="gl-track-path"
-            d="M 250,38 C 365,34 448,108 455,228 C 462,350 395,468 250,480 C 105,468 38,350 45,228 C 52,108 135,34 250,38 Z"
-            stroke="rgba(225,6,0,0.72)" strokeWidth="1.5"
-          />
-
-          {/* Start/Finish tick — top centre, perpendicular to track */}
-          <line x1="243" y1="32" x2="257" y2="32"
-            stroke="rgba(255,255,255,0.55)" strokeWidth="1.5"/>
-
-          {/* Car wide bloom */}
-          <circle r="10" fill="rgba(225,6,0,0.2)" filter="url(#car-bloom)">
-            <animateMotion dur="5.5s" repeatCount="indefinite" rotate="auto">
-              <mpath href="#gl-track-path"/>
-            </animateMotion>
-          </circle>
-
-          {/* Car halo */}
-          <circle r="5" fill="rgba(220,30,0,0.55)" filter="url(#car-halo)">
-            <animateMotion dur="5.5s" repeatCount="indefinite" rotate="auto">
-              <mpath href="#gl-track-path"/>
-            </animateMotion>
-          </circle>
-
-          {/* Car core */}
-          <circle r="2.5" fill="rgba(255,255,255,0.95)">
-            <animateMotion dur="5.5s" repeatCount="indefinite" rotate="auto">
-              <mpath href="#gl-track-path"/>
-            </animateMotion>
-          </circle>
-
-          {/* Wake — fading comet tail */}
-          <circle r="2" fill="rgba(255,70,0,0.4)">
-            <animateMotion dur="5.5s" begin="-0.13s" repeatCount="indefinite" rotate="auto">
-              <mpath href="#gl-track-path"/>
-            </animateMotion>
-          </circle>
-          <circle r="1.5" fill="rgba(225,6,0,0.22)">
-            <animateMotion dur="5.5s" begin="-0.26s" repeatCount="indefinite" rotate="auto">
-              <mpath href="#gl-track-path"/>
-            </animateMotion>
-          </circle>
-          <circle r="1" fill="rgba(225,6,0,0.1)">
-            <animateMotion dur="5.5s" begin="-0.42s" repeatCount="indefinite" rotate="auto">
-              <mpath href="#gl-track-path"/>
-            </animateMotion>
-          </circle>
-        </svg>
-      </div>
-
-      {/* Ghost grid position — barely-there red numeral behind helmet */}
+      {/* Ghost grid position — behind driver */}
       <div className="gl-hud-pos">01</div>
 
-      {/* Helmet with parallax tilt */}
-      <div className="gl-helmet-wrap" ref={wrapRef}>
+      {/* Driver photo with parallax tilt */}
+      <div className="gl-driver-wrap" ref={wrapRef}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/gridlock-helmet.png"
+          src="/gridlock f1 driver .png"
           alt=""
-          className="gl-helmet"
+          className="gl-driver"
           draggable={false}
         />
-        <div className="gl-shimmer" aria-hidden="true" />
       </div>
+
+      {/* Fire / ember glow — mirrors the photo's backlit flame */}
+      <div className="gl-fire-glow" aria-hidden="true" />
 
       {/* ── F1 HUD overlay ──────────────────────────── */}
 
