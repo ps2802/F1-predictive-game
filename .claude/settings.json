@@ -1,0 +1,60 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--access-token",
+        "${SUPABASE_ACCESS_TOKEN}"
+      ]
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'INPUT=$(cat); CMD=$(echo \"$INPUT\" | jq -r \".tool_input.command // empty\" 2>/dev/null); if echo \"$CMD\" | grep -qE \"(^|[[:space:]])--no-verify([[:space:]]|$)\"; then echo \"BLOCKED: --no-verify is not allowed. Fix the underlying hook issue instead.\" >&2; exit 2; fi'",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-secrets.sh",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'INPUT=$(cat); FILE=$(echo \"$INPUT\" | jq -r \".tool_input.file_path // empty\" 2>/dev/null); if [[ \"$FILE\" =~ \\.(ts|tsx|js|jsx)$ ]] && [[ -f \"$FILE\" ]]; then MATCHES=$(grep -n \"console\\.log\" \"$FILE\" 2>/dev/null || true); if [[ -n \"$MATCHES\" ]]; then echo \"WARNING: console.log found in $FILE:\" >&2; echo \"$MATCHES\" >&2; fi; fi'",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  }
+}

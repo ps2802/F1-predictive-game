@@ -569,16 +569,15 @@ h1, h2, h3 { margin-top: 0; }
   justify-content: center;
   width: 28px;
   height: 28px;
-  color: rgba(255,255,255,.21);
+  color: #E10600;
   border-radius: 3px;
-  transition: color .2s ease;
+  transition: color .18s ease;
 }
 
 @media (pointer: fine) {
-  .gl-social-link:hover {
-    color: rgba(255,255,255,.62);
-  }
+  .gl-social-link:hover { color: #fff; }
 }
+.gl-social-link:active { color: #fff; }
 
 /* ── Main copy — vertically centred ── */
 .gl-copy {
@@ -893,19 +892,33 @@ h1, h2, h3 { margin-top: 0; }
   transition: filter 1.1s ease;
 }
 
+/* Subtle brightness lift on hover — neon laser now owns the drama */
 @media (pointer: fine) {
   .gl-right:hover {
-    filter: saturate(0.12) contrast(1.22) brightness(1.05);
+    filter: brightness(1.12);
   }
 }
 
-/* Scan line — single sweep on hover entry */
+/* ── Neon laser scan line — sweeps continuously on hover ── */
 .gl-right::before {
   content: '';
   position: absolute;
   left: 0; right: 0;
-  height: 1px;
-  background: rgba(255,255,255,.18);
+  height: 1.5px;
+  background: linear-gradient(
+    90deg,
+    transparent           0%,
+    rgba(225,6,0,.12)    12%,
+    rgba(255,70,0,.75)   38%,
+    rgba(255,200,120,1)  50%,
+    rgba(255,70,0,.75)   62%,
+    rgba(225,6,0,.12)    88%,
+    transparent          100%
+  );
+  box-shadow:
+    0 0  6px rgba(255,80,0,.85),
+    0 0 18px rgba(225,6,0,.55),
+    0 0 36px rgba(225,6,0,.25);
   top: -2px;
   z-index: 6;
   pointer-events: none;
@@ -914,15 +927,120 @@ h1, h2, h3 { margin-top: 0; }
 
 @media (pointer: fine) {
   .gl-right:hover::before {
-    animation: gl-scan-sweep 1.5s ease-out 0.25s forwards;
+    animation: gl-laser-sweep 2.4s cubic-bezier(0.4,0,0.6,1) infinite;
   }
 }
 
-@keyframes gl-scan-sweep {
-  0%   { opacity: 0;   top: 0;    }
-  6%   { opacity: 0.3; }
-  88%  { opacity: 0.06; }
-  100% { opacity: 0;   top: 100%; }
+@keyframes gl-laser-sweep {
+  0%   { opacity: 0;   top: -2%;  }
+  6%   { opacity: .9;             }
+  88%  { opacity: .55;            }
+  96%  { opacity: 0;              }
+  100% { opacity: 0;   top: 102%; }
+}
+
+/* ── Neon halo — radial glow blooms behind helmet on hover ── */
+.gl-helmet-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255,220,180,.55)  0%,   /* hot white-orange laser source */
+    rgba(255,80,0,.60)     8%,
+    rgba(225,6,0,.42)     22%,
+    rgba(225,6,0,.14)     46%,
+    transparent           68%
+  );
+  filter: blur(38px);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity .55s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@media (pointer: fine) {
+  .gl-right:hover .gl-helmet-wrap::before {
+    opacity: 1;
+    animation: laser-halo-pulse 2.8s ease-in-out infinite;
+  }
+}
+
+@keyframes laser-halo-pulse {
+  0%, 100% { opacity: .82; }
+  50%       { opacity: 1;   }
+}
+
+/* ── Laser beam shafts — 3 directional beams, pulse on hover ── */
+.gl-helmet-wrap::after {
+  content: '';
+  position: absolute;
+  inset: -28%;
+  background:
+    /* Upper-left beam */
+    linear-gradient(
+      148deg,
+      transparent           32%,
+      rgba(225,6,0,0)       43%,
+      rgba(255,70,0,.30)    48%,
+      rgba(255,190,100,.22) 50%,
+      rgba(255,70,0,.30)    52%,
+      rgba(225,6,0,0)       57%,
+      transparent           66%
+    ),
+    /* Upper-right beam */
+    linear-gradient(
+      32deg,
+      transparent           32%,
+      rgba(225,6,0,0)       43%,
+      rgba(255,70,0,.24)    48%,
+      rgba(255,150,70,.16)  50%,
+      rgba(255,70,0,.24)    52%,
+      rgba(225,6,0,0)       57%,
+      transparent           66%
+    ),
+    /* Vertical beam */
+    linear-gradient(
+      to bottom,
+      transparent           28%,
+      rgba(225,6,0,0)       42%,
+      rgba(255,70,0,.22)    47%,
+      rgba(255,170,80,.16)  50%,
+      rgba(255,70,0,.22)    53%,
+      rgba(225,6,0,0)       58%,
+      transparent           70%
+    );
+  filter: blur(9px);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity .6s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@media (pointer: fine) {
+  .gl-right:hover .gl-helmet-wrap::after {
+    opacity: 1;
+    animation: laser-beams-pulse 3.4s ease-in-out infinite;
+  }
+}
+
+@keyframes laser-beams-pulse {
+  0%, 100% { opacity: .80; filter: blur(9px);  }
+  50%       { opacity: 1;   filter: blur(7px);  }
+}
+
+/* Intensify ambient glow on hover */
+@media (pointer: fine) {
+  .gl-right:hover .gl-glow {
+    opacity: 1;
+    animation-play-state: paused;
+  }
+  .gl-right:hover .gl-glow-deep {
+    opacity: 1;
+    animation-play-state: paused;
+  }
 }
 
 /* Starting grid lines — subtle horizontal stripes, bottom third */
@@ -1305,6 +1423,9 @@ h1, h2, h3 { margin-top: 0; }
   .gl-success-dot { animation: none; }
   .gl-right { transition: none; }
   .gl-right:hover { filter: none; }
+  .gl-right:hover::before { animation: none; opacity: 0; }
+  .gl-right:hover .gl-helmet-wrap::before,
+  .gl-right:hover .gl-helmet-wrap::after { animation: none; opacity: 0; }
 }
 
 /* =============================================================
