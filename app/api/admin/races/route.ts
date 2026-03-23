@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+
+const CreateRaceBody = z.object({
+  id: z.string().regex(/^[a-z0-9-]+$/, "id must be lowercase alphanumeric with hyphens only (e.g. japan-2026)").min(1),
+  round: z.number().int().min(1).max(30),
+  grand_prix_name: z.string().min(1).max(100),
+  circuit: z.string().max(100).optional(),
+  race_starts_at: z.string().datetime({ offset: true }).optional(),
+  qualifying_starts_at: z.string().datetime({ offset: true }).optional(),
+});
 
 async function requireAdmin(supabase: NonNullable<Awaited<ReturnType<typeof createSupabaseServerClient>>>) {
   const { data: { user } } = await supabase.auth.getUser();
@@ -55,25 +65,11 @@ export async function POST(request: Request) {
   const admin = createSupabaseAdminClient();
   if (!admin) return NextResponse.json({ error: "Service role key missing." }, { status: 503 });
 
-  const body = await request.json() as {
-    id?: unknown;
-    round?: unknown;
-    grand_prix_name?: unknown;
-    circuit?: unknown;
-    race_starts_at?: unknown;
-    qualifying_starts_at?: unknown;
-  };
+  const parsed = CreateRaceBody.safeParse(await request.json());
+  if (!parsed.success)
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid request body." }, { status: 400 });
 
-  const { id, round, grand_prix_name, circuit, race_starts_at, qualifying_starts_at } = body;
-
-  if (!id || typeof id !== "string" || id.trim().length === 0)
-    return NextResponse.json({ error: "id (slug) is required." }, { status: 400 });
-  if (!/^[a-z0-9-]+$/.test(id as string))
-    return NextResponse.json({ error: "id must be lowercase alphanumeric with hyphens only (e.g. japan-2026)." }, { status: 400 });
-  if (!round || typeof round !== "number" || !Number.isInteger(round) || round < 1 || round > 30)
-    return NextResponse.json({ error: "round must be an integer between 1 and 30." }, { status: 400 });
-  if (!grand_prix_name || typeof grand_prix_name !== "string" || (grand_prix_name as string).trim().length === 0)
-    return NextResponse.json({ error: "grand_prix_name is required." }, { status: 400 });
+  const { id, round, grand_prix_name, circuit, race_starts_at, qualifying_starts_at } = parsed.data;
 
   // Prevent duplicate slug
   const { data: existing } = await admin.from("races").select("id").eq("id", id).single();
@@ -81,12 +77,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `A race with id "${id}" already exists.` }, { status: 409 });
 
   const { error: insertError } = await admin.from("races").insert({
-    id: (id as string).trim(),
-    round: round as number,
-    grand_prix_name: (grand_prix_name as string).trim(),
-    circuit: circuit && typeof circuit === "string" ? (circuit as string).trim() || null : null,
-    race_starts_at: race_starts_at && typeof race_starts_at === "string" ? race_starts_at : null,
-    qualifying_starts_at: qualifying_starts_at && typeof qualifying_starts_at === "string" ? qualifying_starts_at : null,
+    id: id.trim(),
+    round,
+    grand_prix_name: grand_prix_name.trim(),
+    circuit: circuit?.trim() || null,
+    race_starts_at: race_starts_at ?? null,
+    qualifying_starts_at: qualifying_starts_at ?? null,
     season: 2026,
     race_locked: false,
     is_locked: false,

@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { track } from "@/lib/analytics";
 
 function OnboardingForm() {
   const router = useRouter();
@@ -38,6 +39,7 @@ function OnboardingForm() {
       setError(data.error ?? "Failed to save username.");
       setSaving(false);
     } else {
+      track("onboarding_completed", { username });
       setShowBetaNotice(true);
       setTimeout(() => router.push(redirect), 2000);
     }

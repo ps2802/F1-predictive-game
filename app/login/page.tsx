@@ -4,6 +4,7 @@ import { Suspense, useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy, useLogin, type User } from "@privy-io/react-auth";
 import { handlePrivyAuthComplete } from "@/lib/auth";
+import { track } from "@/lib/analytics";
 
 /**
  * /login — unified auth entry point for Gridlock.
@@ -25,9 +26,10 @@ function AuthForm() {
   const [loading, setLoading] = useState(false);
 
   const onComplete = useCallback(
-    async (_: { user: User }) => {
+    async (result: { user: User }) => {
       setError(null);
       try {
+        track("auth_completed", { privy_user_id: result.user.id });
         await handlePrivyAuthComplete(getAccessToken, redirect, router);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Sign-in failed.";

@@ -1,6 +1,24 @@
 "use client";
 
+import { useEffect } from "react";
 import { PrivyProvider } from "@privy-io/react-auth";
+import posthog from "posthog-js";
+
+function PostHogInit() {
+  useEffect(() => {
+    const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    const host = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
+    if (!key) return;
+    posthog.init(key, {
+      api_host: host,
+      capture_pageview: true,
+      capture_pageleave: true,
+      autocapture: false, // manual events only — keeps data clean for beta
+      persistence: "localStorage",
+    });
+  }, []);
+  return null;
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
@@ -34,6 +52,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
+      <PostHogInit />
       {children}
     </PrivyProvider>
   );

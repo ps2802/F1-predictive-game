@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { races } from "@/lib/races";
+import { track } from "@/lib/analytics";
 
 type Option = {
   id: string;
@@ -201,6 +202,7 @@ export default function PredictPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to save");
+      track("prediction_submitted", { race_id: raceId });
       localStorage.removeItem(`picks_${raceId}`);
       setSaved(true);
     } catch (e) {

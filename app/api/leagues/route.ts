@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+const CreateLeagueBody = z.object({
+  name: z.string().min(1).max(60),
+  type: z.enum(["public", "private"]).default("private"),
+  entry_fee_usdc: z.number().min(0).max(1000).default(0),
+  max_users: z.number().int().min(2).max(10000).default(1000),
+});
 
 export async function GET() {
   const supabase = await createSupabaseServerClient();
@@ -50,15 +58,11 @@ export async function POST(request: Request) {
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { name, type, entry_fee_usdc, max_users } = (await request.json()) as {
-    name: string;
-    type: "public" | "private";
-    entry_fee_usdc: number;
-    max_users: number;
-  };
+  const parsed = CreateLeagueBody.safeParse(await request.json());
+  if (!parsed.success)
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid request body." }, { status: 400 });
 
-  if (!name?.trim())
-    return NextResponse.json({ error: "League name is required." }, { status: 400 });
+  const { name, type, entry_fee_usdc, max_users } = parsed.data;
 
   // Generate invite code
   const { data: codeData } = await supabase.rpc("generate_invite_code");

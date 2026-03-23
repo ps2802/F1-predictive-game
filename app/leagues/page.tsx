@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { track } from "@/lib/analytics";
 
 type League = {
   id: string;
@@ -21,16 +22,20 @@ export default function LeaguesPage() {
   const router = useRouter();
   const [leagues, setLeagues] = useState<League[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState("");
   const [joinSuccess, setJoinSuccess] = useState("");
 
   async function loadLeagues() {
+    setLoadError("");
     const res = await fetch("/api/leagues");
     if (res.ok) {
       const data = await res.json();
       setLeagues(data.leagues ?? []);
+    } else {
+      setLoadError("Failed to load leagues. Please refresh.");
     }
     setLoading(false);
   }
@@ -60,6 +65,7 @@ export default function LeaguesPage() {
     if (!res.ok) {
       setJoinError(data.error ?? "Failed to join league.");
     } else {
+      track("league_joined", { league_id: data.leagueId });
       setJoinSuccess("Joined! Redirecting...");
       setJoinCode("");
       setTimeout(() => router.push(`/leagues/${data.leagueId}`), 1200);
@@ -72,6 +78,27 @@ export default function LeaguesPage() {
       <div className="gla-root">
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <div className="gl-spinner" />
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="gla-root">
+        <div className="gl-stripe" aria-hidden="true" />
+        <AppNav />
+        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
+          <p style={{ fontSize: "2rem", marginBottom: "1rem" }}>⚠️</p>
+          <h1 className="gla-page-title">Something went wrong</h1>
+          <p className="gla-page-sub" style={{ marginTop: "0.5rem" }}>{loadError}</p>
+          <button
+            className="gla-race-btn"
+            style={{ marginTop: "2rem" }}
+            onClick={() => { setLoading(true); loadLeagues(); }}
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
