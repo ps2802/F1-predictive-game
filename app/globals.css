@@ -1792,51 +1792,30 @@ h1, h2, h3 { margin-top: 0; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   LOGIN PAGE — Full-screen split hero
+   LOGIN PAGE — Full-screen split hero  (content LEFT · image RIGHT)
 ───────────────────────────────────────────────────────────────────────────── */
 .gl-login-root {
   position: relative;
   min-height: 100svh;
   display: grid;
+  /* content left, image right */
   grid-template-columns: 1fr 1fr;
   background: #000;
   overflow: hidden;
 }
 
-/* ── Right: visual / image panel ── */
-.gl-login-visual {
-  position: relative;
-  overflow: hidden;
-}
-
-.gl-login-driver {
+/* ── Checkered flag accent strip at very top of panel ── */
+.gl-login-checker-top {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
-  display: block;
-  filter: saturate(1.08) contrast(1.05);
-}
-
-/* Dark gradient overlay — left edge bleeds into the content panel */
-.gl-login-img-overlay {
-  position: absolute;
-  inset: 0;
+  top: 0; left: 0; right: 0;
+  height: 6px;
   background:
-    linear-gradient(to right,  #000 0%, rgba(0,0,0,0.55) 28%, transparent 55%),
-    linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 70%, rgba(0,0,0,0.7) 100%);
-}
-
-/* Vertical red glow strip — left edge of image, bridges panels */
-.gl-login-vstrip {
-  position: absolute;
-  top: 0; bottom: 0; left: 0;
-  width: 2px;
-  background: linear-gradient(to bottom, transparent 0%, #E10600 30%, #E10600 70%, transparent 100%);
-  box-shadow: 0 0 24px 4px rgba(225,6,0,0.45);
-  z-index: 2;
+    repeating-linear-gradient(
+      90deg,
+      #E10600 0px, #E10600 6px,
+      #000     6px, #000    12px
+    );
+  z-index: 10;
 }
 
 /* ── Left: content panel ── */
@@ -1848,22 +1827,31 @@ h1, h2, h3 { margin-top: 0; }
   justify-content: center;
   padding: 3.5rem 4rem 3rem;
   background: #000;
+  overflow: hidden;
 }
 
-/* Top red bar */
-.gl-login-panel::before {
+/* Faint diagonal speed-lines behind content */
+.gl-login-panel::after {
   content: "";
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: #E10600;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -68deg,
+    transparent 0px,
+    transparent 38px,
+    rgba(255,255,255,0.012) 38px,
+    rgba(255,255,255,0.012) 40px
+  );
+  pointer-events: none;
 }
 
 .gl-login-logo {
   width: 130px;
   height: auto;
   display: block;
-  margin-bottom: 2.8rem;
+  margin-bottom: 2.4rem;
+  position: relative;
+  z-index: 1;
 }
 
 .gl-login-eyebrow {
@@ -1875,7 +1863,9 @@ h1, h2, h3 { margin-top: 0; }
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: #E10600;
-  margin: 0 0 1.2rem;
+  margin: 0 0 1.1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .gl-login-dot {
@@ -1890,53 +1880,122 @@ h1, h2, h3 { margin-top: 0; }
 
 @keyframes gl-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.45; transform: scale(0.7); }
+  50%       { opacity: 0.4; transform: scale(0.65); }
 }
 
 .gl-login-h1 {
-  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  font-size: clamp(2.4rem, 4vw, 3.6rem);
   font-weight: 900;
-  line-height: 1.0;
+  line-height: 0.95;
   letter-spacing: -0.03em;
   text-transform: uppercase;
   color: #fff;
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.25rem;
+  position: relative;
+  z-index: 1;
 }
 
 .gl-login-h1 em {
   font-style: normal;
   color: #E10600;
+  /* subtle glow on the money line */
+  text-shadow: 0 0 40px rgba(225,6,0,0.4);
 }
 
 .gl-login-sub {
   font-size: 0.82rem;
   line-height: 1.65;
-  color: rgba(255,255,255,0.42);
+  color: rgba(255,255,255,0.4);
   letter-spacing: 0.02em;
-  max-width: 380px;
-  margin: 0 0 2rem;
+  max-width: 360px;
+  margin: 0 0 1.6rem;
+  position: relative;
+  z-index: 1;
 }
 
-/* Stats row */
-.gl-login-stats {
+/* ── Prize pot callout box — scarcity + loss aversion ── */
+.gl-login-prize-box {
   display: flex;
   align-items: center;
   gap: 0;
-  margin-bottom: 2.2rem;
+  margin-bottom: 1.6rem;
+  border: 1px solid rgba(225,6,0,0.35);
+  background: rgba(225,6,0,0.07);
+  position: relative;
+  z-index: 1;
+  width: fit-content;
+  max-width: 380px;
+}
+
+.gl-login-prize-left {
+  display: flex;
+  flex-direction: column;
+  padding: 0.85rem 1.4rem;
+  border-right: 1px solid rgba(225,6,0,0.25);
+}
+
+.gl-login-prize-label {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(225,6,0,0.7);
+  margin-bottom: 0.2rem;
+}
+
+.gl-login-prize-amount {
+  font-size: 1.8rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #fff;
+  letter-spacing: -0.04em;
+}
+
+.gl-login-prize-right {
+  padding: 0.6rem 1.2rem;
+}
+
+.gl-login-prize-warn {
+  font-size: 0.62rem;
+  line-height: 1.55;
+  color: rgba(255,255,255,0.32);
+  letter-spacing: 0.04em;
+  font-style: italic;
+}
+
+/* ── Sector-style stats row ── */
+.gl-login-stats {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 1.8rem;
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.02);
   width: fit-content;
+  position: relative;
+  z-index: 1;
 }
 
 .gl-login-stat {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.85rem 1.6rem;
+  padding: 0.75rem 1.5rem;
+  position: relative;
+}
+
+/* Sector label (S1/S2/S3) — F1 timing flavour */
+.gl-login-stat-sector {
+  font-size: 0.45rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(0,210,170,0.7);  /* F1 teal/green sector colour */
+  margin-bottom: 0.2rem;
 }
 
 .gl-login-stat-n {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 900;
   line-height: 1;
   color: #fff;
@@ -1944,25 +2003,26 @@ h1, h2, h3 { margin-top: 0; }
 }
 
 .gl-login-stat-l {
-  font-size: 0.55rem;
+  font-size: 0.5rem;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.3);
-  margin-top: 0.25rem;
+  color: rgba(255,255,255,0.28);
+  margin-top: 0.2rem;
 }
 
 .gl-login-stat-div {
   width: 1px;
-  height: 2.4rem;
   background: rgba(255,255,255,0.09);
+  align-self: stretch;
 }
 
-/* CTA button */
+/* ── CTA button ── */
 .gl-login-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.6rem;
   width: 100%;
   max-width: 340px;
   background: #E10600;
@@ -1973,39 +2033,34 @@ h1, h2, h3 { margin-top: 0; }
   letter-spacing: 0.18em;
   text-transform: uppercase;
   border: none;
-  padding: 1.05rem 1.5rem;
+  padding: 1.1rem 1.5rem;
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
   position: relative;
+  z-index: 1;
   overflow: hidden;
 }
 
+/* Sweep shimmer on hover */
 .gl-login-btn::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.07) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.09) 50%, transparent 100%);
   transform: translateX(-100%);
-  transition: transform 0.4s ease;
+  transition: transform 0.45s ease;
 }
 
-.gl-login-btn:hover:not(:disabled)::after {
-  transform: translateX(100%);
-}
-
+.gl-login-btn:hover:not(:disabled)::after { transform: translateX(100%); }
 .gl-login-btn:hover:not(:disabled) {
   background: #c00500;
   transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(225,6,0,0.35);
 }
+.gl-login-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+.gl-login-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-.gl-login-btn:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.gl-login-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
+.gl-login-btn-flag { font-size: 0.9rem; }
 
 /* Spinner inside button */
 .gl-login-spinner {
@@ -2018,88 +2073,242 @@ h1, h2, h3 { margin-top: 0; }
   animation: gl-spin 0.7s linear infinite;
 }
 
-@keyframes gl-spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes gl-spin { to { transform: rotate(360deg); } }
 
 .gl-login-error {
   margin-top: 0.75rem;
   font-size: 0.74rem;
   color: #f87171;
   letter-spacing: 0.02em;
+  position: relative;
+  z-index: 1;
 }
 
-/* Loss aversion micro-copy */
+/* Loss aversion micro-copy under CTA */
 .gl-login-urgency {
-  margin-top: 1rem;
-  font-size: 0.64rem;
+  margin-top: 0.9rem;
+  font-size: 0.62rem;
   font-style: italic;
-  color: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.18);
   letter-spacing: 0.04em;
   max-width: 340px;
+  position: relative;
+  z-index: 1;
 }
 
 .gl-login-footer {
-  margin-top: 2rem;
-  padding-top: 1.2rem;
+  margin-top: 1.8rem;
+  padding-top: 1.1rem;
   border-top: 1px solid rgba(255,255,255,0.07);
-  font-size: 0.68rem;
+  font-size: 0.67rem;
   color: rgba(255,255,255,0.22);
   letter-spacing: 0.06em;
+  position: relative;
+  z-index: 1;
 }
 
 .gl-login-footer a {
-  color: rgba(255,255,255,0.55);
+  color: rgba(255,255,255,0.5);
   text-decoration: none;
   transition: color 0.15s;
 }
+.gl-login-footer a:hover { color: #fff; }
 
-.gl-login-footer a:hover {
-  color: #fff;
+/* ─────────────────────────────────────────────────────────────────────────────
+   IMAGE PANEL (right side)
+───────────────────────────────────────────────────────────────────────────── */
+.gl-login-visual {
+  position: relative;
+  overflow: hidden;
 }
 
-/* ── Mobile: stack vertically, image becomes top hero ── */
+/* Flip horizontally so driver faces LEFT → toward the content */
+.gl-login-driver {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+  filter: saturate(1.1) contrast(1.06);
+  transform: scaleX(-1);   /* mirror the photo */
+}
+
+/* Dark gradient — right edge fades to black (away from content) */
+.gl-login-img-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to left,  #000 0%, rgba(0,0,0,0.45) 22%, transparent 50%),
+    linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 20%, transparent 65%, rgba(0,0,0,0.9) 100%);
+}
+
+/* Diagonal speed lines across image */
+.gl-login-speedlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -72deg,
+    transparent 0px,
+    transparent 28px,
+    rgba(255,255,255,0.025) 28px,
+    rgba(255,255,255,0.025) 30px
+  );
+  pointer-events: none;
+}
+
+/* Vertical red glow strip — right edge of content panel */
+.gl-login-vstrip {
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, transparent 0%, #E10600 25%, #E10600 75%, transparent 100%);
+  box-shadow: 0 0 28px 6px rgba(225,6,0,0.5);
+  z-index: 3;
+}
+
+/* ── DRS badge (top-right of image) ── */
+.gl-login-drs-badge {
+  position: absolute;
+  top: 1.4rem;
+  right: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid rgba(0,210,170,0.5);
+  background: rgba(0,0,0,0.7);
+  padding: 0.3rem 0.7rem;
+  z-index: 4;
+  backdrop-filter: blur(4px);
+}
+
+.gl-login-drs-label {
+  font-size: 0.45rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+}
+
+.gl-login-drs-status {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(0,210,170,1);
+  text-transform: uppercase;
+  animation: gl-pulse 1.6s ease-in-out infinite;
+}
+
+/* ── Lap counter (bottom-right of image) ── */
+.gl-login-lap {
+  position: absolute;
+  bottom: 5.5rem; /* above ticker */
+  right: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  z-index: 4;
+}
+
+.gl-login-lap-label {
+  font-size: 0.45rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+}
+
+.gl-login-lap-n {
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.55);
+}
+
+/* ── Scrolling circuit ticker ── */
+.gl-ticker-wrap {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2.4rem;
+  background: rgba(0,0,0,0.82);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  overflow: hidden;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+}
+
+.gl-ticker-track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  white-space: nowrap;
+  animation: gl-ticker 28s linear infinite;
+}
+
+@keyframes gl-ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }  /* move by half (one duplicate set) */
+}
+
+.gl-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  padding: 0 2rem;
+}
+
+.gl-ticker-flag {
+  font-size: 0.6rem;
+  filter: grayscale(1) opacity(0.4);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MOBILE — stack: image top, content bottom
+───────────────────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .gl-login-root {
     grid-template-columns: 1fr;
-    grid-template-rows: 52vh 1fr;
+    grid-template-rows: 48vh 1fr;
   }
 
-  /* Image first on mobile */
+  /* Image panel first */
   .gl-login-visual {
     order: -1;
-    min-height: 52vh;
+    min-height: 48vh;
   }
 
   .gl-login-img-overlay {
     background:
-      linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 30%, transparent 55%, #000 100%),
-      linear-gradient(to right, rgba(0,0,0,0.2) 0%, transparent 100%);
+      linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 30%, transparent 55%, #000 100%);
   }
 
-  .gl-login-vstrip {
-    display: none;
-  }
+  .gl-login-vstrip { display: none; }
 
   .gl-login-panel {
     padding: 2rem 1.5rem 2.5rem;
     justify-content: flex-start;
   }
 
-  .gl-login-logo {
-    width: 100px;
-    margin-bottom: 1.8rem;
-  }
+  .gl-login-logo { width: 100px; margin-bottom: 1.6rem; }
 
-  .gl-login-h1 {
-    font-size: 2rem;
-  }
+  .gl-login-h1 { font-size: 2.1rem; }
 
-  .gl-login-btn {
-    max-width: 100%;
-  }
+  .gl-login-prize-box { max-width: 100%; width: 100%; }
 
-  .gl-login-stat {
-    padding: 0.7rem 1.1rem;
-  }
+  .gl-login-stats { width: 100%; }
+
+  .gl-login-stat { flex: 1; padding: 0.7rem 0.8rem; }
+
+  .gl-login-btn { max-width: 100%; }
+
+  .gl-login-drs-badge { top: 1rem; right: 1rem; }
+
+  .gl-login-lap { bottom: 4.5rem; right: 1rem; }
 }
