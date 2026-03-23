@@ -7,9 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed:races": "ts-node scripts/seed-races.ts"
+    "seed:races": "ts-node scripts/seed-races.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
+    "@privy-io/react-auth": "^3.18.0",
+    "@privy-io/server-auth": "^1.32.5",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.99.0",
     "next": "16.1.6",
@@ -27,6 +31,7 @@
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.0"
   }
 }
