@@ -44,7 +44,11 @@ export async function handlePrivyLoginComplete(
   const { token, email } = await res.json();
 
   const supabase = createSupabaseBrowserClient();
-  if (!supabase) return;
+  if (!supabase) {
+    throw new Error(
+      "Supabase client not configured — check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY"
+    );
+  }
 
   const { error } = await supabase.auth.verifyOtp({
     email,

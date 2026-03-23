@@ -131,18 +131,22 @@ export async function POST(request: NextRequest) {
   const resolvedUserId = supabaseUserId ?? linkData.user?.id;
 
   // Upsert profile: set privy_user_id and wallet_address.
-  // balance_usdc is intentionally NOT touched here — it was set by the
-  // handle_new_user trigger on first signup and must not be overwritten
-  // on subsequent logins.
+  // Use upsert (not update) so that if the handle_new_user trigger hasn't
+  // run yet for a brand-new user the row is still written. On conflict only
+  // the specified columns are touched — balance_usdc is intentionally
+  // excluded and is never overwritten here.
   if (resolvedUserId) {
     await admin
       .from("profiles")
-      .update({
-        privy_user_id: privyUserId,
-        ...(walletAddress ? { wallet_address: walletAddress } : {}),
-        is_beta_account: true,
-      })
-      .eq("id", resolvedUserId);
+      .upsert(
+        {
+          id: resolvedUserId,
+          privy_user_id: privyUserId,
+          ...(walletAddress ? { wallet_address: walletAddress } : {}),
+          is_beta_account: true,
+        },
+        { onConflict: "id" }
+      );
   }
 
   return NextResponse.json({
