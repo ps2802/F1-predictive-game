@@ -4,7 +4,7 @@
 
 **Gridlock** is an F1 predictive game where users predict podium finishes (1st/2nd/3rd) for each 2026 Formula 1 race and compete on a global leaderboard. Site: joingridlock.com
 
-**Stage:** Waitlist live → launching for 2026 season (24 rounds, 20 drivers)
+**Stage:** Waitlist live → launching for 2026 season (23 rounds, 20 drivers)
 
 ## Tech Stack
 

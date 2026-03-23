@@ -120,7 +120,7 @@ async function main() {
     throw new Error(`Failed upserting races: ${error.message}`);
   }
 
-  console.log(`seed:races success: upserted ${raceRows.length} races`);
+  process.stdout.write(`seed:races: upserted ${raceRows.length} races\n`);
 }
 
 main().catch((error) => {
