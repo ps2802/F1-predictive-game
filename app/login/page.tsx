@@ -6,22 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy, useLogin, type User } from "@privy-io/react-auth";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-/**
- * handlePrivyLoginComplete
- *
- * Shared post-login handler called by /login and /signup after Privy
- * authenticates the user. It:
- *   1. Exchanges the Privy JWT for a Supabase magic-link OTP via
- *      /api/auth/privy-sync (server-side, keeps all existing API routes
- *      working without changes).
- *   2. Establishes a Supabase browser session so supabase.auth.getUser()
- *      works everywhere.
- *   3. Redirects: new users → /onboarding, returning users → /dashboard
- *      (or the original ?redirect= destination).
- *
- * Supabase is used here ONLY for session bridging — it is NOT the visible
- * auth entry point. The user-facing auth UI is exclusively Privy.
- */
 export async function handlePrivyLoginComplete(
   getAccessToken: () => Promise<string | null>,
   redirectTo: string | null,
@@ -66,7 +50,6 @@ export async function handlePrivyLoginComplete(
     return;
   }
 
-  // New users haven't set a username yet → send to onboarding.
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     const { data: prof } = await supabase
@@ -83,9 +66,6 @@ export async function handlePrivyLoginComplete(
   router.push("/dashboard");
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LoginForm — rendered inside a Suspense boundary (needed for useSearchParams)
-// ─────────────────────────────────────────────────────────────────────────────
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -93,6 +73,7 @@ function LoginForm() {
 
   const { getAccessToken } = usePrivy();
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const onComplete = useCallback(
     async ({ user }: { user: User }) => {
@@ -103,6 +84,7 @@ function LoginForm() {
       } catch (err) {
         console.error("[Privy] post-login sync failed:", err);
         setError("Sign-in failed. Please try again.");
+        setLoading(false);
       }
     },
     [getAccessToken, redirect, router]
@@ -111,43 +93,107 @@ function LoginForm() {
   const onError = useCallback((err: unknown) => {
     console.error("[Privy] login error:", err);
     setError("Sign-in failed. Please try again.");
+    setLoading(false);
   }, []);
 
   const { login } = useLogin({ onComplete, onError });
 
+  const handleLogin = () => {
+    setLoading(true);
+    login();
+  };
+
   return (
-    <>
-      <div className="gl-stripe" aria-hidden="true" />
-      <div className="gla-auth-root">
+    <div className="gl-login-root">
+      {/* ── Right: Driver hero image ── */}
+      <div className="gl-login-visual" aria-hidden="true">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/gridlock f1 driver .png"
+          alt=""
+          className="gl-login-driver"
+          draggable={false}
+        />
+        <div className="gl-login-img-overlay" />
+        {/* Vertical red glow strip */}
+        <div className="gl-login-vstrip" />
+      </div>
+
+      {/* ── Left: Content panel ── */}
+      <div className="gl-login-panel">
+
+        {/* Logo */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/gridlock logo - transparent.png"
           alt="Gridlock"
-          className="gla-auth-logo"
+          className="gl-login-logo"
           draggable={false}
         />
 
-        <div className="gla-auth-card">
-          <p className="gla-auth-eyebrow">Driver login</p>
-          <h1 className="gla-auth-title">Sign in</h1>
-          <p className="gla-auth-sub">
-            Welcome back. Continue with your email or social account.
-          </p>
+        {/* Eyebrow */}
+        <p className="gl-login-eyebrow">
+          <span className="gl-login-dot" />
+          2026 SEASON · NOW LIVE
+        </p>
 
-          {/* This button is the ONLY entry point for authentication.
-              Clicking it opens the Privy modal — no email/password form. */}
-          <button className="gla-auth-btn" onClick={login}>
-            Sign in
-          </button>
+        {/* Headline — identity threat + exclusivity */}
+        <h1 className="gl-login-h1">
+          You either<br />
+          see the grid<br />
+          <em>— or you don&apos;t.</em>
+        </h1>
 
-          {error && <p className="gla-auth-msg is-error">{error}</p>}
+        {/* Dark psychology sub-copy */}
+        <p className="gl-login-sub">
+          Opinions are free. Points aren&apos;t.<br />
+          Predict qualifying, race results, and driver battles
+          across 24 rounds. Your rivals placed last race.
+          Did you?
+        </p>
 
-          <div className="gla-auth-footer">
-            New to Gridlock? <Link href="/signup">Create an account</Link>
+        {/* Stats row — social proof + loss aversion */}
+        <div className="gl-login-stats">
+          <div className="gl-login-stat">
+            <span className="gl-login-stat-n">24</span>
+            <span className="gl-login-stat-l">Rounds</span>
+          </div>
+          <div className="gl-login-stat-div" />
+          <div className="gl-login-stat">
+            <span className="gl-login-stat-n">20</span>
+            <span className="gl-login-stat-l">Drivers</span>
+          </div>
+          <div className="gl-login-stat-div" />
+          <div className="gl-login-stat">
+            <span className="gl-login-stat-n">1</span>
+            <span className="gl-login-stat-l">Champion</span>
           </div>
         </div>
+
+        {/* CTA */}
+        <button
+          className="gl-login-btn"
+          onClick={handleLogin}
+          disabled={loading}
+        >
+          {loading ? <span className="gl-login-spinner" /> : "ENTER THE GRID"}
+        </button>
+
+        {error && <p className="gl-login-error">{error}</p>}
+
+        {/* Loss aversion micro-copy */}
+        <p className="gl-login-urgency">
+          Every race you sit out is a race you can never win back.
+        </p>
+
+        {/* Footer */}
+        <div className="gl-login-footer">
+          No account?{" "}
+          <Link href="/signup">Join the grid</Link>
+        </div>
+
       </div>
-    </>
+    </div>
   );
 }
 
