@@ -1,7 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Rate limit: 10 join attempts per IP per minute (prevents invite code brute-force)
+  const ip = getClientIp(request.headers);
+  if (isRateLimited(`leagues-join:${ip}`, 10, 60 * 1000)) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   const supabase = await createSupabaseServerClient();
   if (!supabase)
     return NextResponse.json({ error: "Supabase env vars missing." }, { status: 500 });
@@ -56,11 +63,26 @@ export async function POST(request: Request) {
         { status: 402 }
       );
 
-    // Deduct entry fee
-    await supabase
+    // Atomic deduction using optimistic locking.
+    //
+    // WHY: a simple read-then-write has a race condition: two simultaneous
+    // requests both read balance=100, both pass the check, both deduct → user
+    // spends 2x. By requiring balance_usdc to still equal the value we just
+    // read, the second concurrent update finds 0 rows (balance changed between
+    // read and write) and returns a 409. Only one of two racing requests wins.
+    const { data: deducted } = await supabase
       .from("profiles")
       .update({ balance_usdc: profile.balance_usdc - league.entry_fee_usdc })
-      .eq("id", user.id);
+      .eq("id", user.id)
+      .eq("balance_usdc", profile.balance_usdc) // optimistic lock
+      .select("balance_usdc");
+
+    if (!deducted || deducted.length === 0) {
+      return NextResponse.json(
+        { error: "Balance changed — please try again." },
+        { status: 409 }
+      );
+    }
 
     await supabase.from("transactions").insert({
       user_id: user.id,

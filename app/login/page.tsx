@@ -1,72 +1,21 @@
 "use client";
 
-import Link from "next/link";
 import { Suspense, useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy, useLogin, type User } from "@privy-io/react-auth";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { handlePrivyAuthComplete } from "@/lib/auth";
 
-export async function handlePrivyLoginComplete(
-  getAccessToken: () => Promise<string | null>,
-  redirectTo: string | null,
-  router: ReturnType<typeof useRouter>
-) {
-  const accessToken = await getAccessToken();
-  if (!accessToken) return;
-
-  const res = await fetch("/api/auth/privy-sync", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ accessToken }),
-  });
-
-  if (!res.ok) {
-    console.error("[privy-sync] failed:", await res.text());
-    throw new Error("privy-sync failed");
-  }
-
-  const { token, email } = await res.json();
-
-  const supabase = createSupabaseBrowserClient();
-  if (!supabase) {
-    throw new Error(
-      "Supabase client not configured — check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY"
-    );
-  }
-
-  const { error } = await supabase.auth.verifyOtp({
-    email,
-    token,
-    type: "email",
-  });
-
-  if (error) {
-    console.error("[Supabase] verifyOtp failed:", error.message);
-    throw new Error(error.message);
-  }
-
-  if (redirectTo) {
-    router.push(redirectTo);
-    return;
-  }
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    const { data: prof } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .single();
-    if (!prof?.username) {
-      router.push("/onboarding");
-      return;
-    }
-  }
-
-  router.push("/dashboard");
-}
-
-function LoginForm() {
+/**
+ * /login — unified auth entry point for Gridlock.
+ *
+ * Handles both new signups and returning logins through the same Privy modal.
+ * Privy determines whether the user is new internally. After auth:
+ *   - New user (no username)  → /onboarding
+ *   - Returning user          → /dashboard (or ?redirect=)
+ *
+ * The separate /signup route redirects here so there is one canonical path.
+ */
+function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams?.get("redirect") ?? null;
@@ -76,30 +25,29 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const onComplete = useCallback(
-    async ({ user }: { user: User }) => {
-      console.log("[Privy] login complete:", user.id);
+    async (_: { user: User }) => {
       setError(null);
       try {
-        await handlePrivyLoginComplete(getAccessToken, redirect, router);
+        await handlePrivyAuthComplete(getAccessToken, redirect, router);
       } catch (err) {
-        console.error("[Privy] post-login sync failed:", err);
-        setError("Sign-in failed. Please try again.");
+        const msg = err instanceof Error ? err.message : "Sign-in failed.";
+        setError(msg.includes("fetch") ? "Network error — please try again." : "Sign-in failed. Please try again.");
         setLoading(false);
       }
     },
     [getAccessToken, redirect, router]
   );
 
-  const onError = useCallback((err: unknown) => {
-    console.error("[Privy] login error:", err);
+  const onError = useCallback((_err: unknown) => {
     setError("Sign-in failed. Please try again.");
     setLoading(false);
   }, []);
 
   const { login } = useLogin({ onComplete, onError });
 
-  const handleLogin = () => {
+  const handleEnter = () => {
     setLoading(true);
+    setError(null);
     login();
   };
 
@@ -115,14 +63,11 @@ function LoginForm() {
           draggable={false}
         />
         <div className="gl-login-img-overlay" />
-        {/* Vertical red glow strip */}
         <div className="gl-login-vstrip" />
       </div>
 
       {/* ── Left: Content panel ── */}
       <div className="gl-login-panel">
-
-        {/* Logo */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/gridlock logo - transparent.png"
@@ -131,20 +76,17 @@ function LoginForm() {
           draggable={false}
         />
 
-        {/* Eyebrow */}
         <p className="gl-login-eyebrow">
           <span className="gl-login-dot" />
           2026 SEASON · NOW LIVE
         </p>
 
-        {/* Headline — identity threat + exclusivity */}
         <h1 className="gl-login-h1">
           You either<br />
           see the grid<br />
           <em>— or you don&apos;t.</em>
         </h1>
 
-        {/* Dark psychology sub-copy */}
         <p className="gl-login-sub">
           Opinions are free. Points aren&apos;t.<br />
           Predict qualifying, race results, and driver battles
@@ -152,7 +94,6 @@ function LoginForm() {
           Did you?
         </p>
 
-        {/* Stats row — social proof + loss aversion */}
         <div className="gl-login-stats">
           <div className="gl-login-stat">
             <span className="gl-login-stat-n">24</span>
@@ -170,10 +111,9 @@ function LoginForm() {
           </div>
         </div>
 
-        {/* CTA */}
         <button
           className="gl-login-btn"
-          onClick={handleLogin}
+          onClick={handleEnter}
           disabled={loading}
         >
           {loading ? <span className="gl-login-spinner" /> : "ENTER THE GRID"}
@@ -181,17 +121,9 @@ function LoginForm() {
 
         {error && <p className="gl-login-error">{error}</p>}
 
-        {/* Loss aversion micro-copy */}
         <p className="gl-login-urgency">
           Every race you sit out is a race you can never win back.
         </p>
-
-        {/* Footer */}
-        <div className="gl-login-footer">
-          No account?{" "}
-          <Link href="/signup">Join the grid</Link>
-        </div>
-
       </div>
     </div>
   );
@@ -200,7 +132,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense>
-      <LoginForm />
+      <AuthForm />
     </Suspense>
   );
 }

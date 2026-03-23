@@ -500,14 +500,55 @@ h1, h2, h3 { margin-top: 0; }
 
 /* ── Responsive ── */
 @media (max-width: 700px) {
-  .gla-nav { padding: 0 1.25rem; }
-  .gla-content { padding: 1.75rem 1.25rem 3rem; }
+  /* Nav: wrap to two rows on mobile so links don't overflow */
+  .gla-nav {
+    padding: 0 1rem;
+    height: auto;
+    min-height: 52px;
+    flex-wrap: wrap;
+    gap: 0;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  .gla-nav-logo { width: 100px; }
+  .gla-nav-right {
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    padding: 0.25rem 0;
+  }
+  /* Hide leaderboard + leagues on very small screens to prevent overflow */
+  .gla-content { padding: 1.75rem 1rem 3rem; }
   .gla-race-grid { grid-template-columns: 1fr; }
   .gla-auth-card { padding: 1.5rem 1.25rem; }
+
+  /* Dashboard header — stack on mobile */
+  .dash-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
 }
 @media (max-width: 420px) {
   .gla-predict-row { flex-direction: column; align-items: flex-start; gap: .6rem; }
   .gla-predict-pos { width: auto; }
+  /* Predict step tabs — make them scrollable, not wrapping */
+  .predict-steps {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: 0.25rem;
+  }
+}
+
+/* dash-header — needed for the flex stack on mobile above */
+.dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 /* ═══════════════════════════════════════════════════════════════

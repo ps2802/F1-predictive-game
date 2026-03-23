@@ -1,9 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
 type Answers = Record<string, string[]>; // question_id → option_id[]
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Rate limit: 60 prediction submits per user per minute
+  const ip = getClientIp(request.headers);
+  if (isRateLimited(`predictions:${ip}`, 60, 60 * 1000)) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   const supabase = await createSupabaseServerClient();
   if (!supabase)
     return NextResponse.json({ error: "Supabase env vars missing." }, { status: 500 });
