@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { drivers } from "@/lib/races";
 
 type PredictionPayload = {
   raceId?: string;
@@ -8,7 +9,9 @@ type PredictionPayload = {
   thirdDriver?: string;
 };
 
-export async function POST(request: Request) {
+const VALID_DRIVERS = new Set(drivers);
+
+export async function POST(request: Request): Promise<NextResponse> {
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
@@ -35,9 +38,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Each podium position must be different." }, { status: 400 });
   }
 
+  // Validate all three drivers against the canonical allowlist.
+  for (const driver of [firstDriver, secondDriver, thirdDriver]) {
+    if (!VALID_DRIVERS.has(driver)) {
+      return NextResponse.json({ error: `Unknown driver: ${driver}` }, { status: 400 });
+    }
+  }
+
   const { data: race, error: raceError } = await supabase
     .from("races")
-    .select("race_starts_at")
+    .select("is_locked, race_date")
     .eq("id", raceId)
     .single();
 
@@ -45,13 +55,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Race not found." }, { status: 404 });
   }
 
-  const raceStart = new Date(race.race_starts_at).getTime();
+  // is_locked is the authoritative admin gate. Time-based lock is the automatic fallback.
+  if (race.is_locked) {
+    return NextResponse.json({ error: "Predictions locked." }, { status: 403 });
+  }
+
+  const raceStart = new Date(race.race_date).getTime();
   if (Number.isNaN(raceStart)) {
     return NextResponse.json({ error: "Invalid race date." }, { status: 500 });
   }
 
   if (Date.now() > raceStart) {
-    return NextResponse.json({ error: "Predictions locked" }, { status: 403 });
+    return NextResponse.json({ error: "Predictions locked." }, { status: 403 });
+  }
+
+  // Block predictions for races that have already been settled.
+  const { data: existingResult } = await supabase
+    .from("results")
+    .select("race_id")
+    .eq("race_id", raceId)
+    .maybeSingle();
+
+  if (existingResult) {
+    return NextResponse.json({ error: "Race already settled." }, { status: 403 });
   }
 
   const { error: upsertError } = await supabase.from("predictions").upsert(
