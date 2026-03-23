@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { usePrivy, useLogin } from "@privy-io/react-auth";
+import { usePrivy, useLogin, type User } from "@privy-io/react-auth";
 import { handlePrivyLoginComplete } from "@/app/login/page";
 
 /**
@@ -17,12 +17,26 @@ import { handlePrivyLoginComplete } from "@/app/login/page";
 export default function SignupPage() {
   const router = useRouter();
   const { getAccessToken } = usePrivy();
+  const [error, setError] = useState<string | null>(null);
 
-  const onComplete = useCallback(async () => {
-    await handlePrivyLoginComplete(getAccessToken, null, router);
+  // Privy v3: onComplete receives { user, isNewUser, wasAlreadyAuthenticated, ... }
+  const onComplete = useCallback(async ({ user }: { user: User }) => {
+    console.log("[Privy] signup complete for", user.id);
+    setError(null);
+    try {
+      await handlePrivyLoginComplete(getAccessToken, null, router);
+    } catch (err) {
+      console.error("[Privy] post-signup sync failed", err);
+      setError("Sign-up failed. Please try again.");
+    }
   }, [getAccessToken, router]);
 
-  const { login } = useLogin({ onComplete });
+  const onError = useCallback((err: unknown) => {
+    console.error("[Privy] signup error", err);
+    setError("Sign-up failed. Please try again.");
+  }, []);
+
+  const { login } = useLogin({ onComplete, onError });
 
   return (
     <>
@@ -47,6 +61,10 @@ export default function SignupPage() {
           <button className="gla-auth-btn" onClick={login}>
             Get started
           </button>
+
+          {error && (
+            <p className="gla-auth-msg is-error">{error}</p>
+          )}
 
           <div className="gla-auth-footer">
             Already have an account? <Link href="/login">Sign in</Link>

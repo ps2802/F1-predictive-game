@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useCallback } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { usePrivy, useLogin } from "@privy-io/react-auth";
+import { usePrivy, useLogin, type User } from "@privy-io/react-auth";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /**
@@ -75,12 +75,26 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams?.get("redirect") ?? null;
   const { getAccessToken } = usePrivy();
+  const [error, setError] = useState<string | null>(null);
 
-  const onComplete = useCallback(async () => {
-    await handlePrivyLoginComplete(getAccessToken, redirect, router);
+  // Privy v3: onComplete receives { user, isNewUser, wasAlreadyAuthenticated, ... }
+  const onComplete = useCallback(async ({ user }: { user: User }) => {
+    console.log("[Privy] login complete for", user.id);
+    setError(null);
+    try {
+      await handlePrivyLoginComplete(getAccessToken, redirect, router);
+    } catch (err) {
+      console.error("[Privy] post-login sync failed", err);
+      setError("Sign-in failed. Please try again.");
+    }
   }, [getAccessToken, redirect, router]);
 
-  const { login } = useLogin({ onComplete });
+  const onError = useCallback((err: unknown) => {
+    console.error("[Privy] login error", err);
+    setError("Sign-in failed. Please try again.");
+  }, []);
+
+  const { login } = useLogin({ onComplete, onError });
 
   return (
     <>
@@ -98,12 +112,16 @@ function LoginForm() {
           <p className="gla-auth-eyebrow">Driver login</p>
           <h1 className="gla-auth-title">Sign in</h1>
           <p className="gla-auth-sub">
-            Welcome back. Continue with email, Google, or Apple.
+            Welcome back. Continue with your email or social account.
           </p>
 
           <button className="gla-auth-btn" onClick={login}>
             Sign in
           </button>
+
+          {error && (
+            <p className="gla-auth-msg is-error">{error}</p>
+          )}
 
           <div className="gla-auth-footer">
             New to Gridlock? <Link href="/signup">Create an account</Link>
