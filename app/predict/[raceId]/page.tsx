@@ -29,16 +29,18 @@ type Question = {
 // question_id → option_id[]
 type Answers = Record<string, string[]>;
 
-const STEPS = ["qualifying", "race", "chaos"] as const;
+const STEPS = ["qualifying", "race", "chaos", "review"] as const;
 const STEP_LABELS: Record<string, string> = {
   qualifying: "Qualifying",
   race: "Race",
   chaos: "Chaos",
+  review: "Review",
 };
 const STEP_ICONS: Record<string, string> = {
   qualifying: "Q",
   race: "R",
   chaos: "⚡",
+  review: "✎",
 };
 
 export default function PredictPage() {
@@ -177,12 +179,64 @@ export default function PredictPage() {
   }
 
   function stepComplete(category: string) {
+    if (category === "review") return false;
     const qs = questions.filter((q) => q.category === category);
     if (qs.length === 0) return true;
     return qs.every((q) => {
       const picks = (answers[q.id] ?? []).filter(Boolean);
       return picks.length >= q.multi_select;
     });
+  }
+
+  function getOptionLabel(optionId: string): string {
+    for (const q of questions) {
+      for (const opt of q.options) {
+        if (opt.id === optionId) return opt.option_value;
+      }
+    }
+    return "—";
+  }
+
+  function renderReview() {
+    const categories = ["qualifying", "race", "chaos"] as const;
+    return (
+      <div className="predict-review">
+        {categories.map((cat) => {
+          const catQuestions = questions.filter((q) => q.category === cat);
+          if (catQuestions.length === 0) return null;
+          return (
+            <div key={cat} className="predict-review-category">
+              <h3>{STEP_LABELS[cat]}</h3>
+              {catQuestions.map((q) => {
+                const picks = (answers[q.id] ?? []).filter(Boolean);
+                return (
+                  <div key={q.id} className="predict-review-row">
+                    <span className="predict-review-label">{q.label}</span>
+                    <div className="predict-review-picks">
+                      {picks.length > 0 ? (
+                        picks.map((optId, i) => (
+                          <span key={i} className="predict-review-pick">
+                            {getOptionLabel(optId)}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="predict-review-missing">No pick</span>
+                      )}
+                    </div>
+                    <button
+                      className="predict-review-edit-btn"
+                      onClick={() => setStep(categories.indexOf(cat))}
+                    >
+                      Edit
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
   async function handleSubmit() {
@@ -334,7 +388,9 @@ export default function PredictPage() {
 
       {/* Questions */}
       <div className="predict-body">
-        {currentQuestions.length === 0 ? (
+        {currentCategory === "review" ? (
+          renderReview()
+        ) : currentQuestions.length === 0 ? (
           <div className="predict-empty">
             <p>No {currentCategory} questions available yet.</p>
           </div>
@@ -393,14 +449,7 @@ export default function PredictPage() {
               ← Back
             </button>
           )}
-          {step < STEPS.length - 1 ? (
-            <button
-              className="predict-nav-btn primary"
-              onClick={() => setStep(step + 1)}
-            >
-              Next: {STEP_LABELS[STEPS[step + 1]]} →
-            </button>
-          ) : (
+          {currentCategory === "review" ? (
             <button
               className="predict-nav-btn primary"
               onClick={handleSubmit}
@@ -411,6 +460,13 @@ export default function PredictPage() {
                 : isAuthenticated
                 ? "Lock In Predictions"
                 : "Continue to Login →"}
+            </button>
+          ) : (
+            <button
+              className="predict-nav-btn primary"
+              onClick={() => setStep(step + 1)}
+            >
+              Next: {STEP_LABELS[STEPS[step + 1]]} →
             </button>
           )}
         </div>
