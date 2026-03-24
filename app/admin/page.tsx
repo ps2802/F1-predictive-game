@@ -115,8 +115,9 @@ export default function AdminPage() {
       round: parseInt(createForm.round, 10),
       grand_prix_name: createForm.grand_prix_name.trim(),
       circuit: createForm.circuit.trim() || undefined,
-      race_starts_at: createForm.race_starts_at || undefined,
-      qualifying_starts_at: createForm.qualifying_starts_at || undefined,
+      // datetime-local gives "2026-03-29T15:00" (no TZ) — append :00Z for valid ISO-8601
+      race_starts_at: createForm.race_starts_at ? createForm.race_starts_at + ":00Z" : undefined,
+      qualifying_starts_at: createForm.qualifying_starts_at ? createForm.qualifying_starts_at + ":00Z" : undefined,
     };
 
     const res = await fetch("/api/admin/races", {
