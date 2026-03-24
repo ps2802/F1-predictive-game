@@ -27,5 +27,14 @@ export async function GET(
   if (!score)
     return NextResponse.json({ error: "No score found for this race." }, { status: 404 });
 
-  return NextResponse.json({ score });
+  // Count how many users scored strictly higher to derive rank (1-indexed)
+  const { count: aboveCount } = await supabase
+    .from("race_scores")
+    .select("user_id", { count: "exact", head: true })
+    .eq("race_id", raceId)
+    .gt("total_score", score.total_score);
+
+  const rank = (aboveCount ?? 0) + 1;
+
+  return NextResponse.json({ score, rank });
 }

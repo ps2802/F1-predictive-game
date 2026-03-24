@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrivyClient } from "@privy-io/server-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
 /**
  * POST /api/auth/privy-sync
@@ -19,6 +20,15 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
  * with the returned values to complete the session handshake.
  */
 export async function POST(request: NextRequest) {
+  // Rate limit: 10 auth attempts per IP per 15 minutes
+  const ip = getClientIp(request.headers);
+  if (isRateLimited(`privy-sync:${ip}`, 10, 15 * 60 * 1000)) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait before trying again." },
+      { status: 429 }
+    );
+  }
+
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
   const appSecret = process.env.PRIVY_APP_SECRET;
 

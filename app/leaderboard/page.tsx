@@ -17,6 +17,7 @@ export default function LeaderboardPage() {
   const router = useRouter();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,11 +31,12 @@ export default function LeaderboardPage() {
       if (!user) { router.push("/login"); return; }
       setCurrentUserId(user.id);
 
-      const { data } = await supabase
+      const { data, error: fetchErr } = await supabase
         .from("leaderboard")
         .select("*")
         .limit(100);
 
+      if (fetchErr) setError("Failed to load leaderboard. Please refresh.");
       setEntries(data ?? []);
       setLoading(false);
     }
@@ -46,6 +48,27 @@ export default function LeaderboardPage() {
       <div className="gla-root">
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <div className="gl-spinner" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="gla-root">
+        <div className="gl-stripe" aria-hidden="true" />
+        <AppNav />
+        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
+          <p style={{ fontSize: "2rem", marginBottom: "1rem" }}>⚠️</p>
+          <h1 className="gla-page-title">Something went wrong</h1>
+          <p className="gla-page-sub" style={{ marginTop: "0.5rem" }}>{error}</p>
+          <button
+            className="gla-race-btn"
+            style={{ marginTop: "2rem" }}
+            onClick={() => { setError(""); setLoading(true); router.refresh(); }}
+          >
+            Retry
+          </button>
         </div>
       </div>
     );

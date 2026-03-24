@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+const DepositBody = z.object({
+  target_user_id: z.string().uuid(),
+  amount: z.number().positive().max(100_000),
+  tx_hash: z.string().optional(),
+});
 
 // Returns user's deposit wallet address + current balance
 export async function GET() {
@@ -46,14 +53,11 @@ export async function POST(request: Request) {
   if (!profile?.is_admin)
     return NextResponse.json({ error: "Forbidden: admin only." }, { status: 403 });
 
-  const { target_user_id, amount, tx_hash } = (await request.json()) as {
-    target_user_id: string;
-    amount: number;
-    tx_hash: string;
-  };
+  const parsed = DepositBody.safeParse(await request.json());
+  if (!parsed.success)
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid request body." }, { status: 400 });
 
-  if (!target_user_id || !amount || amount <= 0)
-    return NextResponse.json({ error: "Invalid deposit parameters." }, { status: 400 });
+  const { target_user_id, amount, tx_hash } = parsed.data;
 
   // Record deposit event
   const { error: depErr } = await supabase.from("deposit_events").insert({

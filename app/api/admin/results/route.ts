@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+
+const ResultsBody = z.object({
+  raceId: z.string().min(1),
+  results: z.array(z.object({
+    question_id: z.string().min(1),
+    correct_option_id: z.string().min(1),
+    pick_order: z.number().int().min(1).default(1),
+  })).min(1),
+});
 
 // Admin-only: submit race results per question
 export async function POST(request: Request) {
@@ -24,17 +34,11 @@ export async function POST(request: Request) {
   if (!profile?.is_admin)
     return NextResponse.json({ error: "Forbidden: admin only." }, { status: 403 });
 
-  const { raceId, results } = (await request.json()) as {
-    raceId: string;
-    results: Array<{
-      question_id: string;
-      correct_option_id: string;
-      pick_order: number;
-    }>;
-  };
+  const parsed = ResultsBody.safeParse(await request.json());
+  if (!parsed.success)
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid request body." }, { status: 400 });
 
-  if (!raceId || !Array.isArray(results) || results.length === 0)
-    return NextResponse.json({ error: "Missing raceId or results." }, { status: 400 });
+  const { raceId, results } = parsed.data;
 
   // Use admin client for writes (bypasses RLS)
   const admin = createSupabaseAdminClient();

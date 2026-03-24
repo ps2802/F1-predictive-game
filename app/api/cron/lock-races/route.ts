@@ -1,0 +1,65 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+
+/**
+ * GET /api/cron/lock-races
+ *
+ * Called by Vercel Cron every 5 minutes (see vercel.json).
+ * Locks any race whose qualifying session has started but whose
+ * race_locked flag is still false — so admin doesn't have to do it manually.
+ *
+ * Security: requires Authorization: Bearer <CRON_SECRET> header.
+ * Vercel injects this automatically when the cron fires; the header must
+ * match the CRON_SECRET env var set in the Vercel project settings.
+ *
+ * Manual oversight still needed:
+ *   - qualifying_starts_at must be set for each race (via admin panel / migration).
+ *   - If a race needs to stay open past qualifying (unusual), set race_locked=false
+ *     manually and the cron will re-lock it on the next tick — remove the
+ *     qualifying_starts_at instead to prevent re-locking.
+ */
+export async function GET(request: NextRequest) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret) {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
+
+  const admin = createSupabaseAdminClient();
+  if (!admin)
+    return NextResponse.json({ error: "Service role key missing." }, { status: 503 });
+
+  const now = new Date().toISOString();
+
+  // Find races that should be locked (qualifying started, not yet locked)
+  const { data: racesToLock, error: fetchErr } = await admin
+    .from("races")
+    .select("id, grand_prix_name, qualifying_starts_at")
+    .eq("race_locked", false)
+    .not("qualifying_starts_at", "is", null)
+    .lte("qualifying_starts_at", now);
+
+  if (fetchErr)
+    return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+
+  if (!racesToLock || racesToLock.length === 0)
+    return NextResponse.json({ locked: [] });
+
+  const ids = racesToLock.map((r) => r.id);
+
+  const { error: updateErr } = await admin
+    .from("races")
+    .update({ race_locked: true, is_locked: true })
+    .in("id", ids);
+
+  if (updateErr)
+    return NextResponse.json({ error: updateErr.message }, { status: 500 });
+
+  return NextResponse.json({
+    locked: ids,
+    count: ids.length,
+    lockedAt: now,
+  });
+}

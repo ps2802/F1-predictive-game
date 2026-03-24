@@ -1,160 +1,140 @@
 "use client";
 
-import Link from "next/link";
 import { Suspense, useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy, useLogin, type User } from "@privy-io/react-auth";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { handlePrivyAuthComplete } from "@/lib/auth";
+import { track } from "@/lib/analytics";
 
 /**
- * handlePrivyLoginComplete
+ * /login — unified auth entry point for Gridlock.
  *
- * Shared post-login handler called by /login and /signup after Privy
- * authenticates the user. It:
- *   1. Exchanges the Privy JWT for a Supabase magic-link OTP via
- *      /api/auth/privy-sync (server-side, keeps all existing API routes
- *      working without changes).
- *   2. Establishes a Supabase browser session so supabase.auth.getUser()
- *      works everywhere.
- *   3. Redirects: new users → /onboarding, returning users → /dashboard
- *      (or the original ?redirect= destination).
+ * Handles both new signups and returning logins through the same Privy modal.
+ * Privy determines whether the user is new internally. After auth:
+ *   - New user (no username)  → /onboarding
+ *   - Returning user          → /dashboard (or ?redirect=)
  *
- * Supabase is used here ONLY for session bridging — it is NOT the visible
- * auth entry point. The user-facing auth UI is exclusively Privy.
+ * The separate /signup route redirects here so there is one canonical path.
  */
-export async function handlePrivyLoginComplete(
-  getAccessToken: () => Promise<string | null>,
-  redirectTo: string | null,
-  router: ReturnType<typeof useRouter>
-) {
-  const accessToken = await getAccessToken();
-  if (!accessToken) return;
-
-  const res = await fetch("/api/auth/privy-sync", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ accessToken }),
-  });
-
-  if (!res.ok) {
-    console.error("[privy-sync] failed:", await res.text());
-    throw new Error("privy-sync failed");
-  }
-
-  const { token, email } = await res.json();
-
-  const supabase = createSupabaseBrowserClient();
-  if (!supabase) {
-    throw new Error(
-      "Supabase client not configured — check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY"
-    );
-  }
-
-  const { error } = await supabase.auth.verifyOtp({
-    email,
-    token,
-    type: "email",
-  });
-
-  if (error) {
-    console.error("[Supabase] verifyOtp failed:", error.message);
-    throw new Error(error.message);
-  }
-
-  if (redirectTo) {
-    router.push(redirectTo);
-    return;
-  }
-
-  // New users haven't set a username yet → send to onboarding.
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    const { data: prof } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .single();
-    if (!prof?.username) {
-      router.push("/onboarding");
-      return;
-    }
-  }
-
-  router.push("/dashboard");
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LoginForm — rendered inside a Suspense boundary (needed for useSearchParams)
-// ─────────────────────────────────────────────────────────────────────────────
-function LoginForm() {
+function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams?.get("redirect") ?? null;
 
   const { getAccessToken } = usePrivy();
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const onComplete = useCallback(
-    async ({ user }: { user: User }) => {
-      console.log("[Privy] login complete:", user.id);
+    async (result: { user: User }) => {
       setError(null);
       try {
-        await handlePrivyLoginComplete(getAccessToken, redirect, router);
+        track("auth_completed", { privy_user_id: result.user.id });
+        await handlePrivyAuthComplete(getAccessToken, redirect, router);
       } catch (err) {
-        console.error("[Privy] post-login sync failed:", err);
-        setError("Sign-in failed. Please try again.");
+        const msg = err instanceof Error ? err.message : "Sign-in failed.";
+        setError(msg.includes("fetch") ? "Network error — please try again." : "Sign-in failed. Please try again.");
+        setLoading(false);
       }
     },
     [getAccessToken, redirect, router]
   );
 
-  const onError = useCallback((err: unknown) => {
-    console.error("[Privy] login error:", err);
+  const onError = useCallback((_err: unknown) => {
     setError("Sign-in failed. Please try again.");
+    setLoading(false);
   }, []);
 
   const { login } = useLogin({ onComplete, onError });
 
+  const handleEnter = () => {
+    setLoading(true);
+    setError(null);
+    login();
+  };
+
   return (
-    <>
-      <div className="gl-stripe" aria-hidden="true" />
-      <div className="gla-auth-root">
+    <div className="gl-login-root">
+      {/* ── Right: Driver hero image ── */}
+      <div className="gl-login-visual" aria-hidden="true">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/gridlock f1 driver .png"
+          alt=""
+          className="gl-login-driver"
+          draggable={false}
+        />
+        <div className="gl-login-img-overlay" />
+        <div className="gl-login-vstrip" />
+      </div>
+
+      {/* ── Left: Content panel ── */}
+      <div className="gl-login-panel">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/gridlock logo - transparent.png"
           alt="Gridlock"
-          className="gla-auth-logo"
+          className="gl-login-logo"
           draggable={false}
         />
 
-        <div className="gla-auth-card">
-          <p className="gla-auth-eyebrow">Driver login</p>
-          <h1 className="gla-auth-title">Sign in</h1>
-          <p className="gla-auth-sub">
-            Welcome back. Continue with your email or social account.
-          </p>
+        <p className="gl-login-eyebrow">
+          <span className="gl-login-dot" />
+          2026 SEASON · NOW LIVE
+        </p>
 
-          {/* This button is the ONLY entry point for authentication.
-              Clicking it opens the Privy modal — no email/password form. */}
-          <button className="gla-auth-btn" onClick={login}>
-            Sign in
-          </button>
+        <h1 className="gl-login-h1">
+          You either<br />
+          see the grid<br />
+          <em>— or you don&apos;t.</em>
+        </h1>
 
-          {error && <p className="gla-auth-msg is-error">{error}</p>}
+        <p className="gl-login-sub">
+          Opinions are free. Points aren&apos;t.<br />
+          Predict qualifying, race results, and driver battles
+          across 24 rounds. Your rivals placed last race.
+          Did you?
+        </p>
 
-          <div className="gla-auth-footer">
-            New to Gridlock? <Link href="/signup">Create an account</Link>
+        <div className="gl-login-stats">
+          <div className="gl-login-stat">
+            <span className="gl-login-stat-n">24</span>
+            <span className="gl-login-stat-l">Rounds</span>
+          </div>
+          <div className="gl-login-stat-div" />
+          <div className="gl-login-stat">
+            <span className="gl-login-stat-n">20</span>
+            <span className="gl-login-stat-l">Drivers</span>
+          </div>
+          <div className="gl-login-stat-div" />
+          <div className="gl-login-stat">
+            <span className="gl-login-stat-n">1</span>
+            <span className="gl-login-stat-l">Champion</span>
           </div>
         </div>
+
+        <button
+          className="gl-login-btn"
+          onClick={handleEnter}
+          disabled={loading}
+        >
+          {loading ? <span className="gl-login-spinner" /> : "ENTER THE GRID"}
+        </button>
+
+        {error && <p className="gl-login-error">{error}</p>}
+
+        <p className="gl-login-urgency">
+          Every race you sit out is a race you can never win back.
+        </p>
       </div>
-    </>
+    </div>
   );
 }
 
 export default function LoginPage() {
   return (
     <Suspense>
-      <LoginForm />
+      <AuthForm />
     </Suspense>
   );
 }

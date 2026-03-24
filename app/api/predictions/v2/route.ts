@@ -1,9 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
-type Answers = Record<string, string[]>; // question_id → option_id[]
+const PredictionBody = z.object({
+  raceId: z.string().min(1),
+  answers: z.record(z.string(), z.array(z.string())),
+});
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Rate limit: 60 prediction submits per user per minute
+  const ip = getClientIp(request.headers);
+  if (isRateLimited(`predictions:${ip}`, 60, 60 * 1000)) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   const supabase = await createSupabaseServerClient();
   if (!supabase)
     return NextResponse.json({ error: "Supabase env vars missing." }, { status: 500 });
@@ -14,13 +25,11 @@ export async function POST(request: Request) {
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { raceId, answers } = (await request.json()) as {
-    raceId: string;
-    answers: Answers;
-  };
+  const parsed = PredictionBody.safeParse(await request.json());
+  if (!parsed.success)
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid request body." }, { status: 400 });
 
-  if (!raceId || !answers)
-    return NextResponse.json({ error: "Missing raceId or answers." }, { status: 400 });
+  const { raceId, answers } = parsed.data;
 
   // Check race is not locked (manual flag or qualifying deadline passed)
   const { data: race } = await supabase

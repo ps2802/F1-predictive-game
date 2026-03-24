@@ -66,6 +66,7 @@ export default function ScoreBreakdownPage() {
   const race = races.find((r) => r.id === raceId);
 
   const [score, setScore] = useState<RaceScore | null>(null);
+  const [rank, setRank] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -81,6 +82,7 @@ export default function ScoreBreakdownPage() {
       if (res.ok) {
         const data = await res.json();
         setScore(data.score);
+        if (data.rank != null) setRank(data.rank as number);
       } else {
         const data = await res.json();
         setError(data.error ?? "Score not available.");
@@ -169,6 +171,34 @@ export default function ScoreBreakdownPage() {
             </div>
           )}
         </div>
+
+        {/* Race rank banner — shown once rank is known */}
+        {rank != null && (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "0.75rem",
+            background: "rgba(0,210,170,0.07)",
+            border: "1px solid rgba(0,210,170,0.2)",
+            borderRadius: "10px",
+            padding: "1rem 1.25rem",
+            marginBottom: "1.5rem",
+          }}>
+            <div>
+              <span style={{ fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(0,210,170,0.7)", display: "block", marginBottom: "0.2rem" }}>
+                Your rank this race
+              </span>
+              <span style={{ fontSize: "1.6rem", fontWeight: 900, color: "#00D2AA" }}>
+                #{rank}
+              </span>
+            </div>
+            <Link href="/leaderboard" className="gla-race-btn" style={{ fontSize: "0.65rem", padding: "0.6rem 1.1rem" }}>
+              Full Leaderboard →
+            </Link>
+          </div>
+        )}
 
         {/* Category summary */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem", marginBottom: "2rem" }}>
