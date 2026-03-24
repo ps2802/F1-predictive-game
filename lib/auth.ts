@@ -80,10 +80,13 @@ export async function handlePrivyAuthComplete(
     );
   }
 
+  // type must be "magiclink" — the token was generated via
+  // admin.auth.admin.generateLink({ type: "magiclink" }) and Supabase
+  // returns 403 if you verify it as type "email" (a different OTP flow).
   const { error: otpError } = await supabase.auth.verifyOtp({
     email,
     token,
-    type: "email",
+    type: "magiclink",
   });
 
   if (otpError) {
