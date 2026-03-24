@@ -101,10 +101,12 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  // For free leagues, paid=true immediately.
+  // For paid leagues, payment was already deducted above — mark as paid.
   const { error: joinErr } = await supabase.from("league_members").insert({
     league_id: league.id,
     user_id: user.id,
-    paid: league.entry_fee_usdc === 0,
+    paid: true,
   });
 
   if (joinErr)
@@ -115,6 +117,9 @@ export async function POST(request: NextRequest) {
     .from("leagues")
     .update({ member_count: league.member_count + 1 })
     .eq("id", league.id);
+
+  // Activate any draft predictions now that user has a paid league membership
+  await supabase.rpc("activate_user_predictions", { p_user_id: user.id });
 
   return NextResponse.json({ success: true, leagueId: league.id });
 }

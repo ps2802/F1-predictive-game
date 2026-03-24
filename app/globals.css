@@ -2415,3 +2415,196 @@ h1, h2, h3 { margin-top: 0; }
     padding: 2.5rem 0 2rem;
   }
 }
+
+/* ========================================
+   LEAGUE ECONOMICS & PAYOUT
+   ======================================== */
+
+.league-economics {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.league-econ-card {
+  flex: 1;
+  min-width: 120px;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.league-econ-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.league-econ-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.league-payout-section {
+  margin-top: 2rem;
+}
+
+.league-payout-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.league-payout-tier {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.league-payout-place {
+  width: 36px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.league-payout-bar-bg {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.league-payout-bar {
+  height: 100%;
+  background: var(--gl-red, #e10600);
+  transition: width 0.3s ease;
+}
+
+.league-payout-pct {
+  width: 40px;
+  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.league-payout-amt {
+  width: 70px;
+  text-align: right;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========================================
+   LEAGUE CREATE — FEE PRESETS & PAYOUT EDITOR
+   ======================================== */
+
+.league-fee-presets {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.league-fee-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.league-fee-btn.is-active {
+  background: var(--gl-red, #e10600);
+  border-color: var(--gl-red, #e10600);
+  color: #fff;
+}
+
+.league-fee-btn:hover:not(.is-active) {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.league-payout-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.league-payout-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.league-payout-place-label {
+  width: 36px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ========================================
+   PROFILE — WALLET SECTION (INLINE)
+   ======================================== */
+
+.profile-wallet-section {
+  margin-top: 2rem;
+}
+
+.profile-wallet-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.profile-wallet-balance {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.profile-wallet-amount {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-wallet-currency {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profile-wallet-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.profile-wallet-address {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: 0.5rem;
+  font-family: monospace;
+}

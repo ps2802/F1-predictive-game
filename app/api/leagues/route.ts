@@ -2,11 +2,17 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+const PayoutTier = z.object({
+  place: z.number().int().min(1).max(10),
+  percent: z.number().min(0).max(100),
+});
+
 const CreateLeagueBody = z.object({
   name: z.string().min(1).max(60),
   type: z.enum(["public", "private"]).default("private"),
   entry_fee_usdc: z.number().min(0).max(1000).default(0),
   max_users: z.number().int().min(2).max(10000).default(1000),
+  payout_config: z.object({ tiers: z.array(PayoutTier) }).nullable().optional(),
 });
 
 export async function GET() {
@@ -62,7 +68,7 @@ export async function POST(request: Request) {
   if (!parsed.success)
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid request body." }, { status: 400 });
 
-  const { name, type, entry_fee_usdc, max_users } = parsed.data;
+  const { name, type, entry_fee_usdc, max_users, payout_config } = parsed.data;
 
   // Generate invite code
   const { data: codeData } = await supabase.rpc("generate_invite_code");
@@ -77,6 +83,7 @@ export async function POST(request: Request) {
       creator_id: user.id,
       entry_fee_usdc: entry_fee_usdc ?? 0,
       max_users: max_users ?? 1000,
+      payout_config: payout_config ?? null,
     })
     .select()
     .single();
@@ -95,6 +102,9 @@ export async function POST(request: Request) {
     .from("leagues")
     .update({ member_count: 1 })
     .eq("id", league.id);
+
+  // Activate any draft predictions now that creator has a paid league membership
+  await supabase.rpc("activate_user_predictions", { p_user_id: user.id });
 
   return NextResponse.json({ league }, { status: 201 });
 }

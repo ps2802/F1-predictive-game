@@ -55,6 +55,7 @@ export default function PredictPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [predictionStatus, setPredictionStatus] = useState<"draft" | "active">("draft");
   const [error, setError] = useState("");
   const [isLocked, setIsLocked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -258,6 +259,7 @@ export default function PredictPage() {
       if (!res.ok) throw new Error(data.error ?? "Failed to save");
       track("prediction_submitted", { race_id: raceId });
       localStorage.removeItem(`picks_${raceId}`);
+      setPredictionStatus(data.status ?? "draft");
       setSaved(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -316,17 +318,30 @@ export default function PredictPage() {
   }
 
   if (saved) {
+    const isDraft = predictionStatus === "draft";
     return (
       <div className="gla-root">
         <div className="gl-stripe" aria-hidden="true" />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
-          <div className="predict-success-icon">✓</div>
+          <div className="predict-success-icon">{isDraft ? "📋" : "✓"}</div>
           <h1 className="gla-page-title" style={{ marginTop: "1.5rem" }}>
-            Predictions Locked In
+            {isDraft ? "Predictions Saved as Draft" : "Predictions Locked In"}
           </h1>
           <p className="gla-page-sub">
             {race.name} · Round {race.round}
           </p>
+          {isDraft && (
+            <p style={{
+              color: "rgba(0, 210, 170, 1)",
+              fontSize: "0.9rem",
+              marginTop: "1rem",
+              maxWidth: "400px",
+              marginInline: "auto",
+              lineHeight: 1.5,
+            }}>
+              Join a league to activate your predictions. Only active predictions count for scoring and leaderboards.
+            </p>
+          )}
           <div
             style={{
               display: "flex",
@@ -337,7 +352,7 @@ export default function PredictPage() {
             }}
           >
             <Link href="/leagues" className="gla-race-btn">
-              Join a League
+              {isDraft ? "Join a League to Activate" : "Join a League"}
             </Link>
             <Link
               href="/dashboard"

@@ -65,14 +65,25 @@ export async function POST(request: NextRequest) {
   if (invalidIds.length > 0)
     return NextResponse.json({ error: "Invalid question IDs." }, { status: 400 });
 
-  // Upsert prediction row — status 'active' means submitted and ready for scoring
+  // Check if user has any paid league membership — if so, predictions go active immediately.
+  // Otherwise, predictions stay as draft until they join and pay a league.
+  const { data: paidMemberships } = await supabase
+    .from("league_members")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("paid", true)
+    .limit(1);
+
+  const hasPaidLeague = (paidMemberships?.length ?? 0) > 0;
+
+  // Upsert prediction row — 'draft' until league entry is paid, then 'active'
   const { data: pred, error: predErr } = await supabase
     .from("predictions")
     .upsert(
       {
         user_id: user.id,
         race_id: raceId,
-        status: "active",
+        status: hasPaidLeague ? "active" : "draft",
       },
       { onConflict: "user_id,race_id" }
     )
@@ -118,9 +129,12 @@ export async function POST(request: NextRequest) {
     answers_json: answers,
     edit_cost: 0,
   });
-  if (versionErr) {
-    console.error("prediction_versions insert failed:", versionErr.message);
-  }
+  // Version snapshot failure is non-blocking — swallow silently
+  void versionErr;
 
-  return NextResponse.json({ success: true, predictionId: pred.id });
+  return NextResponse.json({
+    success: true,
+    predictionId: pred.id,
+    status: hasPaidLeague ? "active" : "draft",
+  });
 }

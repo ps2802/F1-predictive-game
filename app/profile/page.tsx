@@ -14,6 +14,7 @@ type Profile = {
   balance_usdc: number;
   is_admin: boolean;
   email: string;
+  wallet_address: string | null;
   created_at: string;
 };
 
@@ -80,6 +81,8 @@ export default function ProfilePage() {
     );
   }
 
+  const balance = Number(profile?.balance_usdc ?? 0);
+
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
@@ -100,8 +103,8 @@ export default function ProfilePage() {
               <span className="profile-stat-label">Races Predicted</span>
             </div>
             <div className="profile-stat">
-              <span className="profile-stat-value">₮{Number(profile?.balance_usdc ?? 0).toFixed(2)}</span>
-              <span className="profile-stat-label">Test USDC · Beta only</span>
+              <span className="profile-stat-value">${balance.toFixed(2)}</span>
+              <span className="profile-stat-label">Balance</span>
             </div>
           </div>
 
@@ -133,15 +136,25 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Beta Credits */}
-        <div className="wallet-card">
-          <div className="wallet-card-left">
-            <span className="wallet-balance-label">Test USDC · Beta only</span>
-            <span className="wallet-balance">₮{Number(profile?.balance_usdc ?? 0).toFixed(2)}</span>
+        {/* Wallet section — inline, no separate page needed */}
+        <div className="profile-wallet-section">
+          <h3 className="league-section-title">Wallet</h3>
+          <div className="profile-wallet-card">
+            <div className="profile-wallet-balance">
+              <span className="profile-wallet-amount">${balance.toFixed(2)}</span>
+              <span className="profile-wallet-currency">USDC</span>
+            </div>
+            <div className="profile-wallet-actions">
+              <Link href="/wallet" className="gla-race-btn">
+                Deposit
+              </Link>
+            </div>
           </div>
-          <Link href="/wallet" className="gla-nav-link" style={{ fontSize: "0.8rem", alignSelf: "center" }}>
-            View wallet →
-          </Link>
+          {profile?.wallet_address && (
+            <p className="profile-wallet-address">
+              Wallet: {profile.wallet_address.slice(0, 6)}...{profile.wallet_address.slice(-4)}
+            </p>
+          )}
         </div>
 
         {/* Race scores history */}
