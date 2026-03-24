@@ -57,9 +57,15 @@ export async function GET(request: NextRequest) {
   if (updateErr)
     return NextResponse.json({ error: updateErr.message }, { status: 500 });
 
+  // Snapshot pick popularity at lock time so settlement uses deterministic data
+  for (const raceId of ids) {
+    await admin.rpc("freeze_pick_popularity", { p_race_id: raceId });
+  }
+
   return NextResponse.json({
     locked: ids,
     count: ids.length,
     lockedAt: now,
+    snapshotsFrozen: ids.length,
   });
 }

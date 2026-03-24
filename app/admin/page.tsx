@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { races } from "@/lib/races";
+import { AppNav } from "@/app/components/AppNav";
 
 type Question = {
   id: string;
@@ -71,6 +71,16 @@ export default function AdminPage() {
   const [message, setMessage] = useState("");
   const [questionsLoading, setQuestionsLoading] = useState(false);
 
+  // ── Race Management functions ─────────────────────────
+
+  const loadDbRaces = useCallback(async () => {
+    setRacesLoading(true);
+    const res = await fetch("/api/admin/races");
+    const data = await res.json();
+    if (res.ok) setDbRaces(data.races ?? []);
+    setRacesLoading(false);
+  }, []);
+
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
@@ -84,22 +94,9 @@ export default function AdminPage() {
       if (!profile?.is_admin) { router.push("/dashboard"); return; }
       setIsAdmin(true);
       setLoading(false);
+      await loadDbRaces();
     });
-  }, [router]);
-
-  // ── Race Management functions ─────────────────────────
-
-  const loadDbRaces = useCallback(async () => {
-    setRacesLoading(true);
-    const res = await fetch("/api/admin/races");
-    const data = await res.json();
-    if (res.ok) setDbRaces(data.races ?? []);
-    setRacesLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (isAdmin) loadDbRaces();
-  }, [isAdmin, loadDbRaces]);
+  }, [router, loadDbRaces]);
 
   function handleFormChange(field: keyof typeof emptyForm, value: string) {
     setCreateForm((prev) => ({ ...prev, [field]: value }));
@@ -270,19 +267,7 @@ export default function AdminPage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
-      <nav className="gla-nav">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/gridlock logo - transparent.png" alt="Gridlock" className="gla-nav-logo" draggable={false} />
-        <div className="gla-nav-right">
-          <Link className="gla-nav-link" href="/dashboard">Dashboard</Link>
-          <span className="gla-nav-link" style={{ color: "var(--gl-red)" }}>Admin</span>
-          <button className="gla-nav-link" onClick={async () => {
-            const supabase = createSupabaseBrowserClient();
-            if (supabase) await supabase.auth.signOut();
-            router.push("/login");
-          }}>Sign out</button>
-        </div>
-      </nav>
+      <AppNav profile={{ is_admin: true }} />
 
       <div className="gla-content">
         <p className="gla-page-title">Admin Panel</p>

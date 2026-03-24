@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { track } from "@/lib/analytics";
+import { AppNav } from "@/app/components/AppNav";
 
 type League = {
   id: string;
@@ -18,6 +19,8 @@ type League = {
   prize_pool: number;
 };
 
+type SortOption = "newest" | "members" | "prize";
+
 export default function LeaguesPage() {
   const router = useRouter();
   const [leagues, setLeagues] = useState<League[]>([]);
@@ -27,6 +30,8 @@ export default function LeaguesPage() {
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState("");
   const [joinSuccess, setJoinSuccess] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
 
   async function loadLeagues() {
     setLoadError("");
@@ -104,8 +109,16 @@ export default function LeaguesPage() {
     );
   }
 
-  const publicLeagues = leagues.filter((l) => l.type === "public" && !l.is_member);
   const myLeagues = leagues.filter((l) => l.is_member);
+
+  const filteredPublicLeagues = leagues
+    .filter((l) => l.type === "public" && !l.is_member)
+    .filter((l) => l.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === "members") return b.member_count - a.member_count;
+      if (sortBy === "prize") return b.prize_pool - a.prize_pool;
+      return 0; // "newest" — API already orders by created_at desc
+    });
 
   return (
     <div className="gla-root">
@@ -158,14 +171,52 @@ export default function LeaguesPage() {
           </section>
         )}
 
-        {/* Public leagues */}
+        {/* Public leagues with search + sort */}
         <section className="league-section">
-          <h2 className="league-section-title">Public Leagues</h2>
-          {publicLeagues.length === 0 ? (
-            <p className="league-empty">No public leagues yet. Create one!</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem", marginBottom: "1rem" }}>
+            <h2 className="league-section-title" style={{ margin: 0 }}>
+              Public Leagues
+              {filteredPublicLeagues.length > 0 && (
+                <span style={{ marginLeft: "0.5rem", fontSize: "0.8rem", fontWeight: 400, color: "rgba(255,255,255,0.4)" }}>
+                  {filteredPublicLeagues.length} found
+                </span>
+              )}
+            </h2>
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+              <input
+                className="league-join-input"
+                style={{ maxWidth: "180px", padding: "0.35rem 0.75rem", fontSize: "0.8rem" }}
+                placeholder="Search leagues..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {(["newest", "members", "prize"] as SortOption[]).map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => setSortBy(opt)}
+                  style={{
+                    padding: "0.35rem 0.75rem",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    background: sortBy === opt ? "var(--gl-red)" : "transparent",
+                    color: "#fff",
+                    cursor: "pointer",
+                    fontSize: "0.75rem",
+                    fontWeight: sortBy === opt ? 700 : 400,
+                  }}
+                >
+                  {opt === "newest" ? "Newest" : opt === "members" ? "Most Members" : "Prize Pool"}
+                </button>
+              ))}
+            </div>
+          </div>
+          {filteredPublicLeagues.length === 0 ? (
+            <p className="league-empty">
+              {searchQuery ? `No leagues matching "${searchQuery}"` : "No public leagues yet. Create one!"}
+            </p>
           ) : (
             <div className="league-grid">
-              {publicLeagues.map((l) => (
+              {filteredPublicLeagues.map((l) => (
                 <LeagueCard key={l.id} league={l} isMember={false} />
               ))}
             </div>
@@ -197,24 +248,3 @@ function LeagueCard({ league, isMember }: { league: League; isMember: boolean })
   );
 }
 
-function AppNav() {
-  const router = useRouter();
-  async function handleLogout() {
-    const supabase = createSupabaseBrowserClient();
-    if (supabase) await supabase.auth.signOut();
-    router.push("/login");
-  }
-  return (
-    <nav className="gla-nav">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/gridlock logo - transparent.png" alt="Gridlock" className="gla-nav-logo" draggable={false} />
-      <div className="gla-nav-right">
-        <Link className="gla-nav-link" href="/dashboard">Races</Link>
-        <Link className="gla-nav-link" href="/leagues">Leagues</Link>
-        <Link className="gla-nav-link" href="/leaderboard">Leaderboard</Link>
-        <Link className="gla-nav-link" href="/profile">Profile</Link>
-        <button className="gla-nav-link" onClick={handleLogout}>Sign out</button>
-      </div>
-    </nav>
-  );
-}

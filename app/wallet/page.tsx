@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { usePrivy } from "@privy-io/react-auth";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { AppNav } from "@/app/components/AppNav";
 
 type ProfileData = {
   balance_usdc: number;
@@ -12,7 +12,6 @@ type ProfileData = {
 
 export default function WalletPage() {
   const router = useRouter();
-  const { logout } = usePrivy();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -31,13 +30,6 @@ export default function WalletPage() {
     });
   }, [router]);
 
-  async function handleSignOut() {
-    const supabase = createSupabaseBrowserClient();
-    if (supabase) await supabase.auth.signOut();
-    await logout();
-    router.push("/login");
-  }
-
   if (loading) {
     return (
       <div className="gla-root">
@@ -53,15 +45,7 @@ export default function WalletPage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
-      <nav className="gla-nav">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/gridlock logo - transparent.png" alt="Gridlock" className="gla-nav-logo" draggable={false} />
-        <div className="gla-nav-right">
-          <Link className="gla-nav-link" href="/dashboard">Races</Link>
-          <Link className="gla-nav-link" href="/profile">Profile</Link>
-          <button className="gla-nav-link" onClick={handleSignOut}>Sign out</button>
-        </div>
-      </nav>
+      <AppNav profile={profile} />
 
       <div className="gla-content" style={{ maxWidth: "560px" }}>
         <Link href="/profile" className="predict-back">← Profile</Link>

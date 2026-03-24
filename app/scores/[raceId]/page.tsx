@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { races } from "@/lib/races";
+import { AppNav } from "@/app/components/AppNav";
 
 type ScoredQuestion = {
   question_id: string;
@@ -128,6 +129,7 @@ export default function ScoreBreakdownPage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
+      <AppNav />
 
       {/* Header */}
       <div style={{ padding: "1.5rem 1.5rem 0" }}>

@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { races } from "@/lib/races";
-import { usePrivy } from "@privy-io/react-auth";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { AppNav } from "@/app/components/AppNav";
 
 type UserProfile = {
   username: string | null;
@@ -60,11 +60,6 @@ export default function DashboardPage() {
               {races.length} rounds · select a race to make your predictions
             </p>
           </div>
-          {profile?.balance_usdc !== undefined && (
-            <Link href="/wallet" className="dash-balance-pill" title="Test USDC · Not real money">
-              ₮{Number(profile.balance_usdc).toFixed(2)}&nbsp;[BETA]
-            </Link>
-          )}
         </div>
 
         <div className="gla-race-grid">
@@ -102,40 +97,3 @@ export default function DashboardPage() {
   );
 }
 
-function AppNav({ profile }: { profile: UserProfile | null }) {
-  const router = useRouter();
-  const { logout } = usePrivy();
-  async function handleLogout() {
-    const supabase = createSupabaseBrowserClient();
-    if (supabase) await supabase.auth.signOut();
-    await logout();
-    router.push("/login");
-  }
-  return (
-    <nav className="gla-nav">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/gridlock logo - transparent.png"
-        alt="Gridlock"
-        className="gla-nav-logo"
-        draggable={false}
-      />
-      <div className="gla-nav-right">
-        <Link className="gla-nav-link" href="/dashboard">Races</Link>
-        <Link className="gla-nav-link" href="/leagues">Leagues</Link>
-        <Link className="gla-nav-link" href="/leaderboard">Leaderboard</Link>
-        <Link className="gla-nav-link" href="/profile">
-          {profile?.username ? `@${profile.username}` : "Profile"}
-        </Link>
-        {profile?.is_admin && (
-          <Link className="gla-nav-link" href="/admin" style={{ color: "var(--gl-red)" }}>
-            Admin
-          </Link>
-        )}
-        <button className="gla-nav-link" onClick={handleLogout}>
-          Sign out
-        </button>
-      </div>
-    </nav>
-  );
-}

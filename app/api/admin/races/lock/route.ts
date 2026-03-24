@@ -30,5 +30,10 @@ export async function PATCH(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
+  // Freeze popularity snapshot when locking; a no-op when unlocking
+  if (locked) {
+    await admin.rpc("freeze_pick_popularity", { p_race_id: raceId });
+  }
+
   return NextResponse.json({ success: true, raceId, locked });
 }
