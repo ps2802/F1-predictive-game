@@ -21,7 +21,7 @@ function AuthForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams?.get("redirect") ?? null;
 
-  const { getAccessToken } = usePrivy();
+  const { getAccessToken, authenticated } = usePrivy();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -50,6 +50,17 @@ function AuthForm() {
   const handleEnter = () => {
     setLoading(true);
     setError(null);
+    // If already authenticated with Privy (existing session), skip the modal
+    // and go straight to the Supabase sync — calling login() when already
+    // authenticated causes Privy to throw "user is already logged in".
+    if (authenticated) {
+      handlePrivyAuthComplete(getAccessToken, redirect, router).catch((err) => {
+        const msg = err instanceof Error ? err.message : "Sign-in failed.";
+        setError(msg.includes("fetch") ? "Network error — please try again." : "Sign-in failed. Please try again.");
+        setLoading(false);
+      });
+      return;
+    }
     login();
   };
 
