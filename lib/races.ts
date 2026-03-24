@@ -53,5 +53,5 @@ export const drivers = [
   "Esteban Ocon",
   "Jack Doohan",
   "Gabriel Bortoleto",
-  "Valtteri Bottas",
+  "Pierre Gasly",
 ];

@@ -13,15 +13,25 @@ function OnboardingForm() {
   const [username, setUsername] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [showBetaNotice, setShowBetaNotice] = useState(false);
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.push("/login");
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) { router.push("/login"); return; }
+      // Skip onboarding if user already has a username set (e.g. returning user
+      // who was mis-routed here due to a stale auth check).
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", user.id)
+        .single();
+      if (prof?.username) {
+        router.push(redirect);
+      }
     });
-  }, [router]);
+  }, [router, redirect]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,13 +50,44 @@ function OnboardingForm() {
       setSaving(false);
     } else {
       track("onboarding_completed", { username });
-      setShowBetaNotice(true);
-      setTimeout(() => router.push(redirect), 2000);
+      setDone(true);
     }
   }
 
-  function handleSkip() {
-    router.push(redirect);
+  // Success state — show beta credits notice with an explicit CTA
+  // (no auto-redirect: the 2-second timer was too fast to read the notice)
+  if (done) {
+    return (
+      <div className="gla-root">
+        <div className="gl-stripe" aria-hidden="true" />
+        <div className="gla-content" style={{ maxWidth: "480px", textAlign: "center", paddingTop: "6rem" }}>
+          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🏁</div>
+          <h1 className="gla-page-title">You&apos;re in, {username}.</h1>
+          <p className="gla-page-sub" style={{ marginTop: "0.5rem" }}>
+            Your driver name is set. Time to predict.
+          </p>
+          <div style={{
+            marginTop: "1.5rem",
+            padding: "1rem 1.25rem",
+            background: "rgba(232,0,45,0.08)",
+            border: "1px solid rgba(232,0,45,0.2)",
+            textAlign: "left",
+          }}>
+            <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.85)", lineHeight: 1.6 }}>
+              <strong style={{ color: "var(--gl-red)" }}>₮100 Test USDC credited.</strong>{" "}
+              This is not real money — use it to join paid leagues and explore the game freely during beta.
+            </p>
+          </div>
+          <button
+            className="gla-predict-submit"
+            style={{ marginTop: "2rem", width: "100%" }}
+            onClick={() => router.push(redirect)}
+          >
+            Go to Dashboard →
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -56,15 +97,8 @@ function OnboardingForm() {
         <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🏎️</div>
         <h1 className="gla-page-title">Choose your driver name</h1>
         <p className="gla-page-sub">
-          This is how you&apos;ll appear on leaderboards. You can change it anytime.
+          This is how you&apos;ll appear on leaderboards. You can change it anytime from your profile.
         </p>
-
-        {showBetaNotice && (
-          <div style={{ marginTop: "1.5rem", padding: "0.875rem 1rem", borderRadius: "8px", background: "rgba(232,0,45,0.1)", border: "1px solid rgba(232,0,45,0.25)", fontSize: "0.875rem", color: "rgba(255,255,255,0.85)", textAlign: "left" }}>
-            <strong style={{ color: "var(--gl-red)" }}>₮100 Test USDC credited.</strong>{" "}
-            You&apos;ve been credited 100 Test USDC to use during the Gridlock beta. This is not real money — explore freely.
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} style={{ marginTop: "2rem", textAlign: "left" }}>
           <input
@@ -94,7 +128,7 @@ function OnboardingForm() {
               type="button"
               className="gla-race-btn"
               style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}
-              onClick={handleSkip}
+              onClick={() => router.push(redirect)}
             >
               Skip
             </button>

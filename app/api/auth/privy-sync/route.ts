@@ -145,6 +145,8 @@ export async function POST(request: NextRequest) {
   // run yet for a brand-new user the row is still written. On conflict only
   // the specified columns are touched — balance_usdc is intentionally
   // excluded and is never overwritten here.
+  let existingUsername: string | null = null;
+
   if (resolvedUserId) {
     await admin
       .from("profiles")
@@ -157,10 +159,22 @@ export async function POST(request: NextRequest) {
         },
         { onConflict: "id" }
       );
+
+    // Read back the username so the client can skip the onboarding check
+    // DB query without an extra round-trip from the browser.
+    const { data: profileRow } = await admin
+      .from("profiles")
+      .select("username")
+      .eq("id", resolvedUserId)
+      .single();
+    existingUsername = profileRow?.username ?? null;
   }
 
   return NextResponse.json({
     token: linkData.properties.hashed_token,
     email,
+    username: existingUsername,
+    // true when createUser succeeded (brand-new Supabase user)
+    is_new_user: !!newUserData?.user?.id,
   });
 }

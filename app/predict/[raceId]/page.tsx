@@ -59,6 +59,8 @@ export default function PredictPage() {
   const [error, setError] = useState("");
   const [isLocked, setIsLocked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [sectionIncomplete, setSectionIncomplete] = useState(false);
 
   const currentCategory = STEPS[step];
   const currentQuestions = questions.filter(
@@ -126,13 +128,14 @@ export default function PredictPage() {
           .select("question_id, option_id, pick_order")
           .eq("prediction_id", pred.id);
 
-        if (ansData) {
+        if (ansData && ansData.length > 0) {
           const loaded: Answers = {};
           for (const ans of ansData) {
             if (!loaded[ans.question_id]) loaded[ans.question_id] = [];
             loaded[ans.question_id][ans.pick_order - 1] = ans.option_id;
           }
           setAnswers(loaded);
+          setIsEditing(true); // user already predicted — show edit mode
         }
       }
     }
@@ -157,18 +160,28 @@ export default function PredictPage() {
   ) {
     setAnswers((prev) => {
       const picks = [...(prev[questionId] ?? [])];
-      if (multiSelect === 1) {
-        return { ...prev, [questionId]: [optionId] };
-      }
+
+      // Deselection check runs first for ALL question types, including single-select.
+      // This allows users to change their mind before submitting.
       const existing = picks.indexOf(optionId);
       if (existing !== -1) {
         picks.splice(existing, 1);
-      } else if (picks.filter(Boolean).length < multiSelect) {
+        return { ...prev, [questionId]: picks.filter(Boolean) };
+      }
+
+      // Single-select: replace any existing pick with this one
+      if (multiSelect === 1) {
+        return { ...prev, [questionId]: [optionId] };
+      }
+
+      // Multi-select: add if slots remain
+      if (picks.filter(Boolean).length < multiSelect) {
         picks.push(optionId);
       }
       return { ...prev, [questionId]: picks.filter(Boolean) };
     });
     void currentPicks; // suppress lint
+    setSectionIncomplete(false); // clear warning on any selection
   }
 
   function isOptionSelected(questionId: string, optionId: string) {
@@ -385,6 +398,13 @@ export default function PredictPage() {
         </div>
       </div>
 
+      {/* Edit mode banner */}
+      {isEditing && (
+        <div className="predict-edit-banner">
+          Editing your predictions — changes save when you submit at the Review step.
+        </div>
+      )}
+
       {/* Step tabs */}
       <div className="predict-steps">
         {STEPS.map((s, i) => (
@@ -452,14 +472,28 @@ export default function PredictPage() {
           })
         )}
 
+        {/* Race section note — qualifying and race are separate real-world events */}
+        {currentCategory === "race" && (
+          <p className="predict-section-note">
+            Race predictions lock before the race weekend. These are separate from your qualifying picks.
+          </p>
+        )}
+
         {error && <p className="predict-error">{error}</p>}
+
+        {/* Section incomplete warning */}
+        {sectionIncomplete && currentCategory !== "review" && (
+          <p className="predict-section-warning">
+            Answer all questions in this section before moving on. Missing picks won&apos;t score points.
+          </p>
+        )}
 
         {/* Navigation */}
         <div className="predict-nav">
           {step > 0 && (
             <button
               className="predict-nav-btn secondary"
-              onClick={() => setStep(step - 1)}
+              onClick={() => { setSectionIncomplete(false); setStep(step - 1); }}
             >
               ← Back
             </button>
@@ -473,13 +507,20 @@ export default function PredictPage() {
               {saving
                 ? "Saving..."
                 : isAuthenticated
-                ? "Lock In Predictions"
+                ? isEditing ? "Update Predictions" : "Lock In Predictions"
                 : "Continue to Login →"}
             </button>
           ) : (
             <button
               className="predict-nav-btn primary"
-              onClick={() => setStep(step + 1)}
+              onClick={() => {
+                if (!stepComplete(currentCategory as string)) {
+                  setSectionIncomplete(true);
+                  return;
+                }
+                setSectionIncomplete(false);
+                setStep(step + 1);
+              }}
             >
               Next: {STEP_LABELS[STEPS[step + 1]]} →
             </button>

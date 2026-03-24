@@ -19,10 +19,17 @@ type DbRace = {
   qualifying_starts_at: string | null;
 };
 
+type Prediction = {
+  race_id: string;
+  status: "draft" | "active";
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [lockedRaceIds, setLockedRaceIds] = useState<Set<string>>(new Set());
+  const [predictedRaceIds, setPredictedRaceIds] = useState<Set<string>>(new Set());
+  const [draftRaceIds, setDraftRaceIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -30,9 +37,10 @@ export default function DashboardPage() {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push("/login"); return; }
 
-      const [{ data: profileData }, { data: dbRaces }] = await Promise.all([
+      const [{ data: profileData }, { data: dbRaces }, { data: userPreds }] = await Promise.all([
         supabase.from("profiles").select("username, balance_usdc, is_admin").eq("id", user.id).single(),
         supabase.from("races").select("id, race_locked, qualifying_starts_at"),
+        supabase.from("predictions").select("race_id, status").eq("user_id", user.id),
       ]);
 
       setProfile(profileData);
@@ -44,6 +52,15 @@ export default function DashboardPage() {
         if (r.race_locked || pastDeadline) locked.add(r.id);
       }
       setLockedRaceIds(locked);
+
+      const predicted = new Set<string>();
+      const drafts = new Set<string>();
+      for (const p of (userPreds ?? []) as Prediction[]) {
+        predicted.add(p.race_id);
+        if (p.status === "draft") drafts.add(p.race_id);
+      }
+      setPredictedRaceIds(predicted);
+      setDraftRaceIds(drafts);
     });
   }, [router]);
 
@@ -88,6 +105,14 @@ export default function DashboardPage() {
                 </span>
                 {isClosed ? (
                   <span className="gla-race-btn is-disabled">Locked</span>
+                ) : predictedRaceIds.has(race.id) ? (
+                  <Link
+                    className="gla-race-btn is-edit"
+                    href={`/predict/${race.id}`}
+                    title={draftRaceIds.has(race.id) ? "Draft — join a league to activate" : "Active prediction"}
+                  >
+                    {draftRaceIds.has(race.id) ? "Edit (Draft)" : "Edit"}
+                  </Link>
                 ) : (
                   <Link className="gla-race-btn" href={`/predict/${race.id}`}>
                     Predict

@@ -70,7 +70,12 @@ export async function handlePrivyAuthComplete(
     throw new Error(`Auth sync failed (${res.status}): ${body}`);
   }
 
-  const { token, email } = (await res.json()) as { token: string; email: string };
+  const { token, username } = (await res.json()) as {
+    token: string;
+    email: string;
+    username: string | null;
+    is_new_user: boolean;
+  };
 
   // Step 3: Establish Supabase browser session
   const supabase = createSupabaseBrowserClient();
@@ -80,10 +85,6 @@ export async function handlePrivyAuthComplete(
     );
   }
 
-  // token_hash is required here — the server returns generateLink()'s
-  // hashed_token, which must be verified via token_hash (not email+token,
-  // which expects a 6-digit OTP code). Without email, Supabase doesn't
-  // attempt email-OTP validation and instead verifies the hash directly.
   const { error: otpError } = await supabase.auth.verifyOtp({
     token_hash: token,
     type: "magiclink",
@@ -94,27 +95,16 @@ export async function handlePrivyAuthComplete(
   }
 
   // Step 4: Redirect
+  // privy-sync already returned the username from the server-side profile read
+  // so we skip an extra DB round-trip here.
   if (redirectTo) {
     router.push(redirectTo);
     return;
   }
 
-  // New users (no username yet) go through onboarding; returning users skip it.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    const { data: prof } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .single();
-
-    if (!prof?.username) {
-      router.push("/onboarding");
-      return;
-    }
+  if (!username) {
+    router.push("/onboarding");
+    return;
   }
 
   router.push("/dashboard");

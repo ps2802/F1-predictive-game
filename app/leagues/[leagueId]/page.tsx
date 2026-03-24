@@ -198,6 +198,17 @@ export default function LeaguePage() {
           </div>
         )}
 
+        {/* Prediction CTA */}
+        <div className="league-predict-cta">
+          <div className="league-predict-cta-text">
+            <strong>Predictions are made per race, not per league.</strong>
+            <span>Go to the dashboard, pick a race, and lock in your predictions. They&apos;ll automatically count towards this league once the race is settled.</span>
+          </div>
+          <Link href="/dashboard" className="gla-race-btn" style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
+            Make Predictions →
+          </Link>
+        </div>
+
         {/* Leaderboard */}
         <div className="lb-table" style={{ marginTop: "2rem" }}>
           <div className="lb-header">

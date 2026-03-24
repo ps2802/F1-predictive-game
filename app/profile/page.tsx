@@ -29,6 +29,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [raceScores, setRaceScores] = useState<RaceScore[]>([]);
   const [totalScore, setTotalScore] = useState(0);
+  const [predictionsCount, setPredictionsCount] = useState(0);
   const [username, setUsername] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
@@ -50,6 +51,7 @@ export default function ProfilePage() {
         setUsername(data.profile?.username ?? "");
         setRaceScores(data.raceScores ?? []);
         setTotalScore(data.totalScore ?? 0);
+        setPredictionsCount(data.predictionsCount ?? 0);
       }
       setLoading(false);
     }
@@ -89,7 +91,14 @@ export default function ProfilePage() {
       <AppNav isAdmin={profile?.is_admin ?? false} />
 
       <div className="gla-content">
-        <p className="gla-page-title">Your Profile</p>
+        <div className="profile-identity">
+          <p className="gla-page-title">
+            {profile?.username ? `@${profile.username}` : "Your Profile"}
+          </p>
+          {profile?.username && (
+            <p className="gla-page-sub">{profile.email}</p>
+          )}
+        </div>
 
         <div className="profile-grid">
           {/* Stats */}
@@ -99,7 +108,7 @@ export default function ProfilePage() {
               <span className="profile-stat-label">Season Score</span>
             </div>
             <div className="profile-stat">
-              <span className="profile-stat-value">{raceScores.length}</span>
+              <span className="profile-stat-value">{predictionsCount}</span>
               <span className="profile-stat-label">Races Predicted</span>
             </div>
             <div className="profile-stat">
@@ -110,7 +119,7 @@ export default function ProfilePage() {
 
           {/* Edit username */}
           <div className="profile-edit-card">
-            <h3 className="profile-card-title">Username</h3>
+            <h3 className="profile-card-title">Change Username</h3>
             <form onSubmit={handleSave} style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end" }}>
               <input
                 className="auth-input"
@@ -130,9 +139,6 @@ export default function ProfilePage() {
                 {saveMsg}
               </p>
             )}
-            <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", marginTop: "0.5rem" }}>
-              {profile?.email}
-            </p>
           </div>
         </div>
 

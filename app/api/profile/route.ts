@@ -24,12 +24,20 @@ export async function GET() {
     .eq("user_id", user.id)
     .order("calculated_at", { ascending: false });
 
+  // Count submitted predictions (any status) — race_scores only exist post-settlement
+  // so "Races Predicted" would always show 0 pre-season if counting from scores.
+  const { count: predictionsCount } = await supabase
+    .from("predictions")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
   const totalScore = (scores ?? []).reduce((sum, s) => sum + (s.total_score ?? 0), 0);
 
   return NextResponse.json({
     profile: { ...profile, email: user.email },
     totalScore,
     raceScores: scores ?? [],
+    predictionsCount: predictionsCount ?? 0,
   });
 }
 
