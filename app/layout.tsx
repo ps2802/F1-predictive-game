@@ -91,6 +91,17 @@ export const metadata: Metadata = {
     images: ["/opengraph-image"],
   },
 
+  /* ── Icons ── */
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "16x16 32x32", type: "image/x-icon" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+    shortcut: "/favicon.ico",
+  },
+
   /* ── Manifest ── */
   manifest: "/manifest.webmanifest",
 
@@ -98,6 +109,46 @@ export const metadata: Metadata = {
   // verification: {
   //   google: "PASTE_YOUR_GOOGLE_SITE_VERIFICATION_TOKEN_HERE",
   // },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${BASE_URL}/#website`,
+      url: BASE_URL,
+      name: "Gridlock",
+      description:
+        "The F1 prediction game. Predict the grid. Outsmart the crowd. 24 rounds, 2026 season.",
+      inLanguage: "en-US",
+    },
+    {
+      "@type": "Organization",
+      "@id": `${BASE_URL}/#organization`,
+      name: "Gridlock",
+      url: BASE_URL,
+      logo: {
+        "@type": "ImageObject",
+        url: `${BASE_URL}/icon.png`,
+        width: 180,
+        height: 180,
+      },
+      sameAs: ["https://twitter.com/GridlockLeague"],
+    },
+    {
+      "@type": "Game",
+      "@id": `${BASE_URL}/#game`,
+      name: "Gridlock — F1 Prediction Game",
+      description:
+        "Predict qualifying results and podium finishes across all 24 rounds of the 2026 Formula 1 season. Compete on a global leaderboard.",
+      url: BASE_URL,
+      genre: ["Sports", "Strategy", "Prediction"],
+      gamePlatform: "Web Browser",
+      numberOfPlayers: { "@type": "QuantitativeValue", minValue: 1 },
+      publisher: { "@id": `${BASE_URL}/#organization` },
+    },
+  ],
 };
 
 export default function RootLayout({
@@ -108,6 +159,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={titillium.variable}>
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <Providers>{children}</Providers>
       </body>
     </html>
