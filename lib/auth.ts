@@ -80,12 +80,12 @@ export async function handlePrivyAuthComplete(
     );
   }
 
-  // type must be "magiclink" — the token was generated via
-  // admin.auth.admin.generateLink({ type: "magiclink" }) and Supabase
-  // returns 403 if you verify it as type "email" (a different OTP flow).
+  // token_hash is required here — the server returns generateLink()'s
+  // hashed_token, which must be verified via token_hash (not email+token,
+  // which expects a 6-digit OTP code). Without email, Supabase doesn't
+  // attempt email-OTP validation and instead verifies the hash directly.
   const { error: otpError } = await supabase.auth.verifyOtp({
-    email,
-    token,
+    token_hash: token,
     type: "magiclink",
   });
 
