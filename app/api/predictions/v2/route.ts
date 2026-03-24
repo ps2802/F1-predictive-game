@@ -65,6 +65,24 @@ export async function POST(request: NextRequest) {
   if (invalidIds.length > 0)
     return NextResponse.json({ error: "Invalid question IDs." }, { status: 400 });
 
+  // Validate completeness: every question for this race must have the required
+  // number of picks. This is the server-side enforcement of the UI validation —
+  // prevents tab-navigation bypasses from resulting in incomplete stored predictions.
+  const { data: allRaceQuestions } = await supabase
+    .from("prediction_questions")
+    .select("id, question_type, multi_select")
+    .eq("race_id", raceId);
+
+  for (const q of allRaceQuestions ?? []) {
+    const picks = (answers[q.id] ?? []).filter(Boolean);
+    if (picks.length < q.multi_select) {
+      return NextResponse.json(
+        { error: `Please answer all questions before submitting. Missing: ${q.question_type.replace(/_/g, " ")}.` },
+        { status: 400 }
+      );
+    }
+  }
+
   // Check if user has any paid league membership — if so, predictions go active immediately.
   // Otherwise, predictions stay as draft until they join and pay a league.
   const { data: paidMemberships } = await supabase

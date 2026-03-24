@@ -70,6 +70,19 @@ export default function DashboardPage() {
       <AppNav profile={profile} />
 
       <div className="gla-content">
+        {/* Draft predictions banner — shown when user has predictions not yet in a league */}
+        {draftRaceIds.size > 0 && (
+          <div className="dash-draft-banner">
+            <span className="dash-draft-banner-text">
+              <strong>{draftRaceIds.size} prediction{draftRaceIds.size > 1 ? "s" : ""} saved as draft.</strong>{" "}
+              Join any league — including free ones — to activate them and start scoring.
+            </span>
+            <Link href="/leagues" className="dash-draft-banner-cta">
+              Join a League →
+            </Link>
+          </div>
+        )}
+
         <div className="dash-header">
           <div>
             <p className="gla-page-title">2026 Season</p>

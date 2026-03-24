@@ -61,6 +61,7 @@ export default function LeaguePage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [countdown, setCountdown] = useState(() => getNextRaceLockCountdown());
+  const [nextRacePredStatus, setNextRacePredStatus] = useState<"active" | "draft" | "none">("none");
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -96,6 +97,20 @@ export default function LeaguePage() {
         .order("total_score", { ascending: false });
 
       setMembers(lb ?? []);
+
+      // Load prediction status for the next open race so the CTA is contextual
+      const now = new Date();
+      const nextRace = races.find((r) => r.status === "upcoming" && new Date(r.date) > now);
+      if (nextRace && user) {
+        const { data: pred } = await supabase
+          .from("predictions")
+          .select("status")
+          .eq("race_id", nextRace.id)
+          .eq("user_id", user.id)
+          .single();
+        setNextRacePredStatus((pred?.status as "active" | "draft") ?? "none");
+      }
+
       setLoading(false);
     }
     load();
@@ -125,6 +140,8 @@ export default function LeaguePage() {
   const payoutTiers: { place: number; percent: number }[] =
     (league.payout_config as PayoutConfig)?.tiers ?? DEFAULT_PAYOUT_TIERS;
   const pool = Number(league.prize_pool);
+  const now = new Date();
+  const nextOpenRace = races.find((r) => r.status === "upcoming" && new Date(r.date) > now);
 
   return (
     <div className="gla-root">
@@ -198,16 +215,38 @@ export default function LeaguePage() {
           </div>
         )}
 
-        {/* Prediction CTA */}
-        <div className="league-predict-cta">
-          <div className="league-predict-cta-text">
-            <strong>Predictions are made per race, not per league.</strong>
-            <span>Go to the dashboard, pick a race, and lock in your predictions. They&apos;ll automatically count towards this league once the race is settled.</span>
+        {/* Context-aware prediction CTA */}
+        {nextOpenRace && (
+          <div className="league-predict-cta">
+            <div className="league-predict-cta-text">
+              {nextRacePredStatus === "active" ? (
+                <>
+                  <strong>Your picks for {nextOpenRace.name} are active.</strong>
+                  <span>They&apos;ll score once the race is settled. You can update them any time before the deadline.</span>
+                </>
+              ) : nextRacePredStatus === "draft" ? (
+                <>
+                  <strong>You have a draft prediction for {nextOpenRace.name}.</strong>
+                  <span>Since you&apos;re in this league it should already be active — if it still shows Draft, please refresh or contact support.</span>
+                </>
+              ) : (
+                <>
+                  <strong>No prediction yet for {nextOpenRace.name}.</strong>
+                  <span>Predictions count towards all leagues you&apos;re in once the race is settled.</span>
+                </>
+              )}
+            </div>
+            <Link
+              href={`/predict/${nextOpenRace.id}`}
+              className="gla-race-btn"
+              style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+            >
+              {nextRacePredStatus === "none"
+                ? `Predict ${nextOpenRace.name} →`
+                : `Edit ${nextOpenRace.name} →`}
+            </Link>
           </div>
-          <Link href="/dashboard" className="gla-race-btn" style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
-            Make Predictions →
-          </Link>
-        </div>
+        )}
 
         {/* Leaderboard */}
         <div className="lb-table" style={{ marginTop: "2rem" }}>

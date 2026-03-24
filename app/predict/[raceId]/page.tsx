@@ -411,7 +411,24 @@ export default function PredictPage() {
           <button
             key={s}
             className={`predict-step-tab${step === i ? " is-active" : ""}${stepComplete(s) ? " is-done" : ""}`}
-            onClick={() => setStep(i)}
+            onClick={() => {
+              // Backward navigation is always allowed.
+              if (i <= step) {
+                setSectionIncomplete(false);
+                setStep(i);
+                return;
+              }
+              // Forward jump: find the first incomplete section between here and target.
+              for (let check = step; check < i; check++) {
+                if (!stepComplete(STEPS[check] as string)) {
+                  setSectionIncomplete(true);
+                  setStep(check); // land on the first section that needs completing
+                  return;
+                }
+              }
+              setSectionIncomplete(false);
+              setStep(i);
+            }}
           >
             <span className="predict-step-icon">
               {stepComplete(s) ? "✓" : STEP_ICONS[s]}

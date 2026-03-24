@@ -66,9 +66,18 @@ export default function LeaguesPage() {
       setJoinError(data.error ?? "Failed to join league.");
     } else {
       track("league_joined", { league_id: data.leagueId });
-      setJoinSuccess("Joined! Redirecting...");
+      if (data.activationWarning) {
+        setJoinSuccess(`Joined! Note: ${data.activationWarning}`);
+      } else {
+        const activated = data.activatedCount ?? 0;
+        setJoinSuccess(
+          activated > 0
+            ? `Joined! ${activated} draft prediction${activated > 1 ? "s" : ""} activated. Redirecting...`
+            : "Joined! Redirecting..."
+        );
+      }
       setJoinCode("");
-      setTimeout(() => router.push(`/leagues/${data.leagueId}`), 1200);
+      setTimeout(() => router.push(`/leagues/${data.leagueId}`), 1800);
     }
     setJoining(false);
   }

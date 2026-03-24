@@ -118,8 +118,28 @@ export async function POST(request: NextRequest) {
     .update({ member_count: league.member_count + 1 })
     .eq("id", league.id);
 
-  // Activate any draft predictions now that user has a paid league membership
-  await supabase.rpc("activate_user_predictions", { p_user_id: user.id });
+  // Activate any draft predictions now that user has a paid league membership.
+  // If the RPC fails (e.g. function not yet deployed), we surface a warning
+  // in the response rather than silently leaving predictions in draft state.
+  const { data: activatedCount, error: activateErr } = await supabase.rpc(
+    "activate_user_predictions",
+    { p_user_id: user.id }
+  );
 
-  return NextResponse.json({ success: true, leagueId: league.id });
+  if (activateErr) {
+    // Join succeeded and fee was paid — return partial success so the client
+    // can show a clear warning. User should retry or contact support.
+    return NextResponse.json({
+      success: true,
+      leagueId: league.id,
+      activationWarning:
+        "You've joined the league, but your draft predictions could not be activated automatically. Please refresh or contact support if they still show as Draft.",
+    });
+  }
+
+  return NextResponse.json({
+    success: true,
+    leagueId: league.id,
+    activatedCount: activatedCount ?? 0,
+  });
 }
