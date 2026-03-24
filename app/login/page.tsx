@@ -66,19 +66,6 @@ function AuthForm() {
 
   return (
     <div className="gl-login-root">
-      {/* ── Right: Driver hero image ── */}
-      <div className="gl-login-visual" aria-hidden="true">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/gridlock f1 driver .png"
-          alt=""
-          className="gl-login-driver"
-          draggable={false}
-        />
-        <div className="gl-login-img-overlay" />
-        <div className="gl-login-vstrip" />
-      </div>
-
       {/* ── Left: Content panel ── */}
       <div className="gl-login-panel">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -137,6 +124,19 @@ function AuthForm() {
         <p className="gl-login-urgency">
           Every race you sit out is a race you can never win back.
         </p>
+      </div>
+
+      {/* ── Right: Driver hero image ── */}
+      <div className="gl-login-visual" aria-hidden="true">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/gridlock f1 driver .png"
+          alt=""
+          className="gl-login-driver"
+          draggable={false}
+        />
+        <div className="gl-login-img-overlay" />
+        <div className="gl-login-vstrip" />
       </div>
     </div>
   );
