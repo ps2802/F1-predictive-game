@@ -14,6 +14,10 @@
  *   2. @supabase/ssr uses PKCE by default. Calling verifyOtp() with a server-
  *      generated magic-link token fails if no PKCE code_verifier was stored by
  *      the client. Fix: createBrowserClient uses flowType: 'implicit'.
+ *
+ * Performance optimization:
+ *   The privy-sync API now returns hasUsername so we skip the extra profile
+ *   query, reducing the client-side redirect latency significantly.
  */
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -21,14 +25,15 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 type RouterLike = { push: (href: string) => void };
 
 /**
- * Retries getAccessToken() with backoff until the token is available.
+ * Retries getAccessToken() with short backoff until the token is available.
  * Privy's onComplete can fire before the access token is ready.
  */
 async function getAccessTokenWithRetry(
   getAccessToken: () => Promise<string | null>,
-  maxAttempts = 6
+  maxAttempts = 4
 ): Promise<string> {
-  const delays = [150, 300, 500, 800, 1200];
+  // Short delays — token is usually available on the 1st or 2nd attempt.
+  const delays = [50, 150, 300];
   for (let i = 0; i < maxAttempts; i++) {
     const token = await getAccessToken();
     if (token) return token;
@@ -46,7 +51,7 @@ async function getAccessTokenWithRetry(
  *
  * Flow:
  *   1. Get Privy access token (retries if not immediately available)
- *   2. POST /api/auth/privy-sync → creates/finds Supabase user, returns OTP
+ *   2. POST /api/auth/privy-sync → creates/finds Supabase user, returns OTP + hasUsername
  *   3. verifyOtp → establishes Supabase browser session cookie
  *   4. Redirect: no username → /onboarding; returning user → /dashboard
  */
@@ -70,7 +75,11 @@ export async function handlePrivyAuthComplete(
     throw new Error(`Auth sync failed (${res.status}): ${body}`);
   }
 
-  const { token, email } = (await res.json()) as { token: string; email: string };
+  const { token, email, hasUsername } = (await res.json()) as {
+    token: string;
+    email: string;
+    hasUsername: boolean;
+  };
 
   // Step 3: Establish Supabase browser session
   const supabase = createSupabaseBrowserClient();
@@ -93,28 +102,16 @@ export async function handlePrivyAuthComplete(
     throw new Error(`Session handshake failed: ${otpError.message}`);
   }
 
-  // Step 4: Redirect
+  // Step 4: Redirect — use hasUsername from API to skip extra profile query
   if (redirectTo) {
     router.push(redirectTo);
     return;
   }
 
   // New users (no username yet) go through onboarding; returning users skip it.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    const { data: prof } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .single();
-
-    if (!prof?.username) {
-      router.push("/onboarding");
-      return;
-    }
+  if (!hasUsername) {
+    router.push("/onboarding");
+    return;
   }
 
   router.push("/dashboard");
