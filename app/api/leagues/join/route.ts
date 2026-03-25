@@ -95,7 +95,8 @@ export async function POST(request: NextRequest) {
   if (joinErr)
     return NextResponse.json({ error: joinErr.message }, { status: 400 });
 
-  // Atomic member count increment — prevents lost-update under concurrent joins
+
+  // Atomic increment — avoids read-then-write race condition on concurrent joins
   await supabase.rpc("increment_member_count", { p_league_id: league.id });
 
   return NextResponse.json({ success: true, leagueId: league.id });

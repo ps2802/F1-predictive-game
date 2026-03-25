@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { usePrivy } from "@privy-io/react-auth";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { races } from "@/lib/races";
+import { AppNav } from "@/app/components/AppNav";
 
 type Profile = {
   id: string;
@@ -93,7 +93,7 @@ export default function ProfilePage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
-      <AppNav isAdmin={profile?.is_admin ?? false} username={profile?.username ?? null} />
+      <AppNav profile={profile} />
 
       <div className="gla-content" style={{ maxWidth: "720px" }}>
         <p className="gla-page-title">Profile</p>
@@ -201,29 +201,3 @@ export default function ProfilePage() {
   );
 }
 
-function AppNav({ isAdmin, username }: { isAdmin: boolean; username: string | null }) {
-  const router = useRouter();
-  const { logout } = usePrivy();
-  async function handleLogout() {
-    const supabase = createSupabaseBrowserClient();
-    if (supabase) await supabase.auth.signOut();
-    await logout();
-    router.push("/login");
-  }
-  return (
-    <nav className="gla-nav">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/gridlock logo - transparent.png" alt="Gridlock" className="gla-nav-logo" draggable={false} />
-      <div className="gla-nav-right">
-        <Link className="gla-nav-link" href="/dashboard">Races</Link>
-        <Link className="gla-nav-link" href="/leagues">Leagues</Link>
-        <Link className="gla-nav-link" href="/leaderboard">Leaderboard</Link>
-        <Link className="gla-nav-link" href="/profile" style={{ color: "rgba(255,255,255,0.75)" }}>
-          {username ? `@${username}` : "Profile"}
-        </Link>
-        {isAdmin && <Link className="gla-nav-link" href="/admin" style={{ color: "var(--gl-red)" }}>Admin</Link>}
-        <button className="gla-nav-link" onClick={handleLogout}>Sign out</button>
-      </div>
-    </nav>
-  );
-}

@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AppNav } from "@/app/components/AppNav";
 
 export default function CreateLeaguePage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [type, setType] = useState<"public" | "private">("private");
-  const [entryFee, setEntryFee] = useState("0");
+  const [entryFee] = useState("0");
   const [maxUsers, setMaxUsers] = useState("1000");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -41,6 +42,7 @@ export default function CreateLeaguePage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
+      <AppNav />
 
       <div className="gla-content" style={{ maxWidth: "520px" }}>
         <Link href="/leagues" className="predict-back" style={{ display: "block", marginBottom: "1.5rem" }}>

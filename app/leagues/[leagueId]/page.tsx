@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { AppNav } from "@/app/components/AppNav";
 
 type League = {
   id: string;
@@ -93,6 +94,7 @@ export default function LeaguePage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
+      <AppNav />
 
       <div className="gla-content">
         <Link href="/leagues" className="predict-back">← Leagues</Link>
