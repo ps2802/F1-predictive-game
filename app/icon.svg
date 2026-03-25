@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Black background -->
+  <rect width="32" height="32" fill="#000000"/>
+  <!-- Red top stripe — matches the site's speed stripe -->
+  <rect x="0" y="0" width="32" height="3.5" fill="#E10600"/>
+  <!-- Bold condensed "G" in brand red — clear at 16×16 -->
+  <text
+    x="16"
+    y="25"
+    font-family="'Arial Narrow', 'Impact', Arial, Helvetica, sans-serif"
+    font-weight="900"
+    font-size="22"
+    fill="#E10600"
+    text-anchor="middle"
+    letter-spacing="-0.5"
+  >G</text>
+</svg>
