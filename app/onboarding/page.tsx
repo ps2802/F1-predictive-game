@@ -99,7 +99,7 @@ function OnboardingForm() {
                 {error}
               </p>
             )}
-            <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem" }}>
+            <div className="onboarding-actions" style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem" }}>
               <button
                 type="submit"
                 className="gla-race-btn"

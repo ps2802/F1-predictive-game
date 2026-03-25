@@ -503,7 +503,7 @@ export default function PredictPage() {
             </span>
           </div>
 
-          <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+          <div className="predict-locked-box-inner" style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/dashboard" className="gla-race-btn">
               ← All Races
             </Link>
@@ -601,7 +601,7 @@ export default function PredictPage() {
             Predictions close when qualifying starts. You can still edit until then.
           </p>
 
-          <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+          <div className="predict-locked-box-inner" style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/leagues" className="gla-race-btn">
               Join a League
             </Link>

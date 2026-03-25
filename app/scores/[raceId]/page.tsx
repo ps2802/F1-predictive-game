@@ -279,7 +279,7 @@ export default function ScoreBreakdownPage() {
         )}
 
         {/* Category summary */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem", marginBottom: "2rem" }}>
+        <div className="scores-category-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem", marginBottom: "2rem" }}>
           {categories.map((cat) => {
             const raw = categorySum(questions, cat);
             const correct = questions.filter((q) => q.category === cat && q.is_correct).length;
