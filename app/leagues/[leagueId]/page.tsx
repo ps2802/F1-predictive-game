@@ -73,7 +73,9 @@ export default function LeaguePage() {
   function copyInvite() {
     if (!league) return;
     const link = `${window.location.origin}/join/${league.invite_code}`;
-    navigator.clipboard.writeText(link).then(() => {
+    // Share message is pre-composed so recipients understand the context immediately
+    const shareText = `Join my Gridlock league "${league.name}" — predict the F1 podium every race and prove you know the grid. ${link}`;
+    navigator.clipboard.writeText(shareText).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -116,8 +118,11 @@ export default function LeaguePage() {
               <span className="league-invite-label">Invite Code</span>
               <code className="league-invite-code">{league.invite_code}</code>
               <button className="league-copy-btn" onClick={copyInvite}>
-                {copied ? "Copied!" : "Copy Link"}
+                {copied ? "Message copied!" : "Copy Invite"}
               </button>
+              <span className="league-invite-hint">
+                Copies a ready-to-send message with your league link
+              </span>
             </div>
           )}
         </div>
@@ -133,7 +138,11 @@ export default function LeaguePage() {
 
           {members.length === 0 ? (
             <div className="lb-empty">
-              No scores yet — be the first to make predictions!
+              <p className="lb-empty-headline">No predictions locked in yet.</p>
+              <p className="lb-empty-sub">Be first on this grid — every race missed is points your rivals can take.</p>
+              <Link href="/dashboard" className="gla-race-btn" style={{ display: "inline-block", marginTop: "1.25rem" }}>
+                Make Your Predictions
+              </Link>
             </div>
           ) : (
             members.map((m, i) => (
