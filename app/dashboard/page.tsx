@@ -19,10 +19,16 @@ type DbRace = {
   qualifying_starts_at: string | null;
 };
 
+type RaceScore = {
+  race_id: string;
+  total_score: number;
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [lockedRaceIds, setLockedRaceIds] = useState<Set<string>>(new Set());
+  const [settledScores, setSettledScores] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -30,9 +36,10 @@ export default function DashboardPage() {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push("/login"); return; }
 
-      const [{ data: profileData }, { data: dbRaces }] = await Promise.all([
+      const [{ data: profileData }, { data: dbRaces }, { data: scoresData }] = await Promise.all([
         supabase.from("profiles").select("username, balance_usdc, is_admin").eq("id", user.id).single(),
         supabase.from("races").select("id, race_locked, qualifying_starts_at"),
+        supabase.from("race_scores").select("race_id, total_score").eq("user_id", user.id),
       ]);
 
       setProfile(profileData);
@@ -44,6 +51,12 @@ export default function DashboardPage() {
         if (r.race_locked || pastDeadline) locked.add(r.id);
       }
       setLockedRaceIds(locked);
+
+      const scoresMap = new Map<string, number>();
+      for (const s of (scoresData ?? []) as RaceScore[]) {
+        scoresMap.set(s.race_id, s.total_score);
+      }
+      setSettledScores(scoresMap);
     });
   }, [router]);
 
@@ -66,6 +79,8 @@ export default function DashboardPage() {
           {races.map((race) => {
             // A race is locked if: DB says so, OR hardcoded status is "closed" (fallback for races not yet in DB)
             const isClosed = lockedRaceIds.has(race.id) || race.status === "closed";
+            const hasScore = settledScores.has(race.id);
+            const score = settledScores.get(race.id);
             return (
               <article className="gla-race-card" key={race.id}>
                 <p className="gla-race-round">Round {race.round}</p>
@@ -78,15 +93,40 @@ export default function DashboardPage() {
                     month: "short",
                   })}
                 </p>
-                <span className={`gla-race-status ${isClosed ? "is-closed" : "is-upcoming"}`}>
-                  {isClosed ? "Locked" : "Open"}
-                </span>
-                {isClosed ? (
-                  <span className="gla-race-btn is-disabled">Locked</span>
+                {hasScore ? (
+                  /* Post-race: show settled score notification */
+                  <>
+                    <span className="gla-race-status" style={{ background: "rgba(0,210,170,0.12)", color: "rgba(0,210,170,1)", border: "1px solid rgba(0,210,170,0.25)", borderRadius: "6px", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.2rem 0.55rem" }}>
+                      Results In
+                    </span>
+                    <div style={{ marginTop: "auto" }}>
+                      <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.38)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>
+                        Your score
+                      </div>
+                      <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: "0.75rem" }}>
+                        {Number(score).toFixed(1)}
+                      </div>
+                      <Link className="gla-race-btn" href={`/scores/${race.id}`} style={{ fontSize: "0.75rem" }}>
+                        See breakdown →
+                      </Link>
+                    </div>
+                  </>
+                ) : isClosed ? (
+                  <>
+                    <span className={`gla-race-status is-closed`}>
+                      Locked
+                    </span>
+                    <span className="gla-race-btn is-disabled">Locked</span>
+                  </>
                 ) : (
-                  <Link className="gla-race-btn" href={`/predict/${race.id}`}>
-                    Predict
-                  </Link>
+                  <>
+                    <span className={`gla-race-status is-upcoming`}>
+                      Open
+                    </span>
+                    <Link className="gla-race-btn" href={`/predict/${race.id}`}>
+                      Predict
+                    </Link>
+                  </>
                 )}
               </article>
             );
