@@ -18,6 +18,12 @@ type League = {
   prize_pool: number;
 };
 
+/** Compute prize pool from member count × entry fee if the stored value is 0. */
+function computePrizePool(league: League): number {
+  if (league.prize_pool > 0) return league.prize_pool;
+  return league.member_count * league.entry_fee_usdc;
+}
+
 export default function LeaguesPage() {
   const router = useRouter();
   const [leagues, setLeagues] = useState<League[]>([]);
@@ -177,6 +183,9 @@ export default function LeaguesPage() {
 }
 
 function LeagueCard({ league, isMember }: { league: League; isMember: boolean }) {
+  const prizePool = computePrizePool(league);
+  const myContribution = isMember && league.entry_fee_usdc > 0 ? league.entry_fee_usdc : 0;
+
   return (
     <Link href={`/leagues/${league.id}`} className="league-card">
       <div className="league-card-header">
@@ -185,13 +194,26 @@ function LeagueCard({ league, isMember }: { league: League; isMember: boolean })
       </div>
       <div className="league-card-stats">
         <span>{league.member_count}/{league.max_users} members</span>
-        {league.entry_fee_usdc > 0 && (
-          <span className="league-card-fee">${league.entry_fee_usdc} USDC</span>
-        )}
-        {league.prize_pool > 0 && (
-          <span className="league-card-pool">🏆 ${league.prize_pool}</span>
+        {/* Entry fee: show "Free" for 0, otherwise show USDC amount */}
+        {league.entry_fee_usdc === 0 ? (
+          <span className="league-card-fee league-card-fee--free">Free</span>
+        ) : (
+          <span className="league-card-fee">${league.entry_fee_usdc} USDC entry</span>
         )}
       </div>
+      {/* Prize pool shown prominently when non-zero */}
+      {prizePool > 0 && (
+        <div className="league-card-prize">
+          <span className="league-card-prize-label">Prize Pool</span>
+          <span className="league-card-prize-amount">${prizePool.toFixed(2)} USDC</span>
+        </div>
+      )}
+      {/* My contribution for joined paid leagues */}
+      {myContribution > 0 && (
+        <div className="league-card-contribution">
+          My contribution: ${myContribution.toFixed(2)} USDC
+        </div>
+      )}
       {isMember && <span className="league-card-member-badge">✓ Joined</span>}
     </Link>
   );
