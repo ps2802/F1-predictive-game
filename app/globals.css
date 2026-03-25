@@ -1906,25 +1906,8 @@ h1, h2, h3 { margin-top: 0; }
   display: none;
 }
 
-/* ── F1 car wireframe background ── */
-.gl-login-f1-bg {
-  position: absolute;
-  bottom: -2rem;
-  left: -4rem;
-  width: 110%;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 1;
-}
-
-.gl-login-f1-bg svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* ── Speed lines background ── */
-.gl-login-speedlines {
+/* ── Full-panel F1 engineering blueprint background ── */
+.gl-login-engineering-bg {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -1932,8 +1915,8 @@ h1, h2, h3 { margin-top: 0; }
   overflow: hidden;
 }
 
-/* ── Ensure panel content sits above bg elements ── */
-.gl-login-panel > *:not(.gl-login-f1-bg):not(.gl-login-speedlines) {
+/* ── Ensure panel content sits above engineering bg ── */
+.gl-login-panel > *:not(.gl-login-engineering-bg) {
   position: relative;
   z-index: 1;
 }
@@ -2160,13 +2143,12 @@ h1, h2, h3 { margin-top: 0; }
 @media (max-width: 768px) {
   .gl-login-root {
     grid-template-columns: 1fr;
-    grid-template-rows: 52vh 1fr;
+    grid-template-rows: 1fr 45vh;
   }
 
-  /* Image first on mobile */
+  /* Text panel first, image below on mobile */
   .gl-login-visual {
-    order: -1;
-    min-height: 52vh;
+    min-height: 45vh;
   }
 
   .gl-login-img-overlay {
@@ -2179,10 +2161,8 @@ h1, h2, h3 { margin-top: 0; }
     display: none;
   }
 
-  .gl-login-f1-bg {
-    opacity: 0.5;
-    bottom: -1rem;
-    left: -2rem;
+  .gl-login-engineering-bg {
+    opacity: 0.45;
   }
 
   .gl-login-panel {
