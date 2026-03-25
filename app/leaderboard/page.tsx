@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { AppNav } from "@/app/components/AppNav";
 
 type LeaderboardEntry = {
   user_id: string;
@@ -36,8 +36,11 @@ export default function LeaderboardPage() {
         .select("*")
         .limit(100);
 
-      if (fetchErr) setError("Failed to load leaderboard. Please refresh.");
-      setEntries(data ?? []);
+      if (fetchErr) {
+        setError("Failed to load leaderboard. Please refresh.");
+      } else {
+        setEntries(data ?? []);
+      }
       setLoading(false);
     }
     load();
@@ -123,24 +126,3 @@ export default function LeaderboardPage() {
   );
 }
 
-function AppNav() {
-  const router = useRouter();
-  async function handleLogout() {
-    const supabase = createSupabaseBrowserClient();
-    if (supabase) await supabase.auth.signOut();
-    router.push("/login");
-  }
-  return (
-    <nav className="gla-nav">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/gridlock logo - transparent.png" alt="Gridlock" className="gla-nav-logo" draggable={false} />
-      <div className="gla-nav-right">
-        <Link className="gla-nav-link" href="/dashboard">Races</Link>
-        <Link className="gla-nav-link" href="/leagues">Leagues</Link>
-        <Link className="gla-nav-link" href="/leaderboard">Leaderboard</Link>
-        <Link className="gla-nav-link" href="/profile">Profile</Link>
-        <button className="gla-nav-link" onClick={handleLogout}>Sign out</button>
-      </div>
-    </nav>
-  );
-}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AppNav } from "@/app/components/AppNav";
 
 const PRESET_FEES = [0, 5, 10, 20, 25];
 const DEFAULT_TIERS = [
@@ -64,6 +65,7 @@ export default function CreateLeaguePage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
+      <AppNav />
 
       <div className="gla-content" style={{ maxWidth: "520px" }}>
         <Link href="/leagues" className="predict-back" style={{ display: "block", marginBottom: "1.5rem" }}>

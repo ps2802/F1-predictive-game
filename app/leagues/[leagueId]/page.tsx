@@ -146,6 +146,7 @@ export default function LeaguePage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
+      <AppNav />
 
       <div className="gla-content">
         <Link href="/leagues" className="predict-back">← Leagues</Link>

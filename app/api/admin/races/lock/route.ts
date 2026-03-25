@@ -5,7 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const LockRaceBody = z.object({
   raceId: z.string().min(1, "raceId is required."),
-  locked: z.boolean({ required_error: "locked (boolean) is required." }),
+  locked: z.boolean(),
 });
 
 // PATCH /api/admin/races/lock — manually lock or unlock a race
@@ -37,6 +37,11 @@ export async function PATCH(request: Request) {
     .eq("id", raceId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  // Freeze popularity snapshot when locking; a no-op when unlocking
+  if (locked) {
+    await admin.rpc("freeze_pick_popularity", { p_race_id: raceId });
+  }
 
   return NextResponse.json({ success: true, raceId, locked });
 }

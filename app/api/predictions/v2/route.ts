@@ -3,6 +3,9 @@ import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
+// Edit cost in USDC. Set to 0 during beta; raise for production.
+const EDIT_COST_USDC = 0;
+
 const PredictionBody = z.object({
   raceId: z.string().min(1),
   answers: z.record(z.string(), z.array(z.string())),
@@ -111,6 +114,14 @@ export async function POST(request: NextRequest) {
   if (predErr || !pred)
     return NextResponse.json({ error: predErr?.message ?? "Failed to create prediction." }, { status: 400 });
 
+  // Increment edit_count on re-submissions so the scoring penalty is accurate
+  if (isEdit) {
+    await supabase
+      .from("predictions")
+      .update({ edit_count: nextEditCount })
+      .eq("id", pred.id);
+  }
+
   // Delete old answers for these questions then insert new ones
   await supabase
     .from("prediction_answers")
@@ -141,11 +152,11 @@ export async function POST(request: NextRequest) {
   }
 
   // Save prediction version snapshot (audit trail — failure does not block the response)
-  const { error: versionErr } = await supabase.from("prediction_versions").insert({
+  await supabase.from("prediction_versions").insert({
     prediction_id: pred.id,
-    version_number: (pred.edit_count ?? 0) + 1,
+    version_number: nextEditCount + 1,
     answers_json: answers,
-    edit_cost: 0,
+    edit_cost: EDIT_COST_USDC,
   });
   // Version snapshot failure is non-blocking — swallow silently
   void versionErr;
