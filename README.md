@@ -16,8 +16,16 @@ Next.js 16 + Supabase app. Predict podiums, qualify picks, and chaos outcomes. A
 
 ```bash
 cp .env.example .env.local
-# Fill in NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
-# Fill in SUPABASE_SERVICE_ROLE_KEY (for admin operations + seeding)
+# Required for local + Vercel:
+# - NEXT_PUBLIC_SUPABASE_URL
+# - NEXT_PUBLIC_SUPABASE_ANON_KEY
+# - SUPABASE_SERVICE_ROLE_KEY
+# - NEXT_PUBLIC_PRIVY_APP_ID
+# - PRIVY_APP_SECRET
+# Optional:
+# - CRON_SECRET
+# - NEXT_PUBLIC_POSTHOG_KEY
+# - NEXT_PUBLIC_POSTHOG_HOST
 ```
 
 ### 3. Apply migrations (in order)
@@ -34,6 +42,7 @@ supabase/migrations/202603120001_align_predictions_mvp.sql
 supabase/migrations/202603180001_create_waitlist.sql
 supabase/migrations/202603190001_prd_full_schema.sql   ← new PRD schema
 supabase/migrations/202603190002_hardening.sql          ← critical fixes
+supabase/migrations/202603260002_security_and_prediction_integrity.sql
 ```
 
 ### 4. Seed race questions
@@ -71,9 +80,11 @@ npm run test:watch # watch mode
 
 ### Infrastructure
 - [ ] Supabase project created and connected
-- [ ] All 9 migrations applied in order (verify with `SELECT * FROM prediction_questions LIMIT 1`)
+- [ ] All migrations applied in order (verify with `SELECT * FROM prediction_questions LIMIT 1`)
 - [ ] `is_admin = true` set for at least one user
+- [ ] `NEXT_PUBLIC_PRIVY_APP_ID` and `PRIVY_APP_SECRET` set in Vercel env vars
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` set in Vercel env vars
+- [ ] `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` set in Vercel env vars
 - [ ] Domain configured (if custom)
 
 ### Verification
