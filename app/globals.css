@@ -2143,13 +2143,12 @@ h1, h2, h3 { margin-top: 0; }
 @media (max-width: 768px) {
   .gl-login-root {
     grid-template-columns: 1fr;
-    grid-template-rows: 52vh 1fr;
+    grid-template-rows: 1fr 45vh;
   }
 
-  /* Image first on mobile */
+  /* Text panel first, image below on mobile */
   .gl-login-visual {
-    order: -1;
-    min-height: 52vh;
+    min-height: 45vh;
   }
 
   .gl-login-img-overlay {

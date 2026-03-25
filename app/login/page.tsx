@@ -276,11 +276,7 @@ function AuthForm() {
         </h1>
 
         <p className="gl-login-sub">
-          Your rivals locked in their picks hours ago.
-          Right now, prize pools are forming across 24 race weekends —
-          and the players who know F1 are collecting USDC every time
-          they&apos;re right. The ones who hesitate just fund everyone
-          else&apos;s winnings.
+          Pick the podium. Win USDC. Your rivals are already in.
         </p>
 
         <div className="gl-login-stats">
