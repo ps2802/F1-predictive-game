@@ -4,27 +4,31 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 /**
  * GET /api/cron/lock-races
  *
- * Called by Vercel Cron every 5 minutes (see vercel.json).
  * Locks any race whose qualifying session has started but whose
  * race_locked flag is still false — so admin doesn't have to do it manually.
  *
+ * Intended to run every 5 minutes. Call via an external cron service
+ * (e.g. cron-job.org, GitHub Actions) or upgrade to Vercel Pro for
+ * native Vercel Cron support with sub-daily schedules.
+ *
  * Security: requires Authorization: Bearer <CRON_SECRET> header.
- * Vercel injects this automatically when the cron fires; the header must
- * match the CRON_SECRET env var set in the Vercel project settings.
+ * Pass CRON_SECRET as the bearer token from your cron service.
  *
  * Manual oversight still needed:
  *   - qualifying_starts_at must be set for each race (via admin panel / migration).
- *   - If a race needs to stay open past qualifying (unusual), set race_locked=false
- *     manually and the cron will re-lock it on the next tick — remove the
+ *   - If a race needs to stay open past qualifying (unusual), remove the
  *     qualifying_starts_at instead to prevent re-locking.
  */
 export async function GET(request: NextRequest) {
+  // CRON_SECRET must always be set in production. Reject the request if
+  // the secret is missing (misconfigured deployment) or doesn't match.
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!cronSecret) {
+    return NextResponse.json({ error: "CRON_SECRET env var not configured." }, { status: 503 });
+  }
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const admin = createSupabaseAdminClient();

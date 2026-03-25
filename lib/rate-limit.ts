@@ -1,51 +1,14 @@
 /**
- * lib/rate-limit.ts — Lightweight in-memory rate limiter.
+ * lib/rate-limit.ts — Supabase-backed rate limiter.
  *
- * Works within a single serverless function instance. Good enough for a
- * 20-100 user closed beta to catch obvious abuse (brute force, spam).
- * Does not persist across cold starts or across multiple instances.
+ * Uses a PostgreSQL counter table so limits are enforced consistently across
+ * all Vercel function instances (replaces the previous single-instance
+ * in-memory Map which could not share state across cold starts or pods).
  *
- * For production scale, replace with @upstash/ratelimit + Redis.
+ * Degrades gracefully: if the admin client is unavailable (missing env var)
+ * or the DB call fails, the request is allowed through rather than blocked.
  */
-
-interface Bucket {
-  count: number;
-  resetAt: number;
-}
-
-const store = new Map<string, Bucket>();
-
-// Prune expired buckets every 5 minutes to prevent unbounded memory growth
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, bucket] of store.entries()) {
-    if (now >= bucket.resetAt) store.delete(key);
-  }
-}, 5 * 60 * 1000);
-
-/**
- * Returns true if the request should be rate-limited.
- *
- * @param key      - Unique identifier (e.g. IP address or user ID)
- * @param limit    - Max requests allowed in the window
- * @param windowMs - Window duration in milliseconds
- */
-export function isRateLimited(
-  key: string,
-  limit: number,
-  windowMs: number
-): boolean {
-  const now = Date.now();
-  const bucket = store.get(key);
-
-  if (!bucket || now >= bucket.resetAt) {
-    store.set(key, { count: 1, resetAt: now + windowMs });
-    return false;
-  }
-
-  bucket.count += 1;
-  return bucket.count > limit;
-}
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Extracts a best-effort client IP from Next.js request headers.
@@ -57,4 +20,31 @@ export function getClientIp(headers: Headers): string {
     headers.get("x-real-ip") ??
     "unknown"
   );
+}
+
+/**
+ * Returns true if the key has exceeded the limit within the current window.
+ *
+ * @param key      - Unique identifier (e.g. `"predictions:1.2.3.4"`)
+ * @param limit    - Max requests allowed in the window
+ * @param windowMs - Window duration in milliseconds
+ */
+export async function isRateLimited(
+  key: string,
+  limit: number,
+  windowMs: number
+): Promise<boolean> {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return false; // graceful degradation when service key is absent
+
+  const windowSeconds = Math.max(1, Math.ceil(windowMs / 1000));
+
+  const { data, error } = await admin.rpc("check_rate_limit", {
+    p_key: key,
+    p_limit: limit,
+    p_window_seconds: windowSeconds,
+  });
+
+  if (error) return false; // graceful degradation on DB error
+  return data === true;
 }
