@@ -450,60 +450,167 @@ export default function PredictPage() {
     return (
       <div className="gla-root">
         <div className="gl-stripe" aria-hidden="true" />
-        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
-          <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>🔒</div>
-          <h1 className="gla-page-title">Predictions Closed</h1>
-          <p className="gla-page-sub" style={{ marginTop: "0.5rem" }}>
-            {race.name} · Round {race.round}
+        <div className="gla-content" style={{ textAlign: "center", paddingTop: "5rem" }}>
+          {/* Lock banner */}
+          <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            background: "rgba(225,6,0,0.12)",
+            border: "1px solid rgba(225,6,0,0.35)",
+            borderRadius: "999px",
+            padding: "0.4rem 1rem",
+            fontSize: "0.7rem",
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "#E10600",
+            marginBottom: "2rem",
+          }}>
+            <span aria-hidden="true">●</span> Qualifying Underway
+          </div>
+
+          <h1 className="gla-page-title" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}>
+            Predictions Locked
+          </h1>
+          <p style={{
+            fontSize: "1.05rem",
+            color: "rgba(255,255,255,0.55)",
+            marginTop: "0.75rem",
+            lineHeight: 1.5,
+          }}>
+            The grid is set. Results coming soon.
           </p>
-          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.9rem", marginTop: "1rem" }}>
-            The prediction window for this race has closed.
-          </p>
-          <Link
-            href="/dashboard"
-            className="gla-race-btn"
-            style={{ marginTop: "2rem", display: "inline-block" }}
-          >
-            Back to Dashboard
-          </Link>
+
+          {/* Race identity */}
+          <div style={{
+            display: "inline-flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "0.25rem",
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "12px",
+            padding: "1.25rem 2.5rem",
+            marginTop: "2.5rem",
+            marginBottom: "2.5rem",
+          }}>
+            <span style={{ fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.14em", color: "rgba(255,255,255,0.35)", fontWeight: 700 }}>
+              Round {race.round}
+            </span>
+            <span style={{ fontSize: "1.3rem", fontWeight: 900, color: "#fff", letterSpacing: "-0.01em" }}>
+              {race.name}
+            </span>
+          </div>
+
+          <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+            <Link href="/dashboard" className="gla-race-btn">
+              ← All Races
+            </Link>
+            <Link
+              href="/leaderboard"
+              className="gla-race-btn"
+              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}
+            >
+              Leaderboard
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   if (saved) {
+    const submittedCategories = STEPS.filter((s) => stepComplete(s));
     return (
       <div className="gla-root">
         <div className="gl-stripe" aria-hidden="true" />
-        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
-          <div className="predict-success-icon">✓</div>
-          <h1 className="gla-page-title" style={{ marginTop: "1.5rem" }}>
+        <div className="gla-content" style={{ textAlign: "center", paddingTop: "5rem" }}>
+          {/* Confirmation badge */}
+          <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            background: "rgba(0,210,170,0.1)",
+            border: "1px solid rgba(0,210,170,0.3)",
+            borderRadius: "999px",
+            padding: "0.4rem 1rem",
+            fontSize: "0.7rem",
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "rgba(0,210,170,1)",
+            marginBottom: "2rem",
+          }}>
+            <span aria-hidden="true">✓</span> Locked In
+          </div>
+
+          <h1 className="gla-page-title" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}>
             Predictions Locked In
           </h1>
-          <p className="gla-page-sub">
-            {race.name} · Round {race.round}
+          <p style={{
+            fontSize: "1.05rem",
+            color: "rgba(255,255,255,0.55)",
+            marginTop: "0.75rem",
+            lineHeight: 1.5,
+          }}>
+            May the fastest picks win.
           </p>
-          <div
-            style={{
-              display: "flex",
-              gap: "1rem",
-              justifyContent: "center",
-              marginTop: "2rem",
-              flexWrap: "wrap",
-            }}
-          >
+
+          {/* Race identity + prediction summary */}
+          <div style={{
+            background: "rgba(0,210,170,0.05)",
+            border: "1px solid rgba(0,210,170,0.15)",
+            borderRadius: "12px",
+            padding: "1.5rem 2rem",
+            marginTop: "2.5rem",
+            marginBottom: "2.5rem",
+            display: "inline-flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "1rem",
+            minWidth: "240px",
+          }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
+              <span style={{ fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.14em", color: "rgba(255,255,255,0.35)", fontWeight: 700 }}>
+                Round {race.round}
+              </span>
+              <span style={{ fontSize: "1.2rem", fontWeight: 900, color: "#fff" }}>{race.name}</span>
+            </div>
+            {/* Category completion indicators */}
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              {STEPS.map((s) => (
+                <span key={s} style={{
+                  fontSize: "0.65rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  padding: "0.3rem 0.7rem",
+                  borderRadius: "6px",
+                  background: submittedCategories.includes(s) ? "rgba(0,210,170,0.15)" : "rgba(255,255,255,0.05)",
+                  color: submittedCategories.includes(s) ? "rgba(0,210,170,1)" : "rgba(255,255,255,0.3)",
+                  border: submittedCategories.includes(s) ? "1px solid rgba(0,210,170,0.3)" : "1px solid rgba(255,255,255,0.08)",
+                }}>
+                  {submittedCategories.includes(s) ? "✓ " : ""}{STEP_LABELS[s]}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.3)", marginBottom: "2rem" }}>
+            Predictions close when qualifying starts. You can still edit until then.
+          </p>
+
+          <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/leagues" className="gla-race-btn">
               Join a League
             </Link>
             <Link
               href="/dashboard"
               className="gla-race-btn"
-              style={{
-                background: "transparent",
-                border: "1px solid rgba(255,255,255,0.2)",
-              }}
+              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}
             >
-              Back to Dashboard
+              All Races
             </Link>
           </div>
         </div>
