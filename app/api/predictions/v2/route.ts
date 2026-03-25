@@ -65,14 +65,43 @@ export async function POST(request: NextRequest) {
   if (invalidIds.length > 0)
     return NextResponse.json({ error: "Invalid question IDs." }, { status: 400 });
 
-  // Upsert prediction row — status 'active' means submitted and ready for scoring
+  // Validate completeness: every question for this race must have the required
+  // number of picks. This is the server-side enforcement of the UI validation —
+  // prevents tab-navigation bypasses from resulting in incomplete stored predictions.
+  const { data: allRaceQuestions } = await supabase
+    .from("prediction_questions")
+    .select("id, question_type, multi_select")
+    .eq("race_id", raceId);
+
+  for (const q of allRaceQuestions ?? []) {
+    const picks = (answers[q.id] ?? []).filter(Boolean);
+    if (picks.length < q.multi_select) {
+      return NextResponse.json(
+        { error: `Please answer all questions before submitting. Missing: ${q.question_type.replace(/_/g, " ")}.` },
+        { status: 400 }
+      );
+    }
+  }
+
+  // Check if user has any paid league membership — if so, predictions go active immediately.
+  // Otherwise, predictions stay as draft until they join and pay a league.
+  const { data: paidMemberships } = await supabase
+    .from("league_members")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("paid", true)
+    .limit(1);
+
+  const hasPaidLeague = (paidMemberships?.length ?? 0) > 0;
+
+  // Upsert prediction row — 'draft' until league entry is paid, then 'active'
   const { data: pred, error: predErr } = await supabase
     .from("predictions")
     .upsert(
       {
         user_id: user.id,
         race_id: raceId,
-        status: "active",
+        status: hasPaidLeague ? "active" : "draft",
       },
       { onConflict: "user_id,race_id" }
     )
@@ -118,9 +147,12 @@ export async function POST(request: NextRequest) {
     answers_json: answers,
     edit_cost: 0,
   });
-  if (versionErr) {
-    console.error("prediction_versions insert failed:", versionErr.message);
-  }
+  // Version snapshot failure is non-blocking — swallow silently
+  void versionErr;
 
-  return NextResponse.json({ success: true, predictionId: pred.id });
+  return NextResponse.json({
+    success: true,
+    predictionId: pred.id,
+    status: hasPaidLeague ? "active" : "draft",
+  });
 }

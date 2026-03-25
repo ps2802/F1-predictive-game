@@ -86,10 +86,12 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  // For free leagues, paid=true immediately.
+  // For paid leagues, payment was already deducted above — mark as paid.
   const { error: joinErr } = await supabase.from("league_members").insert({
     league_id: league.id,
     user_id: user.id,
-    paid: league.entry_fee_usdc === 0,
+    paid: true,
   });
 
   if (joinErr)
@@ -98,5 +100,28 @@ export async function POST(request: NextRequest) {
   // Atomic member count increment — prevents lost-update under concurrent joins
   await supabase.rpc("increment_member_count", { p_league_id: league.id });
 
-  return NextResponse.json({ success: true, leagueId: league.id });
+  // Activate any draft predictions now that user has a paid league membership.
+  // If the RPC fails (e.g. function not yet deployed), we surface a warning
+  // in the response rather than silently leaving predictions in draft state.
+  const { data: activatedCount, error: activateErr } = await supabase.rpc(
+    "activate_user_predictions",
+    { p_user_id: user.id }
+  );
+
+  if (activateErr) {
+    // Join succeeded and fee was paid — return partial success so the client
+    // can show a clear warning. User should retry or contact support.
+    return NextResponse.json({
+      success: true,
+      leagueId: league.id,
+      activationWarning:
+        "You've joined the league, but your draft predictions could not be activated automatically. Please refresh or contact support if they still show as Draft.",
+    });
+  }
+
+  return NextResponse.json({
+    success: true,
+    leagueId: league.id,
+    activatedCount: activatedCount ?? 0,
+  });
 }
