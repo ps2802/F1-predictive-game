@@ -165,80 +165,175 @@ function AuthForm() {
             <line x1="495" y1="305" x2="495" y2="370" stroke="rgba(225,6,0,0.13)" strokeWidth="0.8"/>
             <text x="495" y="385" textAnchor="middle" fontFamily="monospace" fontSize="5.5" fill="rgba(225,6,0,0.2)" letterSpacing="2">4.8G LATERAL</text>
 
-            {/* ── MAIN F1 CAR — large side profile filling lower half ── */}
+            {/* ── 2022-2026 ERA F1 CAR — ground effect, 18" wheels, central pylon ── */}
             <g transform="translate(18, 490) scale(0.66)">
-              {/* Chassis fill */}
-              <path d="M 35,148 L 35,132 Q 90,108 158,103 L 205,101 Q 224,82 244,57 L 292,50 Q 342,46 372,54 L 402,101 L 525,98 Q 602,95 648,103 Q 700,111 722,122 L 722,148 Z"
-                    fill="rgba(225,6,0,0.04)" stroke="rgba(225,6,0,0.3)" strokeWidth="1.7"/>
-              {/* Cockpit */}
-              <path d="M 255,101 Q 262,72 288,57 L 314,53 Q 344,50 364,58 L 374,101"
-                    fill="none" stroke="rgba(225,6,0,0.24)" strokeWidth="1.3"/>
-              {/* Halo */}
-              <path d="M 262,74 Q 315,58 366,72" fill="none" stroke="rgba(225,6,0,0.22)" strokeWidth="3.2" strokeLinecap="round"/>
-              <path d="M 262,74 Q 315,58 366,72" fill="none" stroke="rgba(225,6,0,0.08)" strokeWidth="6" strokeLinecap="round"/>
-              {/* Front wing planes */}
-              <path d="M 8,149 L 8,165 L 142,165 L 142,149" fill="rgba(225,6,0,0.03)" stroke="rgba(225,6,0,0.34)" strokeWidth="1.5"/>
-              <path d="M 13,145 L 138,143" fill="none" stroke="rgba(225,6,0,0.18)" strokeWidth="0.8"/>
-              <path d="M 17,148 L 132,146" fill="none" stroke="rgba(225,6,0,0.12)" strokeWidth="0.6"/>
-              <line x1="8" y1="140" x2="8" y2="169" stroke="rgba(225,6,0,0.26)" strokeWidth="1.1"/>
-              <line x1="142" y1="140" x2="142" y2="169" stroke="rgba(225,6,0,0.26)" strokeWidth="1.1"/>
-              {/* Front wheel */}
-              <circle cx="180" cy="176" r="37" fill="rgba(0,0,0,0.5)" stroke="rgba(225,6,0,0.28)" strokeWidth="1.7"/>
-              <circle cx="180" cy="176" r="25" fill="none" stroke="rgba(225,6,0,0.12)" strokeWidth="0.9"/>
-              <circle cx="180" cy="176" r="9"  fill="none" stroke="rgba(225,6,0,0.2)"  strokeWidth="1"/>
-              <line x1="180" y1="139" x2="180" y2="213" stroke="rgba(225,6,0,0.08)" strokeWidth="0.6"/>
-              <line x1="143" y1="176" x2="217" y2="176" stroke="rgba(225,6,0,0.08)" strokeWidth="0.6"/>
-              <line x1="154" y1="150" x2="206" y2="202" stroke="rgba(225,6,0,0.05)" strokeWidth="0.5"/>
-              <line x1="206" y1="150" x2="154" y2="202" stroke="rgba(225,6,0,0.05)" strokeWidth="0.5"/>
-              {/* Front suspension */}
-              <path d="M 144,169 L 97,151 M 216,169 L 242,151" stroke="rgba(225,6,0,0.2)" strokeWidth="1.1" fill="none"/>
-              <path d="M 150,183 L 97,165 M 210,183 L 242,165" stroke="rgba(225,6,0,0.2)" strokeWidth="1.1" fill="none"/>
-              {/* Bargeboards */}
-              <path d="M 240,120 L 253,104 M 257,118 L 270,102 M 274,116 L 287,100" stroke="rgba(225,6,0,0.16)" strokeWidth="0.9" fill="none"/>
-              {/* Side mirror */}
-              <path d="M 253,87 L 266,79 L 285,79 L 285,87" fill="none" stroke="rgba(225,6,0,0.2)" strokeWidth="1"/>
-              {/* Sidepod inlet */}
-              <path d="M 402,101 Q 420,85 443,82 L 466,81" fill="none" stroke="rgba(225,6,0,0.18)" strokeWidth="1.1"/>
-              {/* Engine fin */}
-              <path d="M 402,100 L 429,56 L 496,60 L 525,98" fill="none" stroke="rgba(225,6,0,0.2)" strokeWidth="1.1"/>
-              {/* Floor */}
-              <path d="M 218,149 L 614,149" fill="none" stroke="rgba(225,6,0,0.1)" strokeWidth="0.8" strokeDasharray="6,14"/>
-              {/* Rear wheel */}
-              <circle cx="652" cy="178" r="41" fill="rgba(0,0,0,0.5)" stroke="rgba(225,6,0,0.28)" strokeWidth="1.7"/>
-              <circle cx="652" cy="178" r="28" fill="none" stroke="rgba(225,6,0,0.12)" strokeWidth="0.9"/>
-              <circle cx="652" cy="178" r="10" fill="none" stroke="rgba(225,6,0,0.2)"  strokeWidth="1"/>
-              <line x1="652" y1="137" x2="652" y2="219" stroke="rgba(225,6,0,0.08)" strokeWidth="0.6"/>
-              <line x1="611" y1="178" x2="693" y2="178" stroke="rgba(225,6,0,0.08)" strokeWidth="0.6"/>
-              <line x1="623" y1="149" x2="681" y2="207" stroke="rgba(225,6,0,0.05)" strokeWidth="0.5"/>
-              <line x1="681" y1="149" x2="623" y2="207" stroke="rgba(225,6,0,0.05)" strokeWidth="0.5"/>
-              {/* Rear suspension */}
-              <path d="M 613,170 L 567,153 M 691,170 L 716,152" stroke="rgba(225,6,0,0.2)" strokeWidth="1.1" fill="none"/>
-              {/* Rear wing endplates */}
-              <line x1="697" y1="60" x2="697" y2="158" stroke="rgba(225,6,0,0.24)" strokeWidth="1.2"/>
-              <line x1="782" y1="58" x2="782" y2="158" stroke="rgba(225,6,0,0.24)" strokeWidth="1.2"/>
-              {/* Rear wing planes */}
-              <path d="M 695,80 L 784,77 L 784,67 L 695,70 Z" fill="rgba(225,6,0,0.04)" stroke="rgba(225,6,0,0.34)" strokeWidth="1.5"/>
-              <path d="M 697,86 L 782,83 L 782,76 L 697,78 Z" fill="none" stroke="rgba(225,6,0,0.18)" strokeWidth="0.9"/>
+
+              {/* Body fill */}
+              <path d="M 22,232 C 65,226 115,210 155,193 C 175,185 196,170 218,158 C 232,149 246,141 261,132 C 282,115 304,108 322,110 C 342,113 362,128 382,135 L 386,135 L 386,97 C 398,91 452,88 494,88 C 537,88 570,95 600,108 C 624,118 644,130 662,140 L 730,152 C 718,163 700,177 680,194 C 655,215 628,225 596,227 L 210,230 C 195,232 178,234 162,237 C 138,241 80,242 22,238 Z"
+                    fill="rgba(225,6,0,0.04)" stroke="none"/>
+
+              {/* Upper body profile */}
+              <path d="M 22,232 C 65,226 115,210 155,193 C 175,185 196,170 218,158 C 232,149 246,141 261,132 C 282,115 304,108 322,110 C 342,113 362,128 382,135 L 386,135 L 386,97 C 398,91 452,88 494,88 C 537,88 570,95 600,108 C 624,118 644,130 662,140 L 668,140"
+                    fill="none" stroke="rgba(225,6,0,0.3)" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round"/>
+
+              {/* Lower body / floor line */}
+              <path d="M 22,238 C 80,242 138,240 162,237 C 178,234 195,232 210,230 L 596,227"
+                    fill="none" stroke="rgba(225,6,0,0.3)" strokeWidth="1.6" strokeLinecap="round"/>
+
+              {/* ── DIFFUSER — large, prominent in ground effect era ── */}
+              <path d="M 596,227 C 628,225 655,215 680,194 C 700,177 718,163 730,152"
+                    fill="none" stroke="rgba(225,6,0,0.3)" strokeWidth="1.6" strokeLinecap="round"/>
+              {/* Diffuser internal channels */}
+              <path d="M 612,222 C 638,220 662,208 682,190" fill="none" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
+              <path d="M 626,218 C 650,215 672,203 690,185" fill="none" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
+
+              {/* ── COCKPIT + HALO ── */}
+              {/* Cockpit opening */}
+              <path d="M 248,144 Q 270,128 305,120 Q 340,114 370,130 L 382,136"
+                    fill="none" stroke="rgba(225,6,0,0.22)" strokeWidth="1.2"/>
+              {/* Halo glow */}
+              <path d="M 256,138 Q 292,107 322,108 Q 352,109 372,127"
+                    fill="none" stroke="rgba(225,6,0,0.08)" strokeWidth="8" strokeLinecap="round"/>
+              {/* Halo structure */}
+              <path d="M 256,138 Q 292,107 322,108 Q 352,109 372,127"
+                    fill="none" stroke="rgba(225,6,0,0.26)" strokeWidth="3" strokeLinecap="round"/>
+              {/* Halo front leg (distinctive Y-shape) */}
+              <line x1="268" y1="134" x2="270" y2="156" stroke="rgba(225,6,0,0.2)" strokeWidth="1.8" strokeLinecap="round"/>
+
+              {/* ── AIR INTAKE BOX (tall, rectangular — 2022+ style) ── */}
+              {/* Intake box top face */}
+              <path d="M 386,97 C 398,91 452,88 494,88" fill="none" stroke="rgba(225,6,0,0.22)" strokeWidth="1.2"/>
+              {/* Intake inlet opening face */}
+              <path d="M 386,97 L 386,138" fill="none" stroke="rgba(225,6,0,0.22)" strokeWidth="1.2"/>
+              {/* Intake box right side */}
+              <line x1="494" y1="88" x2="496" y2="135" stroke="rgba(225,6,0,0.16)" strokeWidth="1"/>
+
+              {/* ── SIDEPOD UNDERCUT — key 2022+ visual ── */}
+              {/* Sidepod undercut curve (open space below sidepod) */}
+              <path d="M 386,178 Q 425,185 462,200 Q 500,215 540,225 Q 568,228 596,227"
+                    fill="none" stroke="rgba(225,6,0,0.2)" strokeWidth="1.3"/>
+              {/* Sidepod leading edge inlet */}
+              <path d="M 383,140 C 383,155 383,168 383,178" fill="none" stroke="rgba(225,6,0,0.2)" strokeWidth="1"/>
+
+              {/* ── FLOOR EDGES (prominent aero element in ground effect era) ── */}
+              <path d="M 210,230 L 596,227" fill="none" stroke="rgba(225,6,0,0.18)" strokeWidth="1.4"/>
+              {/* Floor edge micro-steps */}
+              <line x1="280" y1="228" x2="280" y2="233" stroke="rgba(225,6,0,0.12)" strokeWidth="0.8"/>
+              <line x1="360" y1="227" x2="360" y2="232" stroke="rgba(225,6,0,0.12)" strokeWidth="0.8"/>
+              <line x1="440" y1="227" x2="440" y2="232" stroke="rgba(225,6,0,0.12)" strokeWidth="0.8"/>
+              <line x1="520" y1="227" x2="520" y2="232" stroke="rgba(225,6,0,0.12)" strokeWidth="0.8"/>
+
+              {/* ── FRONT WHEEL — 18" era: thin sidewall, big rim, disc cover ── */}
+              {/* Outer tyre */}
+              <circle cx="185" cy="197" r="40" fill="rgba(0,0,0,0.55)" stroke="rgba(225,6,0,0.26)" strokeWidth="1.6"/>
+              {/* 18" = thin sidewall — rim is close to outer tyre */}
+              <circle cx="185" cy="197" r="31" fill="rgba(10,0,0,0.4)" stroke="rgba(225,6,0,0.15)" strokeWidth="1"/>
+              {/* Disc cover (2022+ all cars have wheel covers) */}
+              <circle cx="185" cy="197" r="29" fill="rgba(225,6,0,0.04)" stroke="rgba(225,6,0,0.2)" strokeWidth="0.9"/>
+              {/* Rim centre */}
+              <circle cx="185" cy="197" r="10" fill="none" stroke="rgba(225,6,0,0.18)" strokeWidth="1"/>
+              {/* 5-spoke rim pattern */}
+              <line x1="185" y1="168" x2="185" y2="187" stroke="rgba(225,6,0,0.12)" strokeWidth="1"/>
+              <line x1="185" y1="207" x2="185" y2="226" stroke="rgba(225,6,0,0.12)" strokeWidth="1"/>
+              <line x1="156" y1="197" x2="175" y2="197" stroke="rgba(225,6,0,0.12)" strokeWidth="1"/>
+              <line x1="195" y1="197" x2="214" y2="197" stroke="rgba(225,6,0,0.12)" strokeWidth="1"/>
+              <line x1="164" y1="176" x2="178" y2="190" stroke="rgba(225,6,0,0.09)" strokeWidth="0.8"/>
+              <line x1="192" y1="204" x2="206" y2="218" stroke="rgba(225,6,0,0.09)" strokeWidth="0.8"/>
+              <line x1="206" y1="176" x2="192" y2="190" stroke="rgba(225,6,0,0.09)" strokeWidth="0.8"/>
+              <line x1="164" y1="218" x2="178" y2="204" stroke="rgba(225,6,0,0.09)" strokeWidth="0.8"/>
+
+              {/* Front suspension (pushrod) */}
+              <path d="M 155,183 L 115,166 M 216,183 L 242,166" stroke="rgba(225,6,0,0.18)" strokeWidth="1" fill="none"/>
+              <path d="M 158,210 L 115,198 M 213,210 L 242,198" stroke="rgba(225,6,0,0.18)" strokeWidth="1" fill="none"/>
+              {/* Pushrod */}
+              <line x1="200" y1="186" x2="220" y2="166" stroke="rgba(225,6,0,0.13)" strokeWidth="0.9"/>
+
+              {/* ── REAR WHEEL — 18" era ── */}
+              <circle cx="658" cy="198" r="42" fill="rgba(0,0,0,0.55)" stroke="rgba(225,6,0,0.26)" strokeWidth="1.6"/>
+              <circle cx="658" cy="198" r="33" fill="rgba(10,0,0,0.4)" stroke="rgba(225,6,0,0.15)" strokeWidth="1"/>
+              <circle cx="658" cy="198" r="31" fill="rgba(225,6,0,0.04)" stroke="rgba(225,6,0,0.2)" strokeWidth="0.9"/>
+              <circle cx="658" cy="198" r="11" fill="none" stroke="rgba(225,6,0,0.18)" strokeWidth="1"/>
+              <line x1="658" y1="167" x2="658" y2="187" stroke="rgba(225,6,0,0.12)" strokeWidth="1"/>
+              <line x1="658" y1="209" x2="658" y2="229" stroke="rgba(225,6,0,0.12)" strokeWidth="1"/>
+              <line x1="627" y1="198" x2="647" y2="198" stroke="rgba(225,6,0,0.12)" strokeWidth="1"/>
+              <line x1="669" y1="198" x2="689" y2="198" stroke="rgba(225,6,0,0.12)" strokeWidth="1"/>
+              <line x1="636" y1="176" x2="650" y2="189" stroke="rgba(225,6,0,0.09)" strokeWidth="0.8"/>
+              <line x1="666" y1="207" x2="680" y2="220" stroke="rgba(225,6,0,0.09)" strokeWidth="0.8"/>
+              <line x1="680" y1="176" x2="666" y2="189" stroke="rgba(225,6,0,0.09)" strokeWidth="0.8"/>
+              <line x1="636" y1="220" x2="650" y2="207" stroke="rgba(225,6,0,0.09)" strokeWidth="0.8"/>
+
+              {/* Rear suspension (pullrod) */}
+              <path d="M 618,184 L 574,164 M 698,184 L 722,164" stroke="rgba(225,6,0,0.18)" strokeWidth="1" fill="none"/>
+              <path d="M 620,212 L 574,200 M 696,212 L 722,200" stroke="rgba(225,6,0,0.18)" strokeWidth="1" fill="none"/>
+              {/* Pullrod (goes down from outboard) */}
+              <line x1="622" y1="192" x2="606" y2="210" stroke="rgba(225,6,0,0.13)" strokeWidth="0.9"/>
+
+              {/* ── FRONT WING — 2022+ simplified, 4-element, very close to ground ── */}
+              {/* Endplates (straight, clean 2022+ style) */}
+              <line x1="10" y1="227" x2="10" y2="248" stroke="rgba(225,6,0,0.24)" strokeWidth="1.1"/>
+              <line x1="152" y1="224" x2="152" y2="248" stroke="rgba(225,6,0,0.24)" strokeWidth="1.1"/>
+              {/* Neutral section (centre — flat, connects to nose) */}
+              <path d="M 10,244 L 152,242" fill="none" stroke="rgba(225,6,0,0.32)" strokeWidth="1.5"/>
+              {/* Flap 1 */}
+              <path d="M 12,239 L 150,237" fill="none" stroke="rgba(225,6,0,0.24)" strokeWidth="1"/>
+              {/* Flap 2 */}
+              <path d="M 14,234 L 148,232" fill="none" stroke="rgba(225,6,0,0.18)" strokeWidth="0.9"/>
+              {/* Flap 3 (outer) */}
+              <path d="M 16,229 L 146,227" fill="none" stroke="rgba(225,6,0,0.14)" strokeWidth="0.8"/>
+              {/* Wing mount pylons (2 small pylons) */}
+              <line x1="58" y1="238" x2="68" y2="229" stroke="rgba(225,6,0,0.14)" strokeWidth="0.9"/>
+              <line x1="108" y1="238" x2="98" y2="229" stroke="rgba(225,6,0,0.14)" strokeWidth="0.9"/>
+
+              {/* ── REAR WING — 2022+ HIGH-MOUNTED with SLIM CENTRAL PYLON ── */}
+              {/* Endplates */}
+              <line x1="672" y1="50" x2="672" y2="138" stroke="rgba(225,6,0,0.22)" strokeWidth="1.1"/>
+              <line x1="760" y1="50" x2="760" y2="138" stroke="rgba(225,6,0,0.22)" strokeWidth="1.1"/>
+              {/* Main plane - curved slightly like real car */}
+              <path d="M 670,68 Q 716,58 762,66" fill="rgba(225,6,0,0.04)" stroke="rgba(225,6,0,0.34)" strokeWidth="1.5"/>
+              {/* Main plane lower face */}
+              <path d="M 670,77 Q 716,68 762,76" fill="none" stroke="rgba(225,6,0,0.18)" strokeWidth="0.9"/>
+              {/* Upper flap */}
+              <path d="M 672,60 Q 716,51 760,59" fill="rgba(225,6,0,0.03)" stroke="rgba(225,6,0,0.26)" strokeWidth="1.2"/>
               {/* DRS slot */}
-              <line x1="699" y1="80" x2="780" y2="77" stroke="rgba(0,210,170,0.16)" strokeWidth="0.8" strokeDasharray="4,6"/>
-              {/* Diffuser */}
-              <path d="M 697,151 L 784,155 L 784,170 L 697,164" fill="none" stroke="rgba(225,6,0,0.22)" strokeWidth="1.1"/>
-              {/* Dimension lines */}
-              <line x1="35"  y1="224" x2="722" y2="224" stroke="rgba(225,6,0,0.07)" strokeWidth="0.6" strokeDasharray="3,10"/>
-              <line x1="35"  y1="218" x2="35"  y2="230" stroke="rgba(225,6,0,0.16)" strokeWidth="1"/>
-              <line x1="722" y1="218" x2="722" y2="230" stroke="rgba(225,6,0,0.16)" strokeWidth="1"/>
-              <text x="378" y="242" textAnchor="middle" fontFamily="monospace" fontSize="8.5" fill="rgba(225,6,0,0.18)" letterSpacing="2.5">WHEELBASE — 3,600 mm</text>
-              {/* Ground clearance */}
-              <line x1="180" y1="213" x2="180" y2="255" stroke="rgba(225,6,0,0.1)" strokeWidth="0.6"/>
-              <line x1="170" y1="255" x2="190" y2="255" stroke="rgba(225,6,0,0.1)" strokeWidth="0.6"/>
-              <text x="196" y="258" fontFamily="monospace" fontSize="6.5" fill="rgba(225,6,0,0.14)" letterSpacing="1.5">GND CLR 40mm</text>
-              {/* Aero annotation callout lines */}
-              <line x1="722" y1="105" x2="820" y2="88" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
-              <line x1="820" y1="88" x2="860" y2="88" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
-              <text x="822" y="85" fontFamily="monospace" fontSize="6" fill="rgba(225,6,0,0.14)" letterSpacing="1">REAR WING</text>
-              <line x1="35" y1="140" x2="-40" y2="125" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
-              <line x1="-40" y1="125" x2="-80" y2="125" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
-              <text x="-148" y="122" fontFamily="monospace" fontSize="6" fill="rgba(225,6,0,0.14)" letterSpacing="1">NOSE CONE</text>
+              <path d="M 674,64 Q 716,55 758,63" fill="none" stroke="rgba(0,210,170,0.2)" strokeWidth="0.8" strokeDasharray="4,5"/>
+              {/* ★ SLIM CENTRAL PYLON — most distinctive 2022+ feature ★ */}
+              <rect x="712" y="76" width="8" height="64" rx="2"
+                    fill="rgba(225,6,0,0.06)" stroke="rgba(225,6,0,0.3)" strokeWidth="1.1"/>
+              {/* ★ BEAM WING — second lower element, new in 2022+ ★ */}
+              <path d="M 675,130 Q 716,126 757,129" fill="rgba(225,6,0,0.03)" stroke="rgba(225,6,0,0.28)" strokeWidth="1.3"/>
+              <path d="M 676,135 Q 716,132 756,135" fill="none" stroke="rgba(225,6,0,0.14)" strokeWidth="0.8"/>
+
+              {/* ── TECHNICAL DIMENSIONS ── */}
+              <line x1="22" y1="272" x2="730" y2="272" stroke="rgba(225,6,0,0.07)" strokeWidth="0.6" strokeDasharray="3,10"/>
+              <line x1="22" y1="266" x2="22" y2="278" stroke="rgba(225,6,0,0.14)" strokeWidth="0.9"/>
+              <line x1="730" y1="266" x2="730" y2="278" stroke="rgba(225,6,0,0.14)" strokeWidth="0.9"/>
+              <text x="376" y="286" textAnchor="middle" fontFamily="monospace" fontSize="8" fill="rgba(225,6,0,0.16)" letterSpacing="2">LENGTH — 5,634 mm</text>
+              {/* Wheelbase */}
+              <line x1="185" y1="258" x2="658" y2="258" stroke="rgba(225,6,0,0.06)" strokeWidth="0.5" strokeDasharray="2,8"/>
+              <line x1="185" y1="253" x2="185" y2="263" stroke="rgba(225,6,0,0.12)" strokeWidth="0.8"/>
+              <line x1="658" y1="253" x2="658" y2="263" stroke="rgba(225,6,0,0.12)" strokeWidth="0.8"/>
+              <text x="421" y="267" textAnchor="middle" fontFamily="monospace" fontSize="7" fill="rgba(225,6,0,0.13)" letterSpacing="1.5">WB — 3,600 mm</text>
+              {/* Ground clearance — 2022+ cars run very low */}
+              <line x1="185" y1="237" x2="185" y2="252" stroke="rgba(225,6,0,0.1)" strokeWidth="0.6"/>
+              <line x1="178" y1="252" x2="192" y2="252" stroke="rgba(225,6,0,0.1)" strokeWidth="0.6"/>
+              <text x="198" y="254" fontFamily="monospace" fontSize="6" fill="rgba(225,6,0,0.14)" letterSpacing="1">GND CLR 15mm</text>
+
+              {/* Annotation callouts */}
+              <line x1="716" y1="58" x2="800" y2="38" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
+              <line x1="800" y1="38" x2="840" y2="38" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
+              <text x="842" y="35" fontFamily="monospace" fontSize="6" fill="rgba(225,6,0,0.14)" letterSpacing="1">REAR WING</text>
+              <line x1="716" y1="130" x2="800" y2="148" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
+              <line x1="800" y1="148" x2="840" y2="148" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
+              <text x="842" y="145" fontFamily="monospace" fontSize="6" fill="rgba(225,6,0,0.14)" letterSpacing="1">BEAM WING</text>
+              <line x1="716" y1="108" x2="800" y2="93" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
+              <line x1="800" y1="93" x2="840" y2="93" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
+              <text x="842" y="90" fontFamily="monospace" fontSize="6" fill="rgba(225,6,0,0.14)" letterSpacing="1">PYLON</text>
+              <line x1="22" y1="232" x2="-50" y2="215" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
+              <line x1="-50" y1="215" x2="-90" y2="215" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
+              <text x="-158" y="212" fontFamily="monospace" fontSize="6" fill="rgba(225,6,0,0.14)" letterSpacing="1">NOSE CONE</text>
+              <line x1="450" y1="210" x2="450" y2="228" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
+              <line x1="450" y1="228" x2="390" y2="228" stroke="rgba(225,6,0,0.1)" strokeWidth="0.7"/>
+              <text x="296" y="225" fontFamily="monospace" fontSize="6" fill="rgba(225,6,0,0.14)" letterSpacing="1">SIDEPOD UNDERCUT</text>
             </g>
 
             {/* ── Power unit components strip (bottom) ── */}
