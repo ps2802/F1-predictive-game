@@ -19,12 +19,15 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
  *     qualifying_starts_at instead to prevent re-locking.
  */
 export async function GET(request: NextRequest) {
+  // CRON_SECRET must always be set in production. Reject the request if
+  // the secret is missing (misconfigured deployment) or doesn't match.
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!cronSecret) {
+    return NextResponse.json({ error: "CRON_SECRET env var not configured." }, { status: 503 });
+  }
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const admin = createSupabaseAdminClient();

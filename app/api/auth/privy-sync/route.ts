@@ -22,7 +22,7 @@ import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 export async function POST(request: NextRequest) {
   // Rate limit: 10 auth attempts per IP per 15 minutes
   const ip = getClientIp(request.headers);
-  if (isRateLimited(`privy-sync:${ip}`, 10, 15 * 60 * 1000)) {
+  if (await isRateLimited(`privy-sync:${ip}`, 10, 15 * 60 * 1000)) {
     return NextResponse.json(
       { error: "Too many requests. Please wait before trying again." },
       { status: 429 }
