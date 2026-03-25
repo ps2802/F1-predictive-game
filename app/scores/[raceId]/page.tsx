@@ -108,10 +108,26 @@ export default function ScoreBreakdownPage() {
       <div className="gla-root">
         <div className="gl-stripe" aria-hidden="true" />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
-          <p style={{ fontSize: "2rem", marginBottom: "1rem" }}>📭</p>
-          <h1 className="gla-page-title">No score yet</h1>
-          <p className="gla-page-sub" style={{ marginTop: "0.5rem" }}>
-            {error || "This race hasn't been settled yet."}
+          <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "999px",
+            padding: "0.4rem 1rem",
+            fontSize: "0.7rem",
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.4)",
+            marginBottom: "1.5rem",
+          }}>
+            Results Pending
+          </div>
+          <h1 className="gla-page-title">Waiting on the Chequered Flag</h1>
+          <p className="gla-page-sub" style={{ marginTop: "0.75rem" }}>
+            {error || "This race hasn't been settled yet. Check back after the podium ceremony."}
           </p>
           <Link href="/profile" className="gla-race-btn" style={{ marginTop: "2rem", display: "inline-block" }}>
             Back to Profile
@@ -126,6 +142,18 @@ export default function ScoreBreakdownPage() {
 
   const editPenaltyApplied = score.edit_penalty < 0.999;
 
+  // Contextual headline copy based on score performance
+  const correctCount = questions.filter((q) => q.is_correct).length;
+  const totalCount = questions.length;
+  const correctRatio = totalCount > 0 ? correctCount / totalCount : 0;
+
+  const scoreHeadline = (() => {
+    if (correctRatio >= 0.8) return "Outstanding call. You saw it coming.";
+    if (correctRatio >= 0.5) return "Solid read on the race.";
+    if (correctRatio > 0) return "Points on the board. Keep pushing.";
+    return "Tough one. The cars had other ideas.";
+  })();
+
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
@@ -139,13 +167,32 @@ export default function ScoreBreakdownPage() {
       </div>
 
       <div className="gla-content">
+        {/* Results settled banner */}
+        <div style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "0.5rem",
+          background: "rgba(0,210,170,0.08)",
+          border: "1px solid rgba(0,210,170,0.2)",
+          borderRadius: "999px",
+          padding: "0.35rem 0.9rem",
+          fontSize: "0.65rem",
+          fontWeight: 700,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          color: "rgba(0,210,170,0.85)",
+          marginBottom: "1rem",
+        }}>
+          <span aria-hidden="true">✓</span> Race Settled
+        </div>
+
         <div style={{ marginBottom: "0.25rem" }}>
           <span className="gla-race-round">Round {race?.round}</span>
         </div>
         <p className="gla-page-title" style={{ marginBottom: "0.25rem" }}>
           {race?.name ?? raceId}
         </p>
-        <p className="gla-page-sub">Score breakdown</p>
+        <p className="gla-page-sub">{scoreHeadline}</p>
 
         {/* Total score hero */}
         <div style={{
@@ -190,14 +237,14 @@ export default function ScoreBreakdownPage() {
           }}>
             <div>
               <span style={{ fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(0,210,170,0.7)", display: "block", marginBottom: "0.2rem" }}>
-                Your rank this race
+                {rank === 1 ? "You finished P1 — race winner" : rank <= 3 ? "Podium finish" : "Your race position"}
               </span>
               <span style={{ fontSize: "1.6rem", fontWeight: 900, color: "#00D2AA" }}>
-                #{rank}
+                P{rank}
               </span>
             </div>
             <Link href="/leaderboard" className="gla-race-btn" style={{ fontSize: "0.65rem", padding: "0.6rem 1.1rem" }}>
-              Full Leaderboard →
+              See the full grid →
             </Link>
           </div>
         )}
