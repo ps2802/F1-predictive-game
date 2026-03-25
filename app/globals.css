@@ -2640,3 +2640,415 @@ h1, h2, h3 { margin-top: 0; }
     padding: 1.2rem 1.5rem;
   }
 }
+
+/* =============================================================
+   F1P-22: MOBILE-FIRST RESPONSIVE PASS
+   Target: 375px (iPhone SE) and up. No horizontal scroll.
+   Touch targets ≥ 44px. Text ≥ 14px. Grids → single column.
+============================================================= */
+
+/* ── Driver dropdown (predict page) ── */
+.driver-dd { position: relative; width: 100%; }
+.driver-dd-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  min-height: 44px;
+  text-align: left;
+}
+.driver-dd-trigger:hover:not(.is-disabled) { border-color: rgba(255,255,255,0.3); }
+.driver-dd-trigger.is-open { border-color: var(--gl-red, #E10600); }
+.driver-dd-trigger.is-disabled { opacity: 0.5; cursor: not-allowed; }
+.driver-dd-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.driver-dd-arrow { font-size: 0.65rem; color: rgba(255,255,255,0.4); flex-shrink: 0; margin-left: 0.5rem; }
+
+.driver-dd-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: #0d0d0d;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  z-index: 50;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+}
+.driver-dd-search-wrap { padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.driver-dd-search {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  outline: none;
+}
+.driver-dd-search:focus { border-color: var(--gl-red, #E10600); }
+.driver-dd-list { max-height: 280px; overflow-y: auto; overscroll-behavior: contain; }
+.driver-dd-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.85);
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+  min-height: 44px;
+}
+.driver-dd-item:hover:not(.is-disabled) { background: rgba(255,255,255,0.06); }
+.driver-dd-item.is-selected { background: rgba(225,6,0,0.12); color: #fff; }
+.driver-dd-item.is-disabled { opacity: 0.35; cursor: not-allowed; }
+.driver-dd-num {
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+  min-width: 26px;
+  text-align: center;
+}
+.driver-dd-name { font-weight: 600; flex: 1; }
+.driver-dd-team { font-size: 0.72rem; white-space: nowrap; opacity: 0.75; }
+.driver-dd-check { margin-left: auto; font-size: 0.85rem; color: var(--gl-red, #E10600); flex-shrink: 0; }
+.driver-dd-empty { padding: 1rem; text-align: center; color: rgba(255,255,255,0.3); font-size: 0.875rem; }
+
+/* ── Predict page header + countdown ── */
+.predict-countdown {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.5);
+}
+.predict-countdown-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.35);
+}
+.predict-countdown-value {
+  font-weight: 700;
+  color: rgba(0,210,170,1);
+  font-size: 0.9rem;
+}
+.predict-already-banner {
+  max-width: 900px;
+  margin: 0.75rem auto 0;
+  padding: 0.65rem clamp(1rem, 5vw, 2.5rem);
+  font-size: 0.82rem;
+  color: rgba(0,210,170,0.85);
+  background: rgba(0,210,170,0.06);
+  border-bottom: 1px solid rgba(0,210,170,0.15);
+}
+.predict-step-note {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0.65rem clamp(1rem, 5vw, 2.5rem);
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.predict-step-error {
+  color: #f87171;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* ── Profile-specific classes not yet defined ── */
+.profile-stats-strip {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+.profile-stat-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem 1rem;
+  gap: 0.25rem;
+}
+.profile-stat-num {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+}
+.profile-stat-lbl {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.4);
+  font-weight: 700;
+  text-align: center;
+}
+.profile-stat-divider {
+  width: 1px;
+  background: rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+.profile-identity-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.profile-field-group { display: flex; flex-direction: column; gap: 0.4rem; }
+.profile-field-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.4);
+}
+.profile-field-row { display: flex; gap: 0.75rem; align-items: center; }
+.profile-field-static {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.75);
+}
+.profile-field-note { font-size: 0.72rem; color: rgba(255,255,255,0.3); }
+.profile-wallet-addr { word-break: break-all; }
+.profile-wallet-text { font-family: monospace; font-size: 0.8rem; color: rgba(255,255,255,0.7); }
+.profile-save-msg { font-size: 0.82rem; margin: 0.25rem 0 0; }
+.profile-save-msg.is-ok { color: #4ade80; }
+.profile-save-msg.is-err { color: #f87171; }
+
+/* ── League card prize ── */
+.league-card-prize {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.league-card-prize-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,215,0,0.6);
+  font-weight: 700;
+}
+.league-card-prize-amount {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffd700;
+}
+.league-card-contribution {
+  font-size: 0.75rem;
+  color: rgba(0,210,170,0.7);
+}
+.league-prize-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  background: rgba(255,215,0,0.08);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 8px;
+  padding: 0.75rem 1.1rem;
+}
+.league-prize-banner-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,215,0,0.6);
+  font-weight: 700;
+}
+.league-prize-banner-amount {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #ffd700;
+}
+
+/* =============================================================
+   BREAKPOINT: ≤ 768px  (tablets + large phones)
+============================================================= */
+@media (max-width: 768px) {
+  /* ── Shared: reduce horizontal padding on page content ── */
+  .gla-content { padding: 1.5rem 1rem 3rem; }
+
+  /* ── Nav: tighten horizontal padding, reduce font-clutter ── */
+  .gla-nav { padding: 0 1rem; }
+  /* Shrink balance pill so it doesn't overflow nav ── */
+  .dash-balance-pill { font-size: 0.75rem; padding: 0.4rem 0.7rem; }
+
+  /* ── Dashboard: full-width race cards ── */
+  .gla-race-grid { grid-template-columns: 1fr; }
+
+  /* ── Prediction form: full-width navigation buttons ── */
+  .predict-nav { flex-direction: column; }
+  .predict-nav-btn { width: 100%; text-align: center; min-height: 44px; }
+
+  /* ── Leaderboard: tighten columns for small viewports ── */
+  .lb-header,
+  .lb-row { grid-template-columns: 44px 1fr 56px 72px; padding: 0.75rem 0.85rem; }
+
+  /* ── Leagues: single-column card grid ── */
+  .league-grid { grid-template-columns: 1fr; }
+
+  /* ── League detail: stack header vertically ── */
+  .league-detail-header { flex-direction: column; }
+  .league-invite-box { align-items: flex-start; }
+  .league-invite-hint { max-width: 100%; text-align: left; }
+
+  /* ── League join form: stack on small screens ── */
+  .league-join-form { flex-direction: column; align-items: stretch; }
+  .league-join-form .gla-race-btn { width: 100%; min-height: 44px; }
+  .league-join-input { min-width: unset; width: 100%; }
+
+  /* ── Profile: stats strip — reduce padding on small screens ── */
+  .profile-stats-strip { flex-direction: column; }
+  .profile-stat-divider { width: 100%; height: 1px; }
+  .profile-stat-block { padding: 1rem; align-items: flex-start; }
+  .profile-field-row { flex-direction: column; align-items: stretch; }
+  .profile-field-row .gla-race-btn { width: 100%; min-height: 44px; }
+
+  /* ── Scores page: category summary 3-col → 1-col on small ── */
+  .scores-category-grid { grid-template-columns: 1fr !important; }
+
+  /* ── Score breakdown: question rows handle overflow ── */
+  .score-question-row { grid-template-columns: 1.25rem 1fr auto !important; gap: 0.5rem !important; }
+
+  /* ── Onboarding action buttons stack ── */
+  .onboarding-actions { flex-direction: column; }
+  .onboarding-actions button,
+  .onboarding-actions .gla-race-btn { width: 100%; min-height: 44px; }
+
+  /* ── Auth card: remove extra horizontal padding ── */
+  .gla-auth-card { padding: 1.5rem 1rem; }
+
+  /* ── How it works section already handled but ensure proper mobile ── */
+  .home-hero-sub { font-size: 0.88rem; }
+  .home-countdown-box { max-width: 100%; }
+}
+
+/* =============================================================
+   BREAKPOINT: ≤ 480px  (iPhone SE and similar narrow phones)
+============================================================= */
+@media (max-width: 480px) {
+  /* ── App-wide content padding at narrowest ── */
+  .gla-content { padding: 1.25rem 0.875rem 2.5rem; }
+
+  /* ── Nav: all items must fit in a single tight row ── */
+  .gla-nav { padding: 0 0.75rem; flex-wrap: wrap; min-height: 52px; height: auto; padding-top: 0.4rem; padding-bottom: 0.4rem; gap: 0.25rem; }
+  .gla-nav-logo { width: 96px; }
+  .gla-nav-right { gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end; }
+  .gla-nav-link { font-size: 0.6rem; letter-spacing: 0.08em; }
+  /* Hide leaderboard link in nav on very small screens — accessible via bottom of app */
+  .gla-nav-right .gla-nav-link[href="/leaderboard"] { display: none; }
+  /* Shorten admin link text won't truncate */
+  .dash-balance-pill { font-size: 0.68rem; padding: 0.35rem 0.55rem; }
+
+  /* ── Race cards: tighten padding ── */
+  .gla-race-card { padding: 1rem 1.1rem; }
+  /* Ensure race action buttons are full-width touch-friendly ── */
+  .gla-race-btn { min-height: 44px; display: flex; align-items: center; justify-content: center; }
+
+  /* ── Prediction step tabs: scrollable, never overflow ── */
+  .predict-steps { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; padding-bottom: 0.25rem; }
+  .predict-step-tab { white-space: nowrap; flex-shrink: 0; padding: 0.65rem 1rem; min-height: 44px; }
+
+  /* ── Prediction options: full-width on mobile ── */
+  .predict-options { flex-direction: column; }
+  .predict-option { width: 100%; min-height: 44px; display: flex; align-items: center; }
+
+  /* ── Driver dropdown list: bigger touch targets ── */
+  .driver-dd-item { min-height: 48px; }
+  .driver-dd-list { max-height: 240px; }
+
+  /* ── Leaderboard: only rank, name, score on very narrow ── */
+  .lb-header { grid-template-columns: 40px 1fr 70px; padding: 0.65rem 0.75rem; }
+  .lb-row { grid-template-columns: 40px 1fr 70px; padding: 0.75rem 0.75rem; }
+  /* Hide "Races" column on very narrow screens ── */
+  .lb-header span:nth-child(3),
+  .lb-row .lb-races { display: none; }
+
+  /* ── Profile stats: horizontal row of numbers stays compact ── */
+  .profile-stats-strip { flex-direction: row; }
+  .profile-stat-divider { width: 1px; height: auto; }
+  .profile-stat-block { padding: 0.875rem 0.5rem; }
+  .profile-stat-num { font-size: 1.3rem; }
+  .profile-stat-lbl { font-size: 0.58rem; }
+
+  /* ── Scores: category summary 3-col preserved when wide enough else 1 col ── */
+  /* Already handled at 768px via .scores-category-grid override */
+
+  /* ── League page header title: prevent overflow ── */
+  .gla-page-title { font-size: clamp(1.4rem, 7vw, 2rem); }
+
+  /* ── League join: compact ── */
+  .league-join-box { padding: 1.1rem; }
+
+  /* ── Auth form: ensure inputs don't overflow ── */
+  .gla-auth-card { padding: 1.25rem 0.875rem; }
+  .gla-field-input { font-size: 0.875rem; }
+
+  /* ── Home page: tighten nav ── */
+  .home-nav { padding: 0 1rem; }
+  .home-nav-logo { width: 100px; }
+  .home-hero-inner { padding: 1.75rem 1rem 2.5rem; }
+  .home-hero-actions { flex-direction: column; }
+  .home-cta-primary { width: 100%; justify-content: center; }
+  .home-how-inner { padding: 0 1rem; }
+  .home-footer { padding: 1rem; }
+
+  /* ── Countdown timer: shrink numbers slightly ── */
+  .home-countdown-n { font-size: 1.25rem; }
+  .home-countdown-unit { min-width: 2.5rem; }
+  .home-countdown-sep { font-size: 1.1rem; }
+
+  /* ── Login page: single column always, tighter padding ── */
+  .gl-login-panel { padding: 1.75rem 1rem 2rem; }
+  .gl-login-h1 { font-size: 1.8rem; }
+  .gl-login-stats { flex-wrap: wrap; width: 100%; }
+  .gl-login-stat { flex: 1 1 40%; }
+  .gl-login-btn { max-width: 100%; }
+
+  /* ── Dashboard: page sub text wrap ── */
+  .gla-page-sub { font-size: 0.78rem; }
+
+  /* ── League detail invite code: no overflow ── */
+  .league-invite-code { font-size: 0.95rem; letter-spacing: 0.1em; word-break: break-all; }
+  .league-invite-box { width: 100%; }
+
+  /* ── League type toggle: stack vertically on very narrow ── */
+  .league-type-toggle { flex-direction: column; }
+  .league-type-btn { min-height: 44px; }
+
+  /* ── Predict locked/saved: inline-flex to block ── */
+  .predict-locked-box-inner { flex-direction: column; align-items: stretch; }
+  .predict-locked-box-inner .gla-race-btn { width: 100%; min-height: 44px; text-align: center; display: flex; align-items: center; justify-content: center; }
+
+  /* ── Create league form: submit button full width ── */
+  .gla-predict-submit { width: 100%; min-height: 44px; justify-content: center; }
+}
