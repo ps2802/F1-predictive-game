@@ -5,7 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const LockRaceBody = z.object({
   raceId: z.string().min(1, "raceId is required."),
-  locked: z.boolean(),
+  locked: z.boolean({ required_error: "locked (boolean) is required." }),
 });
 
 // PATCH /api/admin/races/lock — manually lock or unlock a race
