@@ -41,39 +41,48 @@ export default function LeaguePage() {
   const [members, setMembers] = useState<MemberScore[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "shared">("idle");
 
-  useEffect(() => {
-    async function load() {
-      const supabase = createSupabaseBrowserClient();
-      if (!supabase) return;
+  async function load() {
+    setLoadError("");
+    setLoading(true);
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) { setLoading(false); return; }
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) { router.push("/login"); return; }
-      setCurrentUserId(user.id);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) { router.push("/login"); return; }
+    setCurrentUserId(user.id);
 
-      const { data: leagueData } = await supabase
-        .from("leagues")
-        .select("*")
-        .eq("id", leagueId)
-        .single();
+    const { data: leagueData, error: leagueError } = await supabase
+      .from("leagues")
+      .select("*")
+      .eq("id", leagueId)
+      .single();
 
-      if (!leagueData) { router.push("/leagues"); return; }
-      setLeague(leagueData);
-
-      // League leaderboard
-      const { data: lb } = await supabase
-        .from("league_leaderboard")
-        .select("*")
-        .eq("league_id", leagueId)
-        .order("total_score", { ascending: false });
-
-      setMembers(lb ?? []);
+    if (leagueError || !leagueData) {
+      setLoadError("Couldn't load league. Please try again.");
       setLoading(false);
+      return;
     }
+    setLeague(leagueData);
+
+    // League leaderboard
+    const { data: lb } = await supabase
+      .from("league_leaderboard")
+      .select("*")
+      .eq("league_id", leagueId)
+      .order("total_score", { ascending: false });
+
+    setMembers(lb ?? []);
+    setLoading(false);
+  }
+
+  useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leagueId, router]);
 
   /** Build the canonical invite URL for sharing. */
@@ -114,6 +123,26 @@ export default function LeaguePage() {
       <div className="gla-root">
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <div className="gl-spinner" />
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="gla-root">
+        <div className="gl-stripe" aria-hidden="true" />
+        <AppNav />
+        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
+          <h1 className="gla-page-title">Something went wrong</h1>
+          <p className="gla-page-sub" style={{ marginTop: "0.5rem" }}>{loadError}</p>
+          <button
+            className="gla-race-btn"
+            style={{ marginTop: "2rem" }}
+            onClick={load}
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
