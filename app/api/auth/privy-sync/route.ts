@@ -22,7 +22,7 @@ import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 export async function POST(request: NextRequest) {
   // Rate limit: 10 auth attempts per IP per 15 minutes
   const ip = getClientIp(request.headers);
-  if (isRateLimited(`privy-sync:${ip}`, 10, 15 * 60 * 1000)) {
+  if (await isRateLimited(`privy-sync:${ip}`, 10, 15 * 60 * 1000)) {
     return NextResponse.json(
       { error: "Too many requests. Please wait before trying again." },
       { status: 429 }
@@ -96,7 +96,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // ── 3. Find or create Supabase auth user ───────────────────────────────
+  // ── 3 + 5. Find/create Supabase user AND generate OTP in parallel ──────
+  // createUser is fire-and-forget for new users (fires handle_new_user trigger).
+  // generateLink works whether or not the user exists and returns the user ID.
   const admin = createSupabaseAdminClient();
   if (!admin) {
     return NextResponse.json(
@@ -105,29 +107,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // createUser auto-confirms the email; if the user already exists this
-  // returns an error which we intentionally ignore — we proceed to generateLink
-  // either way.
-  const { data: newUserData } = await admin.auth.admin.createUser({
-    email,
-    email_confirm: true,
-  });
-
-  // If createUser succeeded, the handle_new_user trigger already fired and
-  // created a profile row with 100 Beta Credits. If the user already existed
-  // we still have their existing profile.
-  const supabaseUserId = newUserData?.user?.id;
-
-  // ── 4. Upsert profile (privy_user_id + wallet_address) ─────────────────
-  // We need the Supabase user ID. If createUser returned it use it; otherwise
-  // look the user up by generating the link (which also returns the user).
-  // We do this lazily in step 5 where we always call generateLink.
-
-  // ── 5. Generate Supabase magic-link OTP ────────────────────────────────
-  const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
-    type: "magiclink",
-    email,
-  });
+  const [{ data: newUserData }, { data: linkData, error: linkError }] =
+    await Promise.all([
+      admin.auth.admin.createUser({ email, email_confirm: true }),
+      admin.auth.admin.generateLink({ type: "magiclink", email }),
+    ]);
 
   if (linkError || !linkData?.properties?.hashed_token) {
     return NextResponse.json(
@@ -136,19 +120,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Resolve the Supabase user ID from the link response if we didn't get it
-  // from createUser (i.e. user already existed).
-  const resolvedUserId = supabaseUserId ?? linkData.user?.id;
+  // Resolve the Supabase user ID (prefer createUser response; fall back to
+  // generateLink which also returns the user for existing accounts).
+  const resolvedUserId = newUserData?.user?.id ?? linkData.user?.id;
 
-  // Upsert profile: set privy_user_id and wallet_address.
-  // Use upsert (not update) so that if the handle_new_user trigger hasn't
-  // run yet for a brand-new user the row is still written. On conflict only
-  // the specified columns are touched — balance_usdc is intentionally
-  // excluded and is never overwritten here.
+  // ── 4. Upsert profile + check username in parallel ──────────────────────
+  // Check for existing username at the same time as writing privy/wallet fields
+  // so the client doesn't need a separate round-trip to decide where to redirect.
+  let hasUsername = false;
+
   if (resolvedUserId) {
-    await admin
-      .from("profiles")
-      .upsert(
+    const [, { data: profileRow }] = await Promise.all([
+      admin.from("profiles").upsert(
         {
           id: resolvedUserId,
           privy_user_id: privyUserId,
@@ -156,11 +139,15 @@ export async function POST(request: NextRequest) {
           is_beta_account: true,
         },
         { onConflict: "id" }
-      );
+      ),
+      admin.from("profiles").select("username").eq("id", resolvedUserId).single(),
+    ]);
+    hasUsername = !!profileRow?.username;
   }
 
   return NextResponse.json({
     token: linkData.properties.hashed_token,
     email,
+    hasUsername,
   });
 }

@@ -14,7 +14,7 @@ const PredictionBody = z.object({
 export async function POST(request: NextRequest) {
   // Rate limit: 60 prediction submits per user per minute
   const ip = getClientIp(request.headers);
-  if (isRateLimited(`predictions:${ip}`, 60, 60 * 1000)) {
+  if (await isRateLimited(`predictions:${ip}`, 60, 60 * 1000)) {
     return NextResponse.json({ error: "Too many requests." }, { status: 429 });
   }
 
