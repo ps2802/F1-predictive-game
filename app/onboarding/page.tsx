@@ -41,7 +41,8 @@ function OnboardingForm() {
     } else {
       track("onboarding_completed", { username });
       setShowBetaNotice(true);
-      setTimeout(() => router.push(redirect), 2000);
+      // Give user enough time to read the beta credits notice before redirecting
+      setTimeout(() => router.push(redirect), 5000);
     }
   }
 
@@ -60,9 +61,17 @@ function OnboardingForm() {
         </p>
 
         {showBetaNotice && (
-          <div style={{ marginTop: "1.5rem", padding: "0.875rem 1rem", borderRadius: "8px", background: "rgba(232,0,45,0.1)", border: "1px solid rgba(232,0,45,0.25)", fontSize: "0.875rem", color: "rgba(255,255,255,0.85)", textAlign: "left" }}>
-            <strong style={{ color: "var(--gl-red)" }}>₮100 Test USDC credited.</strong>{" "}
+          <div style={{ marginTop: "1.5rem", padding: "1rem 1.25rem", borderRadius: "8px", background: "rgba(232,0,45,0.1)", border: "1px solid rgba(232,0,45,0.25)", fontSize: "0.875rem", color: "rgba(255,255,255,0.85)", textAlign: "left" }}>
+            <strong style={{ color: "var(--gl-red)", display: "block", marginBottom: "0.4rem" }}>₮100 Test USDC credited.</strong>
             You&apos;ve been credited 100 Test USDC to use during the Gridlock beta. This is not real money — explore freely.
+            <button
+              type="button"
+              className="gla-race-btn"
+              style={{ marginTop: "1rem", width: "100%", textAlign: "center" }}
+              onClick={() => router.push(redirect)}
+            >
+              Enter the Grid →
+            </button>
           </div>
         )}
 
