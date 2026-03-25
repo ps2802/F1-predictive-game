@@ -175,6 +175,9 @@ export default function LeaguePage() {
                   ? "Shared!"
                   : "Share"}
               </button>
+              <span className="league-invite-hint">
+                Shares a ready-to-send message with your league link
+              </span>
             </div>
           </div>
         </div>
@@ -215,7 +218,11 @@ export default function LeaguePage() {
 
           {members.length === 0 ? (
             <div className="lb-empty">
-              No scores yet — be the first to make predictions!
+              <p className="lb-empty-headline">No predictions locked in yet.</p>
+              <p className="lb-empty-sub">Be first on this grid — every race missed is points your rivals can take.</p>
+              <Link href="/dashboard" className="gla-race-btn" style={{ display: "inline-block", marginTop: "1.25rem" }}>
+                Make Your Predictions
+              </Link>
             </div>
           ) : (
             members.map((m, i) => (
