@@ -68,48 +68,43 @@ export async function POST(request: NextRequest) {
   if (invalidIds.length > 0)
     return NextResponse.json({ error: "Invalid question IDs." }, { status: 400 });
 
-  // Detect whether this is a first submission or an edit
-  const { data: existingPred } = await supabase
-    .from("predictions")
-    .select("id, edit_count, status")
-    .eq("user_id", user.id)
-    .eq("race_id", raceId)
-    .maybeSingle();
+  // Validate completeness: every question for this race must have the required
+  // number of picks. This is the server-side enforcement of the UI validation —
+  // prevents tab-navigation bypasses from resulting in incomplete stored predictions.
+  const { data: allRaceQuestions } = await supabase
+    .from("prediction_questions")
+    .select("id, question_type, multi_select")
+    .eq("race_id", raceId);
 
-  const isEdit = existingPred?.status === "active";
-  const nextEditCount = isEdit ? (existingPred.edit_count ?? 0) + 1 : 0;
-
-  // Deduct edit fee when EDIT_COST_USDC > 0 (currently 0 in beta)
-  if (isEdit && EDIT_COST_USDC > 0) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("balance_usdc")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile || Number(profile.balance_usdc) < EDIT_COST_USDC)
-      return NextResponse.json({ error: "Insufficient balance to edit." }, { status: 402 });
-
-    // Optimistic lock: second concurrent edit request finds 0 rows and gets 409
-    const { data: deducted } = await supabase
-      .from("profiles")
-      .update({ balance_usdc: Number(profile.balance_usdc) - EDIT_COST_USDC })
-      .eq("id", user.id)
-      .eq("balance_usdc", profile.balance_usdc)
-      .select("balance_usdc");
-
-    if (!deducted || deducted.length === 0)
-      return NextResponse.json({ error: "Balance changed — please try again." }, { status: 409 });
+  for (const q of allRaceQuestions ?? []) {
+    const picks = (answers[q.id] ?? []).filter(Boolean);
+    if (picks.length < q.multi_select) {
+      return NextResponse.json(
+        { error: `Please answer all questions before submitting. Missing: ${q.question_type.replace(/_/g, " ")}.` },
+        { status: 400 }
+      );
+    }
   }
 
-  // Upsert prediction row — status 'active' means submitted and ready for scoring
+  // Check if user has any paid league membership — if so, predictions go active immediately.
+  // Otherwise, predictions stay as draft until they join and pay a league.
+  const { data: paidMemberships } = await supabase
+    .from("league_members")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("paid", true)
+    .limit(1);
+
+  const hasPaidLeague = (paidMemberships?.length ?? 0) > 0;
+
+  // Upsert prediction row — 'draft' until league entry is paid, then 'active'
   const { data: pred, error: predErr } = await supabase
     .from("predictions")
     .upsert(
       {
         user_id: user.id,
         race_id: raceId,
-        status: "active",
+        status: hasPaidLeague ? "active" : "draft",
       },
       { onConflict: "user_id,race_id" }
     )
@@ -118,6 +113,9 @@ export async function POST(request: NextRequest) {
 
   if (predErr || !pred)
     return NextResponse.json({ error: predErr?.message ?? "Failed to create prediction." }, { status: 400 });
+
+  const isEdit = (pred.edit_count ?? 0) > 0;
+  const nextEditCount = (pred.edit_count ?? 0) + 1;
 
   // Increment edit_count on re-submissions so the scoring penalty is accurate
   if (isEdit) {
@@ -157,12 +155,18 @@ export async function POST(request: NextRequest) {
   }
 
   // Save prediction version snapshot (audit trail — failure does not block the response)
-  await supabase.from("prediction_versions").insert({
+  const { error: versionErr } = await supabase.from("prediction_versions").insert({
     prediction_id: pred.id,
     version_number: nextEditCount + 1,
     answers_json: answers,
     edit_cost: EDIT_COST_USDC,
   });
+  // Version snapshot failure is non-blocking — swallow silently
+  void versionErr;
 
-  return NextResponse.json({ success: true, predictionId: pred.id });
+  return NextResponse.json({
+    success: true,
+    predictionId: pred.id,
+    status: hasPaidLeague ? "active" : "draft",
+  });
 }

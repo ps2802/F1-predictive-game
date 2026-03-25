@@ -548,6 +548,16 @@ export default function PredictPage() {
             key={s}
             className={`predict-step-tab${step === i ? " is-active" : ""}${stepComplete(s) ? " is-done" : ""}`}
             onClick={() => {
+              // Backward navigation is always allowed
+              if (i <= step) { setStepError(""); setStep(i); return; }
+              // Forward jump: find the first incomplete section and land there
+              for (let check = step; check < i; check++) {
+                if (!stepComplete(STEPS[check] as string)) {
+                  setStepError("Answer all questions in this section before moving on.");
+                  setStep(check);
+                  return;
+                }
+              }
               setStepError("");
               setStep(i);
             }}

@@ -2187,3 +2187,592 @@ h1, h2, h3 { margin-top: 0; }
     padding: 0.7rem 1.1rem;
   }
 }
+
+/* ========================================
+   LANDING PAGE
+   ======================================== */
+
+.landing-hero {
+  text-align: center;
+  padding: 4rem 0 3rem;
+}
+
+.landing-round {
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.75rem;
+}
+
+.landing-race-name {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+}
+
+.landing-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.landing-countdown-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.landing-countdown-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--gl-red, #e10600);
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-ctas {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.landing-cta-primary {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.85rem 2rem;
+  background: var(--gl-red, #e10600);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.landing-cta-primary:hover {
+  background: #ff1a0e;
+  box-shadow: 0 0 20px rgba(225, 6, 0, 0.4);
+}
+
+.landing-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.85rem 2rem;
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.landing-cta-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.landing-stats {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  padding: 2rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 3rem;
+}
+
+.landing-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.landing-stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-stat-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.landing-section {
+  margin-bottom: 3rem;
+}
+
+.landing-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.landing-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.landing-step-card {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.landing-step-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.landing-step-card p {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.5;
+}
+
+.landing-step-num {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gl-red, #e10600);
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.landing-footer {
+  text-align: center;
+  padding: 3rem 0 2rem;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+}
+
+/* ========================================
+   PREDICT — REVIEW STEP
+   ======================================== */
+
+.predict-review {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.predict-review-category {
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.predict-review-category h3 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 1rem;
+}
+
+.predict-review-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.predict-review-row:last-child {
+  border-bottom: none;
+}
+
+.predict-review-label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  flex: 1;
+}
+
+.predict-review-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+  flex: 1;
+}
+
+.predict-review-pick {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.predict-review-missing {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.25);
+  font-style: italic;
+}
+
+.predict-review-edit-btn {
+  font-size: 0.75rem;
+  color: rgba(0, 210, 170, 1);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.predict-review-edit-btn:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .landing-stats {
+    gap: 1.5rem;
+  }
+
+  .landing-hero {
+    padding: 2.5rem 0 2rem;
+  }
+}
+
+/* ========================================
+   LEAGUE ECONOMICS & PAYOUT
+   ======================================== */
+
+.league-economics {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.league-econ-card {
+  flex: 1;
+  min-width: 120px;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.league-econ-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.league-econ-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.league-payout-section {
+  margin-top: 2rem;
+}
+
+.league-payout-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.league-payout-tier {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.league-payout-place {
+  width: 36px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.league-payout-bar-bg {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.league-payout-bar {
+  height: 100%;
+  background: var(--gl-red, #e10600);
+  transition: width 0.3s ease;
+}
+
+.league-payout-pct {
+  width: 40px;
+  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.league-payout-amt {
+  width: 70px;
+  text-align: right;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========================================
+   LEAGUE CREATE — FEE PRESETS & PAYOUT EDITOR
+   ======================================== */
+
+.league-fee-presets {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.league-fee-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.league-fee-btn.is-active {
+  background: var(--gl-red, #e10600);
+  border-color: var(--gl-red, #e10600);
+  color: #fff;
+}
+
+.league-fee-btn:hover:not(.is-active) {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.league-payout-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.league-payout-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.league-payout-place-label {
+  width: 36px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ========================================
+   PROFILE — WALLET SECTION (INLINE)
+   ======================================== */
+
+.profile-wallet-section {
+  margin-top: 2rem;
+}
+
+.profile-wallet-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.profile-wallet-balance {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.profile-wallet-amount {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-wallet-currency {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profile-wallet-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.profile-wallet-address {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: 0.5rem;
+  font-family: monospace;
+}
+
+/* ========================================
+   PREDICT — EDIT BANNER & SECTION NOTES
+   ======================================== */
+
+.predict-edit-banner {
+  margin: 0 auto;
+  max-width: var(--predict-max-width, 640px);
+  padding: 0.6rem 1rem;
+  background: rgba(0, 210, 170, 0.08);
+  border: 1px solid rgba(0, 210, 170, 0.25);
+  color: rgba(0, 210, 170, 1);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.predict-section-note {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 1rem;
+  font-style: italic;
+}
+
+.predict-section-warning {
+  padding: 0.6rem 0.875rem;
+  background: rgba(225, 6, 0, 0.08);
+  border: 1px solid rgba(225, 6, 0, 0.3);
+  color: rgba(255, 160, 160, 1);
+  font-size: 0.82rem;
+  margin-top: 0.75rem;
+}
+
+/* ========================================
+   DASHBOARD — EDIT STATE BUTTON
+   ======================================== */
+
+.gla-race-btn.is-edit {
+  background: transparent;
+  border: 1px solid rgba(0, 210, 170, 0.5);
+  color: rgba(0, 210, 170, 1);
+}
+
+.gla-race-btn.is-edit:hover {
+  background: rgba(0, 210, 170, 0.08);
+  border-color: rgba(0, 210, 170, 0.8);
+}
+
+/* ========================================
+   LEAGUE — PREDICT CTA STRIP
+   ======================================== */
+
+.league-predict-cta {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.league-predict-cta-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+}
+
+.league-predict-cta-text strong {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ========================================
+   PROFILE — IDENTITY HEADER
+   ======================================== */
+
+.profile-identity {
+  margin-bottom: 1.5rem;
+}
+
+/* ========================================
+   DASHBOARD — DRAFT PREDICTIONS BANNER
+   ======================================== */
+
+.dash-draft-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  margin-bottom: 1.5rem;
+  background: rgba(255, 200, 0, 0.06);
+  border: 1px solid rgba(255, 200, 0, 0.25);
+  flex-wrap: wrap;
+}
+
+.dash-draft-banner-text {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.5;
+}
+
+.dash-draft-banner-text strong {
+  color: rgba(255, 210, 60, 1);
+}
+
+.dash-draft-banner-cta {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.875rem;
+  background: transparent;
+  border: 1px solid rgba(255, 210, 60, 0.45);
+  color: rgba(255, 210, 60, 1);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.dash-draft-banner-cta:hover {
+  background: rgba(255, 210, 60, 0.08);
+}

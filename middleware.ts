@@ -15,7 +15,6 @@ import { createServerClient } from "@supabase/ssr";
 
 const PROTECTED_PREFIXES = [
   "/dashboard",
-  "/predict",
   "/profile",
   "/leagues",
   "/leaderboard",
@@ -25,6 +24,9 @@ const PROTECTED_PREFIXES = [
   "/onboarding",
   "/admin",
 ];
+
+// /predict routes allow anonymous access — auth check happens client-side
+// (removed from PROTECTED_PREFIXES intentionally)
 
 const AUTH_ROUTES = ["/login", "/signup"];
 

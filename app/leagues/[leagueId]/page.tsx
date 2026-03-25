@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { races } from "@/lib/races";
 import { AppNav } from "@/app/components/AppNav";
 
 type League = {
@@ -16,7 +17,13 @@ type League = {
   member_count: number;
   max_users: number;
   creator_id: string;
+  payout_model: string;
+  payout_config: PayoutConfig | null;
 };
+
+interface PayoutConfig {
+  tiers?: { place: number; percent: number }[];
+}
 
 type MemberScore = {
   user_id: string;
@@ -25,6 +32,24 @@ type MemberScore = {
   total_score: number;
   races_played: number;
 };
+
+const DEFAULT_PAYOUT_TIERS = [
+  { place: 1, percent: 50 },
+  { place: 2, percent: 30 },
+  { place: 3, percent: 20 },
+];
+
+function getNextRaceLockCountdown(): string {
+  const now = new Date();
+  const nextRace = races.find((r) => new Date(r.date) >= now);
+  if (!nextRace) return "Season complete";
+  const diff = new Date(nextRace.date).getTime() - now.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  if (days > 0) return `${days}d ${hours}h`;
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  return `${hours}h ${mins}m`;
+}
 
 export default function LeaguePage() {
   const params = useParams();
@@ -36,6 +61,15 @@ export default function LeaguePage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [countdown, setCountdown] = useState(() => getNextRaceLockCountdown());
+  const [nextRacePredStatus, setNextRacePredStatus] = useState<"active" | "draft" | "none">("none");
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCountdown(getNextRaceLockCountdown());
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -57,7 +91,6 @@ export default function LeaguePage() {
       if (!leagueData) { router.push("/leagues"); return; }
       setLeague(leagueData);
 
-      // League leaderboard
       const { data: lb } = await supabase
         .from("league_leaderboard")
         .select("*")
@@ -65,6 +98,20 @@ export default function LeaguePage() {
         .order("total_score", { ascending: false });
 
       setMembers(lb ?? []);
+
+      // Load prediction status for the next open race so the CTA is contextual
+      const now = new Date();
+      const nextRace = races.find((r) => r.status === "upcoming" && new Date(r.date) > now);
+      if (nextRace && user) {
+        const { data: pred } = await supabase
+          .from("predictions")
+          .select("status")
+          .eq("race_id", nextRace.id)
+          .eq("user_id", user.id)
+          .single();
+        setNextRacePredStatus((pred?.status as "active" | "draft") ?? "none");
+      }
+
       setLoading(false);
     }
     load();
@@ -91,6 +138,12 @@ export default function LeaguePage() {
 
   if (!league) return null;
 
+  const payoutTiers: { place: number; percent: number }[] =
+    (league.payout_config as PayoutConfig)?.tiers ?? DEFAULT_PAYOUT_TIERS;
+  const pool = Number(league.prize_pool);
+  const now = new Date();
+  const nextOpenRace = races.find((r) => r.status === "upcoming" && new Date(r.date) > now);
+
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
@@ -107,7 +160,6 @@ export default function LeaguePage() {
             <p className="gla-page-sub">
               {league.member_count}/{league.max_users} members
               {league.entry_fee_usdc > 0 && ` · $${league.entry_fee_usdc} USDC entry`}
-              {league.prize_pool > 0 && ` · 🏆 $${league.prize_pool} prize pool`}
             </p>
           </div>
 
@@ -121,6 +173,82 @@ export default function LeaguePage() {
             </div>
           )}
         </div>
+
+        {/* Economics strip */}
+        <div className="league-economics">
+          {pool > 0 && (
+            <div className="league-econ-card">
+              <span className="league-econ-value">${pool.toFixed(2)}</span>
+              <span className="league-econ-label">Prize Pool</span>
+            </div>
+          )}
+          <div className="league-econ-card">
+            <span className="league-econ-value">{countdown}</span>
+            <span className="league-econ-label">Next Lock</span>
+          </div>
+          {pool > 0 && (
+            <div className="league-econ-card">
+              <span className="league-econ-value">${(pool * (payoutTiers[0]?.percent ?? 50) / 100).toFixed(2)}</span>
+              <span className="league-econ-label">1st Place Wins</span>
+            </div>
+          )}
+        </div>
+
+        {/* Payout distribution */}
+        {(pool > 0 || league.entry_fee_usdc > 0) && (
+          <div className="league-payout-section">
+            <h3 className="league-section-title">Payout Distribution</h3>
+            <div className="league-payout-tiers">
+              {payoutTiers.map((tier) => (
+                <div key={tier.place} className="league-payout-tier">
+                  <span className="league-payout-place">
+                    {tier.place === 1 ? "1st" : tier.place === 2 ? "2nd" : tier.place === 3 ? "3rd" : `${tier.place}th`}
+                  </span>
+                  <div className="league-payout-bar-bg">
+                    <div className="league-payout-bar" style={{ width: `${tier.percent}%` }} />
+                  </div>
+                  <span className="league-payout-pct">{tier.percent}%</span>
+                  {pool > 0 && (
+                    <span className="league-payout-amt">${(pool * tier.percent / 100).toFixed(2)}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Context-aware prediction CTA */}
+        {nextOpenRace && (
+          <div className="league-predict-cta">
+            <div className="league-predict-cta-text">
+              {nextRacePredStatus === "active" ? (
+                <>
+                  <strong>Your picks for {nextOpenRace.name} are active.</strong>
+                  <span>They&apos;ll score once the race is settled. You can update them any time before the deadline.</span>
+                </>
+              ) : nextRacePredStatus === "draft" ? (
+                <>
+                  <strong>You have a draft prediction for {nextOpenRace.name}.</strong>
+                  <span>Since you&apos;re in this league it should already be active — if it still shows Draft, please refresh or contact support.</span>
+                </>
+              ) : (
+                <>
+                  <strong>No prediction yet for {nextOpenRace.name}.</strong>
+                  <span>Predictions count towards all leagues you&apos;re in once the race is settled.</span>
+                </>
+              )}
+            </div>
+            <Link
+              href={`/predict/${nextOpenRace.id}`}
+              className="gla-race-btn"
+              style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+            >
+              {nextRacePredStatus === "none"
+                ? `Predict ${nextOpenRace.name} →`
+                : `Edit ${nextOpenRace.name} →`}
+            </Link>
+          </div>
+        )}
 
         {/* Leaderboard */}
         <div className="lb-table" style={{ marginTop: "2rem" }}>
@@ -142,7 +270,7 @@ export default function LeaguePage() {
                 className={`lb-row${m.user_id === currentUserId ? " is-you" : ""}${i < 3 ? ` is-top-${i + 1}` : ""}`}
               >
                 <span className="lb-rank">
-                  {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                  {i === 0 ? "1st" : i === 1 ? "2nd" : i === 2 ? "3rd" : `${i + 1}th`}
                 </span>
                 <span className="lb-name">
                   {m.username ?? "Anonymous"}
