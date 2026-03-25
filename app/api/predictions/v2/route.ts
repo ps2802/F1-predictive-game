@@ -114,6 +114,9 @@ export async function POST(request: NextRequest) {
   if (predErr || !pred)
     return NextResponse.json({ error: predErr?.message ?? "Failed to create prediction." }, { status: 400 });
 
+  const isEdit = (pred.edit_count ?? 0) > 0;
+  const nextEditCount = (pred.edit_count ?? 0) + 1;
+
   // Increment edit_count on re-submissions so the scoring penalty is accurate
   if (isEdit) {
     await supabase
@@ -152,7 +155,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Save prediction version snapshot (audit trail — failure does not block the response)
-  await supabase.from("prediction_versions").insert({
+  const { error: versionErr } = await supabase.from("prediction_versions").insert({
     prediction_id: pred.id,
     version_number: nextEditCount + 1,
     answers_json: answers,

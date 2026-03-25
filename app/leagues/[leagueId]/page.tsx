@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { races } from "@/lib/races";
+import { AppNav } from "@/app/components/AppNav";
 
 type League = {
   id: string;
