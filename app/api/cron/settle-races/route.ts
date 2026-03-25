@@ -5,7 +5,9 @@ import { runSettlement } from "@/lib/scoring/runSettlement";
 /**
  * GET /api/cron/settle-races
  *
- * Called by Vercel Cron every minute (see vercel.json).
+ * Intended to run every minute. Call via an external cron service
+ * (e.g. cron-job.org, GitHub Actions) or upgrade to Vercel Pro for
+ * native Vercel Cron support with sub-daily schedules.
  * Picks up the oldest pending settlement job, processes it, and marks it
  * done or failed. Processes one job per invocation to stay within the
  * 30-second Vercel function timeout even for large player pools.

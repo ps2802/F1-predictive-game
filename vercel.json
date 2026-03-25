@@ -1,12 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/lock-races",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/settle-races",
-      "schedule": "* * * * *"
-    }
-  ]
-}
+{}
