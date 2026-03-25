@@ -1663,8 +1663,21 @@ h1, h2, h3 { margin-top: 0; }
 .lb-races { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
 .lb-score { font-size: 0.95rem; font-weight: 700; color: #fff; text-align: right; }
 .lb-empty {
-  padding: 2rem; text-align: center;
+  padding: 3rem 2rem; text-align: center;
   color: rgba(255,255,255,0.3); font-size: 0.9rem;
+}
+.lb-empty-headline {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  color: rgba(255,255,255,0.75);
+  margin: 0 0 0.4rem;
+}
+.lb-empty-sub {
+  font-size: 0.83rem;
+  color: rgba(255,255,255,0.35);
+  margin: 0;
+  line-height: 1.55;
 }
 
 /* =============================================================
@@ -1763,6 +1776,13 @@ h1, h2, h3 { margin-top: 0; }
   transition: background 0.12s;
 }
 .league-copy-btn:hover { background: #c40500; }
+.league-invite-hint {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.3);
+  text-align: right;
+  line-height: 1.4;
+  max-width: 200px;
+}
 
 /* =============================================================
    PROFILE
@@ -2142,5 +2162,438 @@ h1, h2, h3 { margin-top: 0; }
 
   .gl-login-stat {
     padding: 0.7rem 1.1rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PUBLIC HOMEPAGE — /app/page.tsx
+   Dark · F1 red #E10600 · teal accent rgba(0,210,170,1)
+═══════════════════════════════════════════════════════════════ */
+
+.home-root {
+  min-height: 100svh;
+  background: #000;
+  color: #fff;
+  font-family: var(--font-titillium, "Titillium Web", "Arial Narrow", Arial, sans-serif);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top speed stripe */
+.home-stripe {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: #E10600;
+  z-index: 100;
+}
+
+/* ── Nav ── */
+.home-nav {
+  position: sticky;
+  top: 3px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3rem;
+  height: 60px;
+  background: rgba(0,0,0,.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.home-nav-logo {
+  width: 130px;
+  height: auto;
+  display: block;
+}
+
+.home-nav-cta {
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.75);
+  padding: 0.45rem 1.1rem;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 3px;
+  transition: color .18s, border-color .18s;
+}
+.home-nav-cta:hover {
+  color: #fff;
+  border-color: rgba(255,255,255,.5);
+}
+
+/* ── Hero ── */
+.home-hero {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: calc(100svh - 63px);
+  overflow: hidden;
+}
+
+.home-hero-inner {
+  padding: 4rem 3rem 4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+}
+
+.home-hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.45);
+  margin-bottom: 1.2rem;
+}
+
+.home-hero-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #E10600;
+  display: inline-block;
+  animation: home-dot-pulse 1.8s ease-in-out infinite;
+}
+@keyframes home-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .55; transform: scale(.85); }
+}
+
+.home-hero-h1 {
+  font-size: clamp(2.4rem, 4.5vw, 4.2rem);
+  font-weight: 900;
+  letter-spacing: -.025em;
+  text-transform: uppercase;
+  line-height: 1.02;
+  margin: 0 0 1.4rem;
+}
+
+.home-hero-em {
+  font-style: normal;
+  color: rgba(0, 210, 170, 1);
+}
+
+.home-hero-sub {
+  font-size: .92rem;
+  color: rgba(255,255,255,.52);
+  line-height: 1.65;
+  max-width: 460px;
+  margin-bottom: 2rem;
+}
+
+/* ── Countdown widget ── */
+.home-countdown-box {
+  border: 1px solid rgba(255,255,255,.09);
+  border-left: 3px solid #E10600;
+  background: rgba(255,255,255,.03);
+  border-radius: 4px;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 2rem;
+  max-width: 440px;
+}
+
+.home-countdown-label {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.38);
+  margin: 0 0 .4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.home-countdown-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #E10600;
+  display: inline-block;
+  animation: home-dot-pulse 1.8s ease-in-out infinite;
+}
+
+.home-countdown-race {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  margin: 0 0 .2rem;
+  color: #fff;
+}
+
+.home-countdown-date {
+  font-size: .72rem;
+  color: rgba(255,255,255,.38);
+  margin: 0 0 1rem;
+  letter-spacing: .04em;
+}
+
+.home-countdown-timer {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.home-countdown-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 3rem;
+}
+
+.home-countdown-n {
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: -.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  color: rgba(0, 210, 170, 1);
+}
+
+.home-countdown-u {
+  font-size: .58rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.3);
+  margin-top: .2rem;
+}
+
+.home-countdown-sep {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: rgba(255,255,255,.2);
+  margin-bottom: .4rem;
+  line-height: 1;
+}
+
+/* ── CTA actions ── */
+.home-hero-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.home-cta-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 2.2rem;
+  background: #E10600;
+  color: #fff;
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  border-radius: 3px;
+  transition: background .18s, transform .15s;
+}
+.home-cta-primary:hover {
+  background: #c80500;
+  transform: translateY(-1px);
+}
+
+/* ── Stats strip ── */
+.home-hero-stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.home-stat {
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+  padding: 0 1.4rem 0 0;
+}
+
+.home-stat-n {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -.03em;
+  line-height: 1;
+  color: #fff;
+}
+
+.home-stat-l {
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.35);
+}
+
+.home-stat-div {
+  width: 1px;
+  height: 30px;
+  background: rgba(255,255,255,.1);
+  margin: 0 1.4rem 0 0;
+}
+
+/* ── Hero visual panel ── */
+.home-hero-visual {
+  position: relative;
+  overflow: hidden;
+}
+
+.home-hero-driver {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.home-hero-img-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, #000 0%, transparent 35%),
+    linear-gradient(to top, #000 0%, transparent 20%);
+}
+
+.home-hero-vstrip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #E10600;
+}
+
+/* ── How it works ── */
+.home-how {
+  background: rgba(255,255,255,.02);
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding: 5rem 0;
+}
+
+.home-how-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 3rem;
+}
+
+.home-how-title {
+  font-size: clamp(1.2rem, 2vw, 1.6rem);
+  font-weight: 900;
+  letter-spacing: -.02em;
+  text-transform: uppercase;
+  margin: 0 0 3rem;
+}
+
+.home-how-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.home-step {
+  border-top: 2px solid rgba(255,255,255,.08);
+  padding-top: 1.5rem;
+}
+
+.home-step-n {
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .2em;
+  color: #E10600;
+  display: block;
+  margin-bottom: .75rem;
+}
+
+.home-step-h {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  margin: 0 0 .7rem;
+}
+
+.home-step-p {
+  font-size: .84rem;
+  color: rgba(255,255,255,.48);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── Footer ── */
+.home-footer {
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding: 1.5rem 3rem;
+  font-size: .7rem;
+  color: rgba(255,255,255,.25);
+  letter-spacing: .04em;
+}
+
+.home-footer-link {
+  color: rgba(255,255,255,.4);
+  text-decoration: underline;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .home-nav {
+    padding: 0 1.5rem;
+  }
+
+  .home-hero {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    min-height: auto;
+  }
+
+  .home-hero-visual {
+    height: 52vw;
+    min-height: 220px;
+    order: -1;
+  }
+
+  .home-hero-img-overlay {
+    background:
+      linear-gradient(to bottom, rgba(0,0,0,.2) 0%, transparent 30%, transparent 60%, #000 100%),
+      linear-gradient(to right, rgba(0,0,0,.3) 0%, transparent 100%);
+  }
+
+  .home-hero-inner {
+    padding: 2rem 1.5rem 3rem;
+  }
+
+  .home-hero-h1 {
+    font-size: clamp(1.8rem, 6vw, 2.6rem);
+  }
+
+  .home-countdown-n {
+    font-size: 1.4rem;
+  }
+
+  .home-how {
+    padding: 3rem 0;
+  }
+
+  .home-how-inner {
+    padding: 0 1.5rem;
+  }
+
+  .home-how-steps {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .home-footer {
+    padding: 1.2rem 1.5rem;
   }
 }

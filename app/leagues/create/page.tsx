@@ -47,43 +47,51 @@ export default function CreateLeaguePage() {
           ← Leagues
         </Link>
         <p className="gla-page-title">Create League</p>
-        <p className="gla-page-sub">Set up your private competition</p>
+        <p className="gla-page-sub">Set up your grid. Invite your rivals. May the best predictor win.</p>
 
         <form onSubmit={handleSubmit} className="auth-form" style={{ marginTop: "2rem" }}>
           <label className="auth-label">
             League Name
             <input
               className="auth-input"
-              placeholder="e.g. Office Grid Warriors"
+              placeholder="e.g. Tifosi Only"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
               maxLength={50}
             />
+            <span style={{ fontSize: "0.75rem", color: "var(--gl-muted, #888)" }}>
+              Pick something your rivals will remember when they lose to you
+            </span>
           </label>
 
           <label className="auth-label">
-            Type
+            Access
             <div className="league-type-toggle">
               <button
                 type="button"
                 className={`league-type-btn${type === "private" ? " is-active" : ""}`}
                 onClick={() => setType("private")}
               >
-                🔒 Private
+                Private — invite only
               </button>
               <button
                 type="button"
                 className={`league-type-btn${type === "public" ? " is-active" : ""}`}
                 onClick={() => setType("public")}
               >
-                🌍 Public
+                Public — open entry
               </button>
             </div>
+            <span style={{ fontSize: "0.75rem", color: "var(--gl-muted, #888)" }}>
+              {type === "private"
+                ? "You get an invite code — share it with whoever you want to challenge"
+                : "Anyone can join from the public leagues list"}
+            </span>
           </label>
 
           <label className="auth-label">
-            Entry Fee (USDC)
+            Entry Fee
             <input
               className="auth-input"
               type="number"
@@ -92,7 +100,7 @@ export default function CreateLeaguePage() {
               style={{ opacity: 0.4, cursor: "not-allowed" }}
             />
             <span style={{ fontSize: "0.75rem", color: "var(--gl-muted, #888)" }}>
-              Paid entry coming soon — all leagues are free during beta
+              USDC required to join — paid entry launching soon. All leagues free during beta.
             </span>
           </label>
 
@@ -106,12 +114,15 @@ export default function CreateLeaguePage() {
               value={maxUsers}
               onChange={(e) => setMaxUsers(e.target.value)}
             />
+            <span style={{ fontSize: "0.75rem", color: "var(--gl-muted, #888)" }}>
+              Cap the grid. 2–1000 competitors.
+            </span>
           </label>
 
           {error && <p className="predict-error">{error}</p>}
 
           <button type="submit" className="gla-predict-submit" disabled={loading || !name.trim()}>
-            {loading ? "Creating..." : "Create League"}
+            {loading ? "Building your grid..." : "Start My League"}
           </button>
         </form>
       </div>

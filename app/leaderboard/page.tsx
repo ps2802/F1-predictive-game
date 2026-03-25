@@ -93,7 +93,11 @@ export default function LeaderboardPage() {
 
           {entries.length === 0 ? (
             <div className="lb-empty">
-              No scores yet — predictions are still being settled.
+              <p className="lb-empty-headline">No predictions locked in yet.</p>
+              <p className="lb-empty-sub">Be first on the board — predict the podium before qualifying locks.</p>
+              <Link href="/dashboard" className="gla-race-btn" style={{ display: "inline-block", marginTop: "1.25rem" }}>
+                Make Your Predictions
+              </Link>
             </div>
           ) : (
             entries.map((entry, i) => (
