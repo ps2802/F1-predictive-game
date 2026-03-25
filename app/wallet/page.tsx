@@ -3,16 +3,17 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { usePrivy } from "@privy-io/react-auth";
+import { AppNav } from "@/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type ProfileData = {
   balance_usdc: number;
+  username: string | null;
+  is_admin: boolean;
 };
 
 export default function WalletPage() {
   const router = useRouter();
-  const { logout } = usePrivy();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,20 +24,13 @@ export default function WalletPage() {
       if (!user) { router.push("/login"); return; }
       const { data } = await supabase
         .from("profiles")
-        .select("balance_usdc")
+        .select("balance_usdc, username, is_admin")
         .eq("id", user.id)
         .single();
-      setProfile(data ?? { balance_usdc: 0 });
+      setProfile(data ?? { balance_usdc: 0, username: null, is_admin: false });
       setLoading(false);
     });
   }, [router]);
-
-  async function handleSignOut() {
-    const supabase = createSupabaseBrowserClient();
-    if (supabase) await supabase.auth.signOut();
-    await logout();
-    router.push("/login");
-  }
 
   if (loading) {
     return (
@@ -53,15 +47,10 @@ export default function WalletPage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
-      <nav className="gla-nav">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/gridlock logo - transparent.png" alt="Gridlock" className="gla-nav-logo" draggable={false} />
-        <div className="gla-nav-right">
-          <Link className="gla-nav-link" href="/dashboard">Races</Link>
-          <Link className="gla-nav-link" href="/profile">Profile</Link>
-          <button className="gla-nav-link" onClick={handleSignOut}>Sign out</button>
-        </div>
-      </nav>
+      <AppNav
+        isAdmin={profile?.is_admin ?? false}
+        profileLabel={profile?.username ? `@${profile.username}` : "Profile"}
+      />
 
       <div className="gla-content" style={{ maxWidth: "560px" }}>
         <Link href="/profile" className="predict-back">← Profile</Link>
@@ -75,6 +64,7 @@ export default function WalletPage() {
 
         {/* Beta disclaimer */}
         <div className="wallet-deposit-card">
+          <p className="wallet-beta-pill">No deposit action during beta</p>
           <p className="wallet-deposit-desc">
             Gridlock is in closed beta. Your balance is simulated — it&apos;s not real
             money and cannot be withdrawn. Use it to enter leagues, make predictions,
@@ -83,6 +73,14 @@ export default function WalletPage() {
           <p className="wallet-deposit-desc" style={{ marginTop: "0.75rem", color: "rgba(255,255,255,0.35)" }}>
             Real money features launch after beta ends.
           </p>
+          <div className="wallet-action-row">
+            <Link href="/leagues" className="gla-race-btn">
+              Join a League
+            </Link>
+            <Link href="/dashboard" className="gla-race-btn league-secondary-btn">
+              Back to Dashboard
+            </Link>
+          </div>
         </div>
       </div>
     </div>

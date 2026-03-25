@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { AppNav } from "@/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { races } from "@/lib/races";
 
@@ -30,6 +31,11 @@ type MemberScore = {
   avatar_url: string | null;
   total_score: number;
   races_played: number;
+};
+
+type NavProfile = {
+  username: string | null;
+  is_admin: boolean;
 };
 
 const DEFAULT_PAYOUT_TIERS = [
@@ -62,6 +68,7 @@ export default function LeaguePage() {
   const [copied, setCopied] = useState(false);
   const [countdown, setCountdown] = useState(() => getNextRaceLockCountdown());
   const [nextRacePredStatus, setNextRacePredStatus] = useState<"active" | "draft" | "none">("none");
+  const [navProfile, setNavProfile] = useState<NavProfile | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -80,6 +87,13 @@ export default function LeaguePage() {
       } = await supabase.auth.getUser();
       if (!user) { router.push("/login"); return; }
       setCurrentUserId(user.id);
+
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("username, is_admin")
+        .eq("id", user.id)
+        .single();
+      setNavProfile(profileData);
 
       const { data: leagueData } = await supabase
         .from("leagues")
@@ -146,6 +160,10 @@ export default function LeaguePage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
+      <AppNav
+        isAdmin={navProfile?.is_admin ?? false}
+        profileLabel={navProfile?.username ? `@${navProfile.username}` : "Profile"}
+      />
 
       <div className="gla-content">
         <Link href="/leagues" className="predict-back">← Leagues</Link>

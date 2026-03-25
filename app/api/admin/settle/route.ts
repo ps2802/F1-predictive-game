@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { selectLatestPredictionVersions } from "@/lib/predictions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
@@ -135,17 +136,20 @@ export async function POST(request: Request) {
   //    Ordering DESC means the first row per prediction_id is always the latest version.
   const { data: allVersions } = await admin
     .from("prediction_versions")
-    .select("prediction_id, version_number, answers_json")
+    .select("id, prediction_id, version_number, answers_json, created_at")
     .in("prediction_id", predictionIds)
-    .order("version_number", { ascending: false });
+    .order("version_number", { ascending: false })
+    .order("created_at", { ascending: false });
 
-  // Pick latest version per prediction
-  const latestByPrediction = new Map<string, Record<string, string[]>>();
-  for (const v of allVersions ?? []) {
-    if (!latestByPrediction.has(v.prediction_id)) {
-      latestByPrediction.set(v.prediction_id, v.answers_json as Record<string, string[]>);
-    }
-  }
+  const latestByPrediction = selectLatestPredictionVersions(
+    (allVersions ?? []).map((version) => ({
+      id: version.id,
+      prediction_id: version.prediction_id,
+      version_number: version.version_number,
+      answers_json: version.answers_json as Record<string, string[]>,
+      created_at: version.created_at,
+    }))
+  );
 
   // 6. Run scoring engine using frozen snapshots
   const { scores } = settleRace({

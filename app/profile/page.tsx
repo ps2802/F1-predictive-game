@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { usePrivy } from "@privy-io/react-auth";
+import { AppNav } from "@/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { races } from "@/lib/races";
 
@@ -88,7 +88,10 @@ export default function ProfilePage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
-      <AppNav isAdmin={profile?.is_admin ?? false} />
+      <AppNav
+        isAdmin={profile?.is_admin ?? false}
+        profileLabel={profile?.username ? `@${profile.username}` : "Profile"}
+      />
 
       <div className="gla-content">
         <div className="profile-identity">
@@ -152,7 +155,7 @@ export default function ProfilePage() {
             </div>
             <div className="profile-wallet-actions">
               <Link href="/wallet" className="gla-race-btn">
-                Deposit
+                Wallet Details
               </Link>
             </div>
           </div>
@@ -190,30 +193,5 @@ export default function ProfilePage() {
         )}
       </div>
     </div>
-  );
-}
-
-function AppNav({ isAdmin }: { isAdmin: boolean }) {
-  const router = useRouter();
-  const { logout } = usePrivy();
-  async function handleLogout() {
-    const supabase = createSupabaseBrowserClient();
-    if (supabase) await supabase.auth.signOut();
-    await logout();
-    router.push("/login");
-  }
-  return (
-    <nav className="gla-nav">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/gridlock logo - transparent.png" alt="Gridlock" className="gla-nav-logo" draggable={false} />
-      <div className="gla-nav-right">
-        <Link className="gla-nav-link" href="/dashboard">Races</Link>
-        <Link className="gla-nav-link" href="/leagues">Leagues</Link>
-        <Link className="gla-nav-link" href="/leaderboard">Leaderboard</Link>
-        <Link className="gla-nav-link" href="/profile">Profile</Link>
-        {isAdmin && <Link className="gla-nav-link" href="/admin" style={{ color: "var(--gl-red)" }}>Admin</Link>}
-        <button className="gla-nav-link" onClick={handleLogout}>Sign out</button>
-      </div>
-    </nav>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AppNav } from "@/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { track } from "@/lib/analytics";
 
@@ -18,6 +19,11 @@ type League = {
   prize_pool: number;
 };
 
+type NavProfile = {
+  username: string | null;
+  is_admin: boolean;
+};
+
 export default function LeaguesPage() {
   const router = useRouter();
   const [leagues, setLeagues] = useState<League[]>([]);
@@ -27,6 +33,8 @@ export default function LeaguesPage() {
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState("");
   const [joinSuccess, setJoinSuccess] = useState("");
+  const [joinedLeagueId, setJoinedLeagueId] = useState<string | null>(null);
+  const [navProfile, setNavProfile] = useState<NavProfile | null>(null);
 
   async function loadLeagues() {
     setLoadError("");
@@ -45,7 +53,15 @@ export default function LeaguesPage() {
     if (!supabase) return;
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) router.push("/login");
-      else loadLeagues();
+      else {
+        supabase
+          .from("profiles")
+          .select("username, is_admin")
+          .eq("id", user.id)
+          .single()
+          .then(({ data }) => setNavProfile(data));
+        loadLeagues();
+      }
     });
   }, [router]);
 
@@ -66,18 +82,19 @@ export default function LeaguesPage() {
       setJoinError(data.error ?? "Failed to join league.");
     } else {
       track("league_joined", { league_id: data.leagueId });
+      setJoinedLeagueId(data.leagueId);
       if (data.activationWarning) {
         setJoinSuccess(`Joined! Note: ${data.activationWarning}`);
       } else {
         const activated = data.activatedCount ?? 0;
         setJoinSuccess(
           activated > 0
-            ? `Joined! ${activated} draft prediction${activated > 1 ? "s" : ""} activated. Redirecting...`
-            : "Joined! Redirecting..."
+            ? `Joined. ${activated} draft prediction${activated > 1 ? "s" : ""} activated.`
+            : "Joined successfully."
         );
       }
       setJoinCode("");
-      setTimeout(() => router.push(`/leagues/${data.leagueId}`), 1800);
+      void loadLeagues();
     }
     setJoining(false);
   }
@@ -96,7 +113,10 @@ export default function LeaguesPage() {
     return (
       <div className="gla-root">
         <div className="gl-stripe" aria-hidden="true" />
-        <AppNav />
+        <AppNav
+          isAdmin={navProfile?.is_admin ?? false}
+          profileLabel={navProfile?.username ? `@${navProfile.username}` : "Profile"}
+        />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <p style={{ fontSize: "2rem", marginBottom: "1rem" }}>⚠️</p>
           <h1 className="gla-page-title">Something went wrong</h1>
@@ -119,7 +139,10 @@ export default function LeaguesPage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
-      <AppNav />
+      <AppNav
+        isAdmin={navProfile?.is_admin ?? false}
+        profileLabel={navProfile?.username ? `@${navProfile.username}` : "Profile"}
+      />
 
       <div className="gla-content">
         <div className="league-page-header">
@@ -153,6 +176,20 @@ export default function LeaguesPage() {
           </form>
           {joinError && <p className="league-join-error">{joinError}</p>}
           {joinSuccess && <p className="league-join-success">{joinSuccess}</p>}
+          {joinedLeagueId && (
+            <div className="league-join-actions">
+              <Link href={`/leagues/${joinedLeagueId}`} className="gla-race-btn">
+                Open League
+              </Link>
+              <button
+                type="button"
+                className="gla-race-btn league-secondary-btn"
+                onClick={() => setJoinedLeagueId(null)}
+              >
+                Stay Here
+              </button>
+            </div>
+          )}
         </div>
 
         {/* My leagues */}
@@ -203,27 +240,5 @@ function LeagueCard({ league, isMember }: { league: League; isMember: boolean })
       </div>
       {isMember && <span className="league-card-member-badge">✓ Joined</span>}
     </Link>
-  );
-}
-
-function AppNav() {
-  const router = useRouter();
-  async function handleLogout() {
-    const supabase = createSupabaseBrowserClient();
-    if (supabase) await supabase.auth.signOut();
-    router.push("/login");
-  }
-  return (
-    <nav className="gla-nav">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/gridlock logo - transparent.png" alt="Gridlock" className="gla-nav-logo" draggable={false} />
-      <div className="gla-nav-right">
-        <Link className="gla-nav-link" href="/dashboard">Races</Link>
-        <Link className="gla-nav-link" href="/leagues">Leagues</Link>
-        <Link className="gla-nav-link" href="/leaderboard">Leaderboard</Link>
-        <Link className="gla-nav-link" href="/profile">Profile</Link>
-        <button className="gla-nav-link" onClick={handleLogout}>Sign out</button>
-      </div>
-    </nav>
   );
 }

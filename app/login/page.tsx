@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy, useLogin, type User } from "@privy-io/react-auth";
 import { handlePrivyAuthComplete } from "@/lib/auth";
@@ -20,6 +21,8 @@ function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams?.get("redirect") ?? null;
+  const mode = searchParams?.get("mode") === "signup" ? "signup" : "login";
+  const isSignup = mode === "signup";
 
   const { getAccessToken, authenticated } = usePrivy();
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +43,7 @@ function AuthForm() {
     [getAccessToken, redirect, router]
   );
 
-  const onError = useCallback((_err: unknown) => {
+  const onError = useCallback(() => {
     setError("Sign-in failed. Please try again.");
     setLoading(false);
   }, []);
@@ -91,20 +94,33 @@ function AuthForm() {
 
         <p className="gl-login-eyebrow">
           <span className="gl-login-dot" />
-          2026 SEASON · NOW LIVE
+          {isSignup ? "CREATE ACCOUNT · 2026 SEASON" : "2026 SEASON · NOW LIVE"}
         </p>
 
         <h1 className="gl-login-h1">
-          You either<br />
-          see the grid<br />
-          <em>— or you don&apos;t.</em>
+          {isSignup ? (
+            <>
+              Create your<br />
+              Gridlock<br />
+              <em>account.</em>
+            </>
+          ) : (
+            <>
+              You either<br />
+              see the grid<br />
+              <em>— or you don&apos;t.</em>
+            </>
+          )}
         </h1>
 
         <p className="gl-login-sub">
-          Opinions are free. Points aren&apos;t.<br />
-          Predict qualifying, race results, and driver battles
-          across 24 rounds. Your rivals placed last race.
-          Did you?
+          {isSignup
+            ? "Start with one account for everything: predictions, leagues, and scoring across the full season."
+            : "Sign in to manage predictions, join leagues, and track your season score."}
+        </p>
+
+        <p className="gl-login-helper">
+          Continue with email, Google, or Apple in the secure sign-in modal.
         </p>
 
         <div className="gl-login-stats">
@@ -129,13 +145,22 @@ function AuthForm() {
           onClick={handleEnter}
           disabled={loading}
         >
-          {loading ? <span className="gl-login-spinner" /> : "ENTER THE GRID"}
+          {loading ? <span className="gl-login-spinner" /> : isSignup ? "CREATE ACCOUNT" : "SIGN IN"}
         </button>
 
         {error && <p className="gl-login-error">{error}</p>}
 
         <p className="gl-login-urgency">
-          Every race you sit out is a race you can never win back.
+          {isSignup
+            ? "You can set your driver name after sign-in."
+            : "Every race you sit out is a race you can never win back."}
+        </p>
+
+        <p className="gl-login-switch">
+          {isSignup ? "Already have an account?" : "New to Gridlock?"}{" "}
+          <Link href={isSignup ? "/login" : "/signup"}>
+            {isSignup ? "Sign in" : "Create one"}
+          </Link>
         </p>
       </div>
     </div>

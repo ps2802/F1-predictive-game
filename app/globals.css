@@ -76,6 +76,7 @@ h1, h2, h3 { margin-top: 0; }
   padding: 0;
 }
 .gla-nav-link:hover { color: rgba(255,255,255,.75); }
+.gla-nav-link.is-active { color: #fff; }
 
 /* ── Page content ── */
 .gla-content {
@@ -500,24 +501,29 @@ h1, h2, h3 { margin-top: 0; }
 
 /* ── Responsive ── */
 @media (max-width: 700px) {
-  /* Nav: wrap to two rows on mobile so links don't overflow */
+  /* Nav: keep a single horizontal row that scrolls on mobile */
   .gla-nav {
     padding: 0 1rem;
     height: auto;
     min-height: 52px;
-    flex-wrap: wrap;
-    gap: 0;
+    flex-wrap: nowrap;
+    gap: 0.75rem;
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
+    align-items: center;
   }
   .gla-nav-logo { width: 100px; }
   .gla-nav-right {
     gap: 0.6rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
     padding: 0.25rem 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    scrollbar-width: none;
   }
-  /* Hide leaderboard + leagues on very small screens to prevent overflow */
+  .gla-nav-right::-webkit-scrollbar { display: none; }
   .gla-content { padding: 1.75rem 1rem 3rem; }
   .gla-race-grid { grid-template-columns: 1fr; }
   .gla-auth-card { padding: 1.5rem 1.25rem; }
@@ -1690,6 +1696,12 @@ h1, h2, h3 { margin-top: 0; }
 .league-join-input:focus { border-color: var(--gl-red, #E10600); }
 .league-join-error { color: var(--gl-red, #E10600); font-size: 0.85rem; margin-top: 0.5rem; }
 .league-join-success { color: #4caf50; font-size: 0.85rem; margin-top: 0.5rem; }
+.league-join-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
 
 .league-section { margin-bottom: 2.5rem; }
 .league-section-title {
@@ -1763,6 +1775,10 @@ h1, h2, h3 { margin-top: 0; }
   transition: background 0.12s;
 }
 .league-copy-btn:hover { background: #c40500; }
+.league-secondary-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+}
 
 /* =============================================================
    PROFILE
@@ -1804,8 +1820,26 @@ h1, h2, h3 { margin-top: 0; }
   background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
   display: flex; flex-direction: column; gap: 1rem;
 }
+.wallet-beta-pill {
+  align-self: flex-start;
+  margin: 0;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffd166;
+  background: rgba(255,209,102,0.12);
+  border: 1px solid rgba(255,209,102,0.24);
+}
 .wallet-deposit-title { font-size: 1rem; font-weight: 700; color: #fff; margin: 0; }
 .wallet-deposit-desc { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin: 0; }
+.wallet-action-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
 .wallet-address-box {
   display: flex; align-items: center; gap: 0.75rem;
   background: rgba(255,255,255,0.06); padding: 0.75rem 1rem; border-radius: 8px;
@@ -1818,6 +1852,20 @@ h1, h2, h3 { margin-top: 0; }
 .wallet-no-address { color: rgba(255,255,255,0.4); font-size: 0.9rem; }
 .wallet-notes { display: flex; flex-direction: column; gap: 0.4rem; }
 .wallet-notes p { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin: 0; }
+.admin-results-status {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.55);
+}
+.admin-results-status span {
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+}
 
 /* =============================================================
    MOBILE RESPONSIVE
@@ -1955,6 +2003,15 @@ h1, h2, h3 { margin-top: 0; }
   color: rgba(255,255,255,0.42);
   letter-spacing: 0.02em;
   max-width: 380px;
+  margin: 0 0 0.8rem;
+}
+
+.gl-login-helper {
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.58);
+  letter-spacing: 0.02em;
+  max-width: 380px;
   margin: 0 0 2rem;
 }
 
@@ -2078,6 +2135,19 @@ h1, h2, h3 { margin-top: 0; }
   color: rgba(255,255,255,0.2);
   letter-spacing: 0.04em;
   max-width: 340px;
+}
+
+.gl-login-switch {
+  margin-top: 1rem;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.38);
+  letter-spacing: 0.03em;
+}
+
+.gl-login-switch a {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
 }
 
 .gl-login-footer {

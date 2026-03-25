@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { validatePredictionAnswers } from "@/lib/predictions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
@@ -48,39 +49,47 @@ export async function POST(request: NextRequest) {
   if (race.race_locked || pastDeadline)
     return NextResponse.json({ error: "Predictions locked for this race." }, { status: 403 });
 
-  // Validate all option IDs belong to this race
   const questionIds = Object.keys(answers);
   if (questionIds.length === 0)
     return NextResponse.json({ error: "No answers provided." }, { status: 400 });
 
-  const { data: questions } = await supabase
-    .from("prediction_questions")
-    .select("id, multi_select")
-    .eq("race_id", raceId)
-    .in("id", questionIds);
-
-  // Validate that every submitted question ID actually belongs to this race
-  const validIds = new Set((questions ?? []).map((q) => q.id));
-  const invalidIds = questionIds.filter((id) => !validIds.has(id));
-  if (invalidIds.length > 0)
-    return NextResponse.json({ error: "Invalid question IDs." }, { status: 400 });
-
-  // Validate completeness: every question for this race must have the required
-  // number of picks. This is the server-side enforcement of the UI validation —
-  // prevents tab-navigation bypasses from resulting in incomplete stored predictions.
-  const { data: allRaceQuestions } = await supabase
+  const { data: allRaceQuestions, error: questionsErr } = await supabase
     .from("prediction_questions")
     .select("id, question_type, multi_select")
     .eq("race_id", raceId);
 
-  for (const q of allRaceQuestions ?? []) {
-    const picks = (answers[q.id] ?? []).filter(Boolean);
-    if (picks.length < q.multi_select) {
-      return NextResponse.json(
-        { error: `Please answer all questions before submitting. Missing: ${q.question_type.replace(/_/g, " ")}.` },
-        { status: 400 }
-      );
-    }
+  if (questionsErr)
+    return NextResponse.json({ error: questionsErr.message }, { status: 400 });
+
+  const validIds = new Set((allRaceQuestions ?? []).map((q) => q.id));
+  const invalidIds = questionIds.filter((id) => !validIds.has(id));
+  if (invalidIds.length > 0)
+    return NextResponse.json({ error: "Invalid question IDs." }, { status: 400 });
+
+  const raceQuestionIds = (allRaceQuestions ?? []).map((question) => question.id);
+  const { data: questionOptions, error: optionsErr } = await supabase
+    .from("prediction_options")
+    .select("id, question_id")
+    .in("question_id", raceQuestionIds);
+
+  if (optionsErr)
+    return NextResponse.json({ error: optionsErr.message }, { status: 400 });
+
+  const validation = validatePredictionAnswers({
+    answers,
+    questions: (allRaceQuestions ?? []).map((question) => ({
+      id: question.id,
+      question_type: question.question_type,
+      multi_select: question.multi_select,
+    })),
+    options: (questionOptions ?? []).map((option) => ({
+      id: option.id,
+      question_id: option.question_id,
+    })),
+  });
+
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
   // Check if user has any paid league membership — if so, predictions go active immediately.
@@ -94,43 +103,55 @@ export async function POST(request: NextRequest) {
 
   const hasPaidLeague = (paidMemberships?.length ?? 0) > 0;
 
-  // Upsert prediction row — 'draft' until league entry is paid, then 'active'
-  const { data: pred, error: predErr } = await supabase
+  const { data: existingPrediction, error: existingPredictionErr } = await supabase
     .from("predictions")
-    .upsert(
-      {
+    .select("id, edit_count")
+    .eq("user_id", user.id)
+    .eq("race_id", raceId)
+    .maybeSingle();
+
+  if (existingPredictionErr)
+    return NextResponse.json({ error: existingPredictionErr.message }, { status: 400 });
+
+  const nextStatus = hasPaidLeague ? "active" : "draft";
+
+  const predictionMutation = existingPrediction
+    ? supabase
+        .from("predictions")
+        .update({
+          status: nextStatus,
+          edit_count: (existingPrediction.edit_count ?? 0) + 1,
+        })
+        .eq("id", existingPrediction.id)
+    : supabase.from("predictions").insert({
         user_id: user.id,
         race_id: raceId,
-        status: hasPaidLeague ? "active" : "draft",
-      },
-      { onConflict: "user_id,race_id" }
-    )
+        status: nextStatus,
+        edit_count: 0,
+      });
+
+  const { data: pred, error: predErr } = await predictionMutation
     .select("id, edit_count")
     .single();
 
   if (predErr || !pred)
     return NextResponse.json({ error: predErr?.message ?? "Failed to create prediction." }, { status: 400 });
 
-  // Delete old answers for these questions then insert new ones
-  await supabase
+  // Replace the stored answer set with the validated payload.
+  const { error: deleteErr } = await supabase
     .from("prediction_answers")
     .delete()
-    .eq("prediction_id", pred.id)
-    .in("question_id", questionIds);
+    .eq("prediction_id", pred.id);
 
-  const answerRows = [];
-  for (const [questionId, optionIds] of Object.entries(answers)) {
-    for (let i = 0; i < optionIds.length; i++) {
-      if (optionIds[i]) {
-        answerRows.push({
-          prediction_id: pred.id,
-          question_id: questionId,
-          option_id: optionIds[i],
-          pick_order: i + 1,
-        });
-      }
-    }
-  }
+  if (deleteErr)
+    return NextResponse.json({ error: deleteErr.message }, { status: 400 });
+
+  const answerRows = validation.answerRows.map((row) => ({
+    prediction_id: pred.id,
+    question_id: row.question_id,
+    option_id: row.option_id,
+    pick_order: row.pick_order,
+  }));
 
   if (answerRows.length > 0) {
     const { error: ansErr } = await supabase
@@ -140,19 +161,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: ansErr.message }, { status: 400 });
   }
 
-  // Save prediction version snapshot (audit trail — failure does not block the response)
+  // Save the frozen version that settlement will score against.
   const { error: versionErr } = await supabase.from("prediction_versions").insert({
     prediction_id: pred.id,
     version_number: (pred.edit_count ?? 0) + 1,
     answers_json: answers,
     edit_cost: 0,
   });
-  // Version snapshot failure is non-blocking — swallow silently
-  void versionErr;
+
+  if (versionErr)
+    return NextResponse.json({ error: versionErr.message }, { status: 400 });
 
   return NextResponse.json({
     success: true,
     predictionId: pred.id,
-    status: hasPaidLeague ? "active" : "draft",
+    status: nextStatus,
   });
 }

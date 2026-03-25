@@ -364,19 +364,39 @@ export default function PredictPage() {
               flexWrap: "wrap",
             }}
           >
-            <Link href="/leagues" className="gla-race-btn">
-              {isDraft ? "Join a League to Activate" : "Join a League"}
-            </Link>
-            <Link
-              href="/dashboard"
-              className="gla-race-btn"
-              style={{
-                background: "transparent",
-                border: "1px solid rgba(255,255,255,0.2)",
-              }}
-            >
-              Back to Dashboard
-            </Link>
+            {isDraft ? (
+              <>
+                <Link href="/leagues" className="gla-race-btn">
+                  Join a League to Activate
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="gla-race-btn"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                  }}
+                >
+                  Back to Dashboard
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/dashboard" className="gla-race-btn">
+                  Back to Dashboard
+                </Link>
+                <Link
+                  href="/leaderboard"
+                  className="gla-race-btn"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                  }}
+                >
+                  View Leaderboard
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
