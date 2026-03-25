@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -26,6 +26,12 @@ type MemberScore = {
   races_played: number;
 };
 
+/** Compute prize pool from member count × entry fee if the stored value is 0. */
+function computePrizePool(league: League): number {
+  if (league.prize_pool > 0) return league.prize_pool;
+  return league.member_count * league.entry_fee_usdc;
+}
+
 export default function LeaguePage() {
   const params = useParams();
   const router = useRouter();
@@ -35,7 +41,7 @@ export default function LeaguePage() {
   const [members, setMembers] = useState<MemberScore[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "shared">("idle");
 
   useEffect(() => {
     async function load() {
@@ -70,14 +76,38 @@ export default function LeaguePage() {
     load();
   }, [leagueId, router]);
 
-  function copyInvite() {
-    if (!league) return;
-    const link = `${window.location.origin}/join/${league.invite_code}`;
-    navigator.clipboard.writeText(link).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+  /** Build the canonical invite URL for sharing. */
+  function buildInviteUrl(inviteCode: string): string {
+    return `https://joingridlock.com/join/${inviteCode}`;
   }
+
+  /** Share via Web Share API if available, otherwise copy to clipboard. */
+  const handleShare = useCallback(async () => {
+    if (!league) return;
+
+    const url = buildInviteUrl(league.invite_code);
+    const text = `I'm competing in ${league.name} on Gridlock — predict the F1 podium and win real prizes. Join here: ${url}`;
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: `Join ${league.name} on Gridlock`, text, url });
+        setShareStatus("shared");
+        setTimeout(() => setShareStatus("idle"), 2500);
+      } catch {
+        // User cancelled share — not an error
+      }
+      return;
+    }
+
+    // Fallback: clipboard copy
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareStatus("copied");
+      setTimeout(() => setShareStatus("idle"), 2500);
+    } catch {
+      // clipboard not available — silently fail
+    }
+  }, [league]);
 
   if (loading) {
     return (
@@ -90,6 +120,12 @@ export default function LeaguePage() {
   }
 
   if (!league) return null;
+
+  const prizePool = computePrizePool(league);
+  const myContribution = currentUserId && league.entry_fee_usdc > 0
+    ? league.entry_fee_usdc
+    : 0;
+  const isCurrentUserMember = members.some((m) => m.user_id === currentUserId);
 
   return (
     <div className="gla-root">
@@ -106,21 +142,67 @@ export default function LeaguePage() {
             <h1 className="gla-page-title" style={{ marginTop: "0.5rem" }}>{league.name}</h1>
             <p className="gla-page-sub">
               {league.member_count}/{league.max_users} members
-              {league.entry_fee_usdc > 0 && ` · $${league.entry_fee_usdc} USDC entry`}
-              {league.prize_pool > 0 && ` · 🏆 $${league.prize_pool} prize pool`}
+              {league.entry_fee_usdc > 0
+                ? ` · $${league.entry_fee_usdc} USDC entry`
+                : " · Free to join"}
             </p>
           </div>
 
-          {league.type === "private" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", alignItems: "flex-end" }}>
+            {/* Prize pool — shown prominently */}
+            {prizePool > 0 && (
+              <div className="league-prize-banner">
+                <span className="league-prize-banner-label">Prize Pool</span>
+                <span className="league-prize-banner-amount">${prizePool.toFixed(2)} USDC</span>
+              </div>
+            )}
+
+            {/* My contribution */}
+            {isCurrentUserMember && myContribution > 0 && (
+              <p style={{ fontSize: "0.78rem", color: "rgba(0,210,170,0.85)", margin: 0 }}>
+                Your contribution: ${myContribution.toFixed(2)} USDC
+              </p>
+            )}
+
+            {/* Share / invite button */}
             <div className="league-invite-box">
               <span className="league-invite-label">Invite Code</span>
               <code className="league-invite-code">{league.invite_code}</code>
-              <button className="league-copy-btn" onClick={copyInvite}>
-                {copied ? "Copied!" : "Copy Link"}
+              <button className="league-copy-btn" onClick={handleShare}>
+                {shareStatus === "copied"
+                  ? "Link Copied!"
+                  : shareStatus === "shared"
+                  ? "Shared!"
+                  : "Share"}
               </button>
             </div>
-          )}
+          </div>
         </div>
+
+        {/* Toast-style confirmation when link is copied */}
+        {shareStatus === "copied" && (
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              position: "fixed",
+              bottom: "2rem",
+              left: "50%",
+              transform: "translateX(-50%)",
+              background: "rgba(0,210,170,0.15)",
+              border: "1px solid rgba(0,210,170,0.4)",
+              color: "rgba(0,210,170,1)",
+              padding: "0.625rem 1.25rem",
+              borderRadius: "8px",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              zIndex: 100,
+              pointerEvents: "none",
+            }}
+          >
+            Invite link copied to clipboard
+          </div>
+        )}
 
         {/* Leaderboard */}
         <div className="lb-table" style={{ marginTop: "2rem" }}>
