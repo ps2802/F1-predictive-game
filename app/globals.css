@@ -2767,6 +2767,27 @@ h1, h2, h3 { margin-top: 0; }
    DASHBOARD — DRAFT PREDICTIONS BANNER
    ======================================== */
 
+.dash-runtime-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  margin-bottom: 1rem;
+  background: rgba(225, 106, 0, 0.08);
+  border: 1px solid rgba(225, 106, 0, 0.3);
+}
+
+.dash-runtime-banner.is-loading {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.dash-runtime-banner-text {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.76);
+  line-height: 1.5;
+}
+
 .dash-draft-banner {
   display: flex;
   align-items: center;

@@ -30,38 +30,132 @@ export default function DashboardPage() {
   const [lockedRaceIds, setLockedRaceIds] = useState<Set<string>>(new Set());
   const [predictedRaceIds, setPredictedRaceIds] = useState<Set<string>>(new Set());
   const [draftRaceIds, setDraftRaceIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [loadWarning, setLoadWarning] = useState("");
 
   useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-    if (!supabase) return;
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { router.push("/login"); return; }
+    let cancelled = false;
 
-      const [{ data: profileData }, { data: dbRaces }, { data: userPreds }] = await Promise.all([
-        supabase.from("profiles").select("username, balance_usdc, is_admin").eq("id", user.id).single(),
-        supabase.from("races").select("id, race_locked, qualifying_starts_at"),
-        supabase.from("predictions").select("race_id, status").eq("user_id", user.id),
-      ]);
+    async function loadDashboard() {
+      setLoadWarning("");
+      setLoading(true);
 
-      setProfile(profileData);
-
-      const now = new Date();
-      const locked = new Set<string>();
-      for (const r of (dbRaces ?? []) as DbRace[]) {
-        const pastDeadline = r.qualifying_starts_at != null && now >= new Date(r.qualifying_starts_at);
-        if (r.race_locked || pastDeadline) locked.add(r.id);
+      const supabase = createSupabaseBrowserClient();
+      if (!supabase) {
+        if (!cancelled) {
+          setLoadWarning(
+            "Live data is unavailable in this environment. Showing the season schedule only."
+          );
+          setLoading(false);
+        }
+        return;
       }
-      setLockedRaceIds(locked);
 
-      const predicted = new Set<string>();
-      const drafts = new Set<string>();
-      for (const p of (userPreds ?? []) as Prediction[]) {
-        predicted.add(p.race_id);
-        if (p.status === "draft") drafts.add(p.race_id);
+      try {
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError) {
+          throw userError;
+        }
+
+        if (!user) {
+          router.push("/login");
+          return;
+        }
+
+        const [profileResult, racesResult, predictionsResult] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("username, balance_usdc, is_admin")
+            .eq("id", user.id)
+            .single(),
+          supabase.from("races").select("id, race_locked, qualifying_starts_at"),
+          supabase.from("predictions").select("race_id, status").eq("user_id", user.id),
+        ]);
+
+        const warningParts: string[] = [];
+
+        if (profileResult.error) {
+          console.error("[Gridlock] Dashboard profile load failed:", profileResult.error.message);
+          warningParts.push("profile details");
+        } else if (!cancelled) {
+          setProfile(profileResult.data);
+        }
+
+        if (racesResult.error) {
+          console.error("[Gridlock] Dashboard races load failed:", racesResult.error.message);
+          warningParts.push("live race status");
+          if (!cancelled) {
+            setLockedRaceIds(new Set());
+          }
+        } else {
+          const now = new Date();
+          const locked = new Set<string>();
+          for (const race of (racesResult.data ?? []) as DbRace[]) {
+            const pastDeadline =
+              race.qualifying_starts_at != null &&
+              now >= new Date(race.qualifying_starts_at);
+            if (race.race_locked || pastDeadline) {
+              locked.add(race.id);
+            }
+          }
+          if (!cancelled) {
+            setLockedRaceIds(locked);
+          }
+        }
+
+        if (predictionsResult.error) {
+          console.error(
+            "[Gridlock] Dashboard predictions load failed:",
+            predictionsResult.error.message
+          );
+          warningParts.push("saved predictions");
+          if (!cancelled) {
+            setPredictedRaceIds(new Set());
+            setDraftRaceIds(new Set());
+          }
+        } else {
+          const predicted = new Set<string>();
+          const drafts = new Set<string>();
+          for (const prediction of (predictionsResult.data ?? []) as Prediction[]) {
+            predicted.add(prediction.race_id);
+            if (prediction.status === "draft") {
+              drafts.add(prediction.race_id);
+            }
+          }
+          if (!cancelled) {
+            setPredictedRaceIds(predicted);
+            setDraftRaceIds(drafts);
+          }
+        }
+
+        if (!cancelled && warningParts.length > 0) {
+          setLoadWarning(
+            `We couldn't load ${warningParts.join(" and ")}. Showing the season schedule with limited live data.`
+          );
+        }
+      } catch (error) {
+        console.error("[Gridlock] Dashboard bootstrap failed:", error);
+        if (!cancelled) {
+          setLoadWarning(
+            "Live dashboard data is temporarily unavailable. Showing the season schedule only."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-      setPredictedRaceIds(predicted);
-      setDraftRaceIds(drafts);
-    });
+    }
+
+    void loadDashboard();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   return (
@@ -73,6 +167,20 @@ export default function DashboardPage() {
       />
 
       <div className="gla-content">
+        {loadWarning && (
+          <div className="dash-runtime-banner" role="status">
+            <span className="dash-runtime-banner-text">{loadWarning}</span>
+          </div>
+        )}
+
+        {loading && (
+          <div className="dash-runtime-banner is-loading" role="status">
+            <span className="dash-runtime-banner-text">
+              Syncing your latest dashboard data...
+            </span>
+          </div>
+        )}
+
         {/* Draft predictions banner — shown when user has predictions not yet in a league */}
         {draftRaceIds.size > 0 && (
           <div className="dash-draft-banner">
