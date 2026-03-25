@@ -70,27 +70,36 @@ export default function ScoreBreakdownPage() {
   const [rank, setRank] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [fetchFailed, setFetchFailed] = useState(false);
+
+  async function load() {
+    setError("");
+    setFetchFailed(false);
+    setLoading(true);
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) { setLoading(false); return; }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { router.push("/login"); return; }
+
+    const res = await fetch(`/api/scores/${raceId}`);
+    if (res.ok) {
+      const data = await res.json();
+      setScore(data.score);
+      if (data.rank != null) setRank(data.rank as number);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      if (res.status >= 500) {
+        setFetchFailed(true);
+      }
+      setError(data.error ?? "Score not available.");
+    }
+    setLoading(false);
+  }
 
   useEffect(() => {
-    async function load() {
-      const supabase = createSupabaseBrowserClient();
-      if (!supabase) return;
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push("/login"); return; }
-
-      const res = await fetch(`/api/scores/${raceId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setScore(data.score);
-        if (data.rank != null) setRank(data.rank as number);
-      } else {
-        const data = await res.json();
-        setError(data.error ?? "Score not available.");
-      }
-      setLoading(false);
-    }
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [raceId, router]);
 
   if (loading) {
@@ -98,6 +107,26 @@ export default function ScoreBreakdownPage() {
       <div className="gla-root">
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <div className="gl-spinner" />
+        </div>
+      </div>
+    );
+  }
+
+  if (fetchFailed) {
+    return (
+      <div className="gla-root">
+        <div className="gl-stripe" aria-hidden="true" />
+        <AppNav />
+        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
+          <h1 className="gla-page-title">Couldn&apos;t load race scores.</h1>
+          <p className="gla-page-sub" style={{ marginTop: "0.5rem" }}>An error occurred while loading this race. Please try again.</p>
+          <button
+            className="gla-race-btn"
+            style={{ marginTop: "2rem" }}
+            onClick={load}
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
