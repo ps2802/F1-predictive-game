@@ -34,28 +34,34 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  async function load() {
+    setLoadError("");
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) { setLoading(false); return; }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) { router.push("/login"); return; }
+
+    const res = await fetch("/api/profile");
+    if (res.ok) {
+      const data = await res.json();
+      setProfile(data.profile);
+      setUsername(data.profile?.username ?? "");
+      setRaceScores(data.raceScores ?? []);
+      setTotalScore(data.totalScore ?? 0);
+      setPredictionsCount(data.predictionsCount ?? 0);
+    } else {
+      setLoadError("Couldn't load your profile. Please try again.");
+    }
+    setLoading(false);
+  }
 
   useEffect(() => {
-    async function load() {
-      const supabase = createSupabaseBrowserClient();
-      if (!supabase) return;
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) { router.push("/login"); return; }
-
-      const res = await fetch("/api/profile");
-      if (res.ok) {
-        const data = await res.json();
-        setProfile(data.profile);
-        setUsername(data.profile?.username ?? "");
-        setRaceScores(data.raceScores ?? []);
-        setTotalScore(data.totalScore ?? 0);
-        setPredictionsCount(data.predictionsCount ?? 0);
-      }
-      setLoading(false);
-    }
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   async function handleSave(e: React.FormEvent) {
@@ -85,6 +91,26 @@ export default function ProfilePage() {
       <div className="gla-root">
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <div className="gl-spinner" />
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="gla-root">
+        <div className="gl-stripe" aria-hidden="true" />
+        <AppNav profile={null} />
+        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
+          <h1 className="gla-page-title">Something went wrong</h1>
+          <p className="gla-page-sub" style={{ marginTop: "0.5rem" }}>{loadError}</p>
+          <button
+            className="gla-race-btn"
+            style={{ marginTop: "2rem" }}
+            onClick={() => { setLoading(true); load(); }}
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -167,9 +193,17 @@ export default function ProfilePage() {
         </div>
 
         {/* Race scores history */}
-        {raceScores.length > 0 && (
-          <div style={{ marginTop: "2rem" }}>
-            <h3 className="league-section-title">Race History</h3>
+        <div style={{ marginTop: "2rem" }}>
+          <h3 className="league-section-title">Race History</h3>
+          {raceScores.length === 0 ? (
+            <div className="lb-empty">
+              <p className="lb-empty-headline">No predictions yet.</p>
+              <p className="lb-empty-sub">Pick your first podium to start scoring points.</p>
+              <Link href="/dashboard" className="gla-race-btn" style={{ display: "inline-block", marginTop: "1.25rem" }}>
+                Make Predictions
+              </Link>
+            </div>
+          ) : (
             <div className="lb-table">
               <div className="lb-header" style={{ gridTemplateColumns: "1fr 120px 100px" }}>
                 <span>Race</span>
@@ -194,8 +228,8 @@ export default function ProfilePage() {
                 );
               })}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
