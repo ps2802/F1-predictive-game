@@ -23,6 +23,15 @@ function AuthForm() {
   const redirect = searchParams?.get("redirect") ?? null;
   const mode = searchParams?.get("mode") === "signup" ? "signup" : "login";
   const isSignup = mode === "signup";
+  const authSwitchHref = (() => {
+    const pathname = isSignup ? "/login" : "/signup";
+    if (!redirect) return pathname;
+
+    const params = new URLSearchParams();
+    params.set("redirect", redirect);
+
+    return `${pathname}?${params.toString()}`;
+  })();
 
   const { getAccessToken, authenticated } = usePrivy();
   const [error, setError] = useState<string | null>(null);
@@ -158,7 +167,7 @@ function AuthForm() {
 
         <p className="gl-login-switch">
           {isSignup ? "Already have an account?" : "New to Gridlock?"}{" "}
-          <Link href={isSignup ? "/login" : "/signup"}>
+          <Link href={authSwitchHref}>
             {isSignup ? "Sign in" : "Create one"}
           </Link>
         </p>
