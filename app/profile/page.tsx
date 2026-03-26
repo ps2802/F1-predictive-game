@@ -89,6 +89,8 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="gla-root">
+        <div className="gl-stripe" aria-hidden="true" />
+        <AppNav profile={null} />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <div className="gl-spinner" />
         </div>
@@ -122,7 +124,7 @@ export default function ProfilePage() {
       <AppNav profile={profile} />
 
       <div className="gla-content" style={{ maxWidth: "720px" }}>
-        <p className="gla-page-title">Profile</p>
+        <h1 className="gla-page-title">Profile</h1>
         <p className="gla-page-sub">Manage your identity and track your season</p>
 
         {/* Stats strip */}

@@ -80,6 +80,8 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="gla-root">
+        <div className="gl-stripe" aria-hidden="true" />
+        <AppNav profile={profile} />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <div className="gl-spinner" />
         </div>
@@ -115,7 +117,7 @@ export default function DashboardPage() {
       <div className="gla-content">
         <div className="dash-header">
           <div>
-            <p className="gla-page-title">2026 Season</p>
+            <h1 className="gla-page-title">2026 Season</h1>
             <p className="gla-page-sub">
               {races.length} rounds · select a race to make your predictions
             </p>
@@ -150,28 +152,21 @@ export default function DashboardPage() {
                 {hasScore ? (
                   /* Post-race: show settled score notification */
                   <>
-                    <span className="gla-race-status" style={{ background: "rgba(0,210,170,0.12)", color: "rgba(0,210,170,1)", border: "1px solid rgba(0,210,170,0.25)", borderRadius: "6px", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.2rem 0.55rem" }}>
+                    <span className="gla-race-status is-results">
                       Results In
                     </span>
-                    <div style={{ marginTop: "auto" }}>
-                      <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.38)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>
-                        Your score
-                      </div>
-                      <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: "0.75rem" }}>
-                        {Number(score).toFixed(1)}
-                      </div>
+                    <div className="gla-race-score">
+                      <div className="gla-race-score-lbl">Your score</div>
+                      <div className="gla-race-score-num">{Number(score).toFixed(1)}</div>
                       <Link className="gla-race-btn" href={`/scores/${race.id}`} style={{ fontSize: "0.75rem" }}>
                         See breakdown →
                       </Link>
                     </div>
                   </>
                 ) : isClosed ? (
-                  <>
-                    <span className={`gla-race-status is-closed`}>
-                      Locked
-                    </span>
-                    <span className="gla-race-btn is-disabled">Locked</span>
-                  </>
+                  <span className="gla-race-status is-closed">
+                    Locked
+                  </span>
                 ) : (
                   <>
                     <span className={`gla-race-status is-upcoming`}>

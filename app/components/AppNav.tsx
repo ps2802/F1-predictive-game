@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -17,7 +17,13 @@ interface AppNavProps {
 
 export function AppNav({ profile }: AppNavProps): React.JSX.Element {
   const router = useRouter();
+  const pathname = usePathname();
   const { logout } = usePrivy();
+
+  function navLinkClass(href: string): string {
+    const active = pathname === href || pathname?.startsWith(href + "/");
+    return `gla-nav-link${active ? " is-active" : ""}`;
+  }
 
   async function handleLogout(): Promise<void> {
     const supabase = createSupabaseBrowserClient();
@@ -36,14 +42,14 @@ export function AppNav({ profile }: AppNavProps): React.JSX.Element {
         draggable={false}
       />
       <div className="gla-nav-right">
-        <Link className="gla-nav-link" href="/dashboard">Races</Link>
-        <Link className="gla-nav-link" href="/leagues">Leagues</Link>
-        <Link className="gla-nav-link" href="/leaderboard">Leaderboard</Link>
-        <Link className="gla-nav-link" href="/profile">
+        <Link className={navLinkClass("/dashboard")} href="/dashboard">Races</Link>
+        <Link className={navLinkClass("/leagues")} href="/leagues">Leagues</Link>
+        <Link className={navLinkClass("/leaderboard")} href="/leaderboard">Leaderboard</Link>
+        <Link className={navLinkClass("/profile")} href="/profile">
           {profile?.username ? `@${profile.username}` : "Profile"}
         </Link>
         {profile?.is_admin && (
-          <Link className="gla-nav-link" href="/admin" style={{ color: "var(--gl-red)" }}>
+          <Link className={navLinkClass("/admin")} href="/admin" style={{ color: "var(--gl-red)" }}>
             Admin
           </Link>
         )}

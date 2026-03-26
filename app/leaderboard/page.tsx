@@ -50,6 +50,8 @@ export default function LeaderboardPage() {
   if (loading) {
     return (
       <div className="gla-root">
+        <div className="gl-stripe" aria-hidden="true" />
+        <AppNav />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <div className="gl-spinner" />
         </div>
@@ -84,7 +86,7 @@ export default function LeaderboardPage() {
       <AppNav />
 
       <div className="gla-content">
-        <p className="gla-page-title">Global Leaderboard</p>
+        <h1 className="gla-page-title">Global Leaderboard</h1>
         <p className="gla-page-sub">Season 2026 · all races</p>
 
         <div className="lb-table">
