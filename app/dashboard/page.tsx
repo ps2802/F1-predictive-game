@@ -81,8 +81,15 @@ export default function DashboardPage() {
         if (profileResult.error) {
           console.error("[Gridlock] Dashboard profile load failed:", profileResult.error.message);
           warningParts.push("profile details");
-        } else if (!cancelled) {
-          setProfile(profileResult.data);
+        } else {
+          if (!profileResult.data?.username) {
+            router.replace("/onboarding");
+            return;
+          }
+
+          if (!cancelled) {
+            setProfile(profileResult.data);
+          }
         }
 
         if (racesResult.error) {

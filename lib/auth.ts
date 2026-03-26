@@ -48,7 +48,7 @@ async function getAccessTokenWithRetry(
  *   1. Get Privy access token (retries if not immediately available)
  *   2. POST /api/auth/privy-sync → creates/finds Supabase user, returns OTP
  *   3. verifyOtp → establishes Supabase browser session cookie
- *   4. Redirect: no username → /onboarding; returning user → /dashboard
+ *   4. Redirect: brand-new user → /onboarding; returning user → /dashboard
  */
 export async function handlePrivyAuthComplete(
   getAccessToken: () => Promise<string | null>,
@@ -70,10 +70,9 @@ export async function handlePrivyAuthComplete(
     throw new Error(`Auth sync failed (${res.status}): ${body}`);
   }
 
-  const { token, username } = (await res.json()) as {
+  const { token, is_new_user } = (await res.json()) as {
     token: string;
     email: string;
-    username: string | null;
     is_new_user: boolean;
   };
 
@@ -102,7 +101,7 @@ export async function handlePrivyAuthComplete(
     return;
   }
 
-  if (!username) {
+  if (is_new_user) {
     router.push("/onboarding");
     return;
   }
