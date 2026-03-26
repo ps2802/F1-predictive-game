@@ -42,18 +42,19 @@ export default function DashboardPage() {
     if (!user) { router.push("/login"); return; }
 
     const [profileResult, racesResult, scoresResult] = await Promise.all([
-      supabase.from("profiles").select("username, balance_usdc, is_admin").eq("id", user.id).single(),
+      supabase.from("profiles").select("username, balance_usdc, is_admin").eq("id", user.id).maybeSingle(),
       supabase.from("races").select("id, race_locked, qualifying_starts_at"),
       supabase.from("race_scores").select("race_id, total_score").eq("user_id", user.id),
     ]);
 
-    if (profileResult.error || racesResult.error) {
+    // Only treat a hard races query error as fatal; missing profile is acceptable (new user)
+    if (racesResult.error) {
       setLoadError("Couldn't load the race calendar. Please try again.");
       setLoading(false);
       return;
     }
 
-    setProfile(profileResult.data);
+    setProfile(profileResult.data ?? null);
 
     const now = new Date();
     const locked = new Set<string>();
