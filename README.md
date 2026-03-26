@@ -44,6 +44,7 @@ supabase/migrations/202603190001_prd_full_schema.sql   ← new PRD schema
 supabase/migrations/202603190002_hardening.sql          ← critical fixes
 supabase/migrations/202603260002_security_and_prediction_integrity.sql
 supabase/migrations/202603260003_sync_official_2026_race_calendar.sql
+supabase/migrations/202603260004_sync_official_2026_driver_team_roster.sql
 ```
 
 ### 4. Seed race questions
