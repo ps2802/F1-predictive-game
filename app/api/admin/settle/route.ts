@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { selectLatestPredictionVersions } from "@/lib/predictions";
+import { selectLatestPredictionVersionRows } from "@/lib/predictions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
@@ -9,6 +9,14 @@ import {
   type RaceResult,
   type PopularitySnapshot,
 } from "@/lib/scoring/settleRace";
+import {
+  distributePool,
+  rankUsers,
+  DEFAULT_PAYOUT_MODEL,
+  MINIMUM_PAID_ENTRANTS,
+  type PayoutModel,
+  type LeaguePayoutConfig,
+} from "@/lib/scoring/distributePrizes";
 
 // Convert prediction_versions.answers_json to PredictionAnswer[] for the scoring engine.
 // answers_json format: { [questionId]: [optionId, optionId, ...] }
@@ -22,6 +30,14 @@ function versionToAnswers(answersJson: Record<string, string[]>): PredictionAnsw
     }
   }
   return result;
+}
+
+function isLateJoiner(joinedAt: string | null, lockDeadline: string | null): boolean {
+  if (!joinedAt || !lockDeadline) {
+    return false;
+  }
+
+  return new Date(joinedAt).getTime() > new Date(lockDeadline).getTime();
 }
 
 // Admin-only: trigger race settlement + scoring
@@ -141,7 +157,7 @@ export async function POST(request: Request) {
     .order("version_number", { ascending: false })
     .order("created_at", { ascending: false });
 
-  const latestByPrediction = selectLatestPredictionVersions(
+  const latestByPrediction = selectLatestPredictionVersionRows(
     (allVersions ?? []).map((version) => ({
       id: version.id,
       prediction_id: version.prediction_id,
@@ -161,8 +177,9 @@ export async function POST(request: Request) {
       .filter((p) => latestByPrediction.has(p.id)) // skip predictions with no version snapshot
       .map((p) => ({
         userId: p.user_id,
-        answers: versionToAnswers(latestByPrediction.get(p.id)!),
+        answers: versionToAnswers(latestByPrediction.get(p.id)!.answers_json),
         editCount: p.edit_count ?? 0,
+        submittedAt: latestByPrediction.get(p.id)?.created_at ?? null,
       })),
   });
 
@@ -174,7 +191,12 @@ export async function POST(request: Request) {
     base_score: s.base_score,
     difficulty_score: s.difficulty_score,
     edit_penalty: s.edit_penalty,
-    breakdown_json: { questions: s.breakdown, chaos_bonus: s.chaos_bonus },
+    breakdown_json: {
+      questions: s.breakdown,
+      chaos_bonus: s.chaos_bonus,
+      correct_picks: s.correct_picks,
+      submitted_at: s.submitted_at,
+    },
     calculated_at: new Date().toISOString(),
   }));
 
@@ -188,12 +210,21 @@ export async function POST(request: Request) {
   // 8. Update league_scores for all affected users
   const { data: leagueMembers } = await admin
     .from("league_members")
-    .select("league_id, user_id")
+    .select("league_id, user_id, paid, joined_at, stake_amount_usdc")
     .in("user_id", scores.map((s) => s.user_id));
+
+  const { data: raceLeagues } = await admin
+    .from("leagues")
+    .select("id")
+    .eq("race_id", raceId);
+
+  const raceLeagueIds = new Set((raceLeagues ?? []).map((league) => league.id));
 
   const leagueScoreRows = [];
   for (const score of scores) {
-    const userLeagues = (leagueMembers ?? []).filter((m) => m.user_id === score.user_id);
+    const userLeagues = (leagueMembers ?? []).filter(
+      (m) => m.user_id === score.user_id && raceLeagueIds.has(m.league_id)
+    );
     for (const lm of userLeagues) {
       leagueScoreRows.push({
         league_id: lm.league_id,
@@ -210,5 +241,188 @@ export async function POST(request: Request) {
       .upsert(leagueScoreRows, { onConflict: "league_id,user_id,race_id" });
   }
 
-  return NextResponse.json({ success: true, scores_computed: scores.length });
+  // ── 9. Distribute league prize pools ──────────────────────────
+  // For each league that has members who scored in this race,
+  // compute payouts and credit winner balances.
+  const distributionResults = [];
+  const scoreByUser = new Map(scores.map((score) => [score.user_id, score]));
+  const settlementLockDeadline = raceRow.qualifying_starts_at ?? null;
+
+  if (leagueScoreRows.length > 0) {
+    // Find all distinct leagues involved
+    const leagueIds = [...new Set(leagueScoreRows.map((r) => r.league_id))];
+
+    const { data: existingSettlements } = await admin
+      .from("league_race_settlements")
+      .select("league_id, status")
+      .eq("race_id", raceId)
+      .in("league_id", leagueIds);
+
+    const settledLeagueIds = new Set(
+      (existingSettlements ?? []).map((settlement) => settlement.league_id)
+    );
+
+    const { data: leagues } = await admin
+      .from("leagues")
+      .select("id, name, prize_pool, entry_fee_usdc, payout_model, payout_config")
+      .in("id", leagueIds)
+      .gt("prize_pool", 0);
+
+    const { data: allLeagueMembers } = await admin
+      .from("league_members")
+      .select("league_id, user_id, paid, joined_at, stake_amount_usdc")
+      .in("league_id", leagueIds);
+
+    const { data: payoutProfiles } = await admin
+      .from("profiles")
+      .select("id, payouts_frozen")
+      .in("id", scores.map((score) => score.user_id));
+
+    const frozenByUserId = new Map(
+      (payoutProfiles ?? []).map((profile) => [profile.id, profile.payouts_frozen === true])
+    );
+
+    for (const league of leagues ?? []) {
+      if (settledLeagueIds.has(league.id)) {
+        distributionResults.push({
+          leagueId: league.id,
+          status: "already_settled",
+        });
+        continue;
+      }
+
+      const paidLeagueMembers = (allLeagueMembers ?? []).filter(
+        (member) => member.league_id === league.id && member.paid === true
+      );
+
+      if (
+        Number(league.entry_fee_usdc) > 0 &&
+        paidLeagueMembers.length < MINIMUM_PAID_ENTRANTS
+      ) {
+        const refunds = paidLeagueMembers.map((member) => ({
+          userId: member.user_id,
+          amount: Number(member.stake_amount_usdc ?? 0),
+          description: `League refund: ${league.name} had fewer than ${MINIMUM_PAID_ENTRANTS} paid entrants`,
+        }));
+
+        const { data: refundStatus, error: refundErr } = await admin.rpc(
+          "apply_league_settlement",
+          {
+            p_league_id: league.id,
+            p_race_id: raceId,
+            p_status: "refunded",
+            p_payout_model:
+              ((league.payout_model as PayoutModel | null) ?? DEFAULT_PAYOUT_MODEL) as PayoutModel,
+            p_prize_pool: league.prize_pool,
+            p_paid_entrant_count: paidLeagueMembers.length,
+            p_eligible_count: 0,
+            p_withheld_amount: 0,
+            p_undistributed_amount: 0,
+            p_payouts_json: [],
+            p_notes: `Refunded because league had fewer than ${MINIMUM_PAID_ENTRANTS} paid entrants.`,
+            p_refunds_json: refunds,
+          }
+        );
+
+        if (refundErr) {
+          throw refundErr;
+        }
+
+        if (refundStatus === "already_settled") {
+          distributionResults.push({
+            leagueId: league.id,
+            status: "already_settled",
+          });
+          continue;
+        }
+
+        distributionResults.push({
+          leagueId: league.id,
+          status: "refunded",
+          refundedCount: paidLeagueMembers.length,
+        });
+        continue;
+      }
+
+      // Get all league member scores for this race
+      const leagueUserScores = leagueScoreRows
+        .filter((r) => r.league_id === league.id)
+        .map((r) => {
+          const member = (allLeagueMembers ?? []).find(
+            (leagueMember) =>
+              leagueMember.league_id === league.id && leagueMember.user_id === r.user_id
+          );
+          const raceScore = scoreByUser.get(r.user_id);
+
+          return {
+            userId: r.user_id,
+            score: Number(r.score),
+            difficultyScore: raceScore?.difficulty_score ?? 0,
+            correctPicks: raceScore?.correct_picks ?? 0,
+            submittedAt: raceScore?.submitted_at ?? null,
+            payoutEligible:
+              member?.paid === true &&
+              !isLateJoiner(member.joined_at ?? null, settlementLockDeadline),
+            payoutFrozen: frozenByUserId.get(r.user_id) ?? false,
+          };
+        });
+
+      if (leagueUserScores.length === 0) continue;
+
+      const ranked = rankUsers(leagueUserScores);
+      const distribution = distributePool(
+        league.id,
+        league.prize_pool,
+        ranked,
+        (league.payout_config as LeaguePayoutConfig | null) ?? null,
+        ((league.payout_model as PayoutModel | null) ?? DEFAULT_PAYOUT_MODEL) as PayoutModel
+      );
+
+      const { data: settlementStatus, error: settlementErr } = await admin.rpc(
+        "apply_league_settlement",
+        {
+          p_league_id: league.id,
+          p_race_id: raceId,
+          p_status: "settled",
+          p_payout_model:
+            ((league.payout_model as PayoutModel | null) ?? DEFAULT_PAYOUT_MODEL) as PayoutModel,
+          p_prize_pool: league.prize_pool,
+          p_paid_entrant_count: paidLeagueMembers.length,
+          p_eligible_count: ranked.filter((user) => user.payoutEligible).length,
+          p_withheld_amount: distribution.withheldAmount,
+          p_undistributed_amount: distribution.undistributed,
+          p_payouts_json: distribution.payouts,
+          p_notes: null,
+          p_refunds_json: [],
+        }
+      );
+
+      if (settlementErr) {
+        throw settlementErr;
+      }
+
+      if (settlementStatus === "already_settled") {
+        distributionResults.push({
+          leagueId: league.id,
+          status: "already_settled",
+        });
+        continue;
+      }
+
+      distributionResults.push({
+        leagueId: league.id,
+        status: "settled",
+        prizePool: distribution.prizePool,
+        payoutsCount: distribution.payouts.length,
+        withheldAmount: distribution.withheldAmount,
+        undistributed: distribution.undistributed,
+      });
+    }
+  }
+
+  return NextResponse.json({
+    success: true,
+    scores_computed: scores.length,
+    distributions: distributionResults,
+  });
 }

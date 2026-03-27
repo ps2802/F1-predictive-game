@@ -99,6 +99,7 @@ export type ScoredQuestion = {
   confidence_multiplier: number;
   raw_score: number;
   is_correct: boolean;
+  correct_picks: number;
 };
 
 export type RaceScoreResult = {
@@ -109,6 +110,8 @@ export type RaceScoreResult = {
   difficulty_score: number;
   edit_penalty: number;
   chaos_bonus: number;
+  correct_picks: number;
+  submitted_at: string | null;
   breakdown: ScoredQuestion[];
 };
 
@@ -214,6 +217,7 @@ function scorePodium(
     confidence_multiplier: confMult,
     raw_score: rawScore,
     is_correct: scoringCount > 0,
+    correct_picks: scoringCount,
   };
 }
 
@@ -268,6 +272,7 @@ function scoreQualifying(
     confidence_multiplier: confMult,
     raw_score: rawScore,
     is_correct: scoringCount > 0,
+    correct_picks: scoringCount,
   };
 }
 
@@ -299,6 +304,7 @@ function scoreTeamsQ3(
       confidence_multiplier: confMult,
       raw_score: 0,
       is_correct: false,
+      correct_picks: 0,
     };
   }
 
@@ -314,6 +320,7 @@ function scoreTeamsQ3(
     confidence_multiplier: confMult,
     raw_score: rawScore,
     is_correct: true,
+    correct_picks: correctCount,
   };
 }
 
@@ -351,6 +358,7 @@ function scorePointsFinishers(
       confidence_multiplier: confMult,
       raw_score: 0,
       is_correct: false,
+      correct_picks: 0,
     };
   }
 
@@ -366,6 +374,7 @@ function scorePointsFinishers(
     confidence_multiplier: confMult,
     raw_score: rawScore,
     is_correct: true,
+    correct_picks: correctCount,
   };
 }
 
@@ -439,6 +448,7 @@ export function scoreQuestion(
     confidence_multiplier: confMult,
     raw_score: rawScore,
     is_correct: isCorrect,
+    correct_picks: correctPicks,
   };
 }
 
@@ -453,7 +463,8 @@ export function scoreUserPrediction(
   userAnswers: PredictionAnswer[],
   results: RaceResult[],
   snapshots: PopularitySnapshot[],
-  editCount: number
+  editCount: number,
+  submittedAt?: string | null
 ): RaceScoreResult {
   const breakdown: ScoredQuestion[] = questions.map((q) =>
     scoreQuestion(q, userAnswers, results, snapshots)
@@ -479,6 +490,7 @@ export function scoreUserPrediction(
     (acc, sq) => acc + sq.raw_score * (sq.difficulty_multiplier - 1),
     0
   );
+  const correctPicks = breakdown.reduce((acc, sq) => acc + sq.correct_picks, 0);
 
   // Chaos bonus: +5 if 10 or more questions score any points
   const questionsWithPoints = breakdown.filter((sq) => sq.raw_score > 0).length;
@@ -496,6 +508,8 @@ export function scoreUserPrediction(
     difficulty_score: Math.round(difficultyScore * 10000) / 10000,
     edit_penalty: Math.round(penalty * 10000) / 10000,
     chaos_bonus: chaosBonus,
+    correct_picks: correctPicks,
+    submitted_at: submittedAt ?? null,
     breakdown,
   };
 }
@@ -536,6 +550,7 @@ export type SettlementInput = {
     userId: string;
     answers: PredictionAnswer[];
     editCount: number;
+    submittedAt?: string | null;
   }>;
 };
 
@@ -545,7 +560,7 @@ export type SettlementOutput = {
 };
 
 export function settleRace(input: SettlementInput): SettlementOutput {
-  const scores = input.userPredictions.map(({ userId, answers, editCount }) =>
+  const scores = input.userPredictions.map(({ userId, answers, editCount, submittedAt }) =>
     scoreUserPrediction(
       userId,
       input.raceId,
@@ -553,15 +568,33 @@ export function settleRace(input: SettlementInput): SettlementOutput {
       answers,
       input.results,
       input.snapshots,
-      editCount
+      editCount,
+      submittedAt
     )
   );
 
-  // Sort by total_score descending
+  // Deterministic ranking fallback chain:
+  // 1. Higher total score
+  // 2. Higher cumulative difficulty score
+  // 3. More correct picks
+  // 4. Earlier submission timestamp
+  // 5. Stable user_id ordering for exact ties only
   scores.sort((a, b) => {
     if (b.total_score !== a.total_score) return b.total_score - a.total_score;
-    // Tie-break: higher difficulty score
-    return b.difficulty_score - a.difficulty_score;
+    if (b.difficulty_score !== a.difficulty_score) {
+      return b.difficulty_score - a.difficulty_score;
+    }
+    if (b.correct_picks !== a.correct_picks) {
+      return b.correct_picks - a.correct_picks;
+    }
+
+    const aSubmitted = a.submitted_at ? new Date(a.submitted_at).getTime() : Number.MAX_SAFE_INTEGER;
+    const bSubmitted = b.submitted_at ? new Date(b.submitted_at).getTime() : Number.MAX_SAFE_INTEGER;
+    if (aSubmitted !== bSubmitted) {
+      return aSubmitted - bSubmitted;
+    }
+
+    return a.user_id.localeCompare(b.user_id);
   });
 
   return {

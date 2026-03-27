@@ -21,7 +21,7 @@ type DbRace = {
 
 type Prediction = {
   race_id: string;
-  status: "draft" | "active";
+  status: "active" | "draft";
 };
 
 export default function DashboardPage() {
@@ -29,7 +29,6 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [lockedRaceIds, setLockedRaceIds] = useState<Set<string>>(new Set());
   const [predictedRaceIds, setPredictedRaceIds] = useState<Set<string>>(new Set());
-  const [draftRaceIds, setDraftRaceIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [loadWarning, setLoadWarning] = useState("");
 
@@ -122,20 +121,14 @@ export default function DashboardPage() {
           warningParts.push("saved predictions");
           if (!cancelled) {
             setPredictedRaceIds(new Set());
-            setDraftRaceIds(new Set());
           }
         } else {
           const predicted = new Set<string>();
-          const drafts = new Set<string>();
           for (const prediction of (predictionsResult.data ?? []) as Prediction[]) {
             predicted.add(prediction.race_id);
-            if (prediction.status === "draft") {
-              drafts.add(prediction.race_id);
-            }
           }
           if (!cancelled) {
             setPredictedRaceIds(predicted);
-            setDraftRaceIds(drafts);
           }
         }
 
@@ -188,19 +181,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Draft predictions banner — shown when user has predictions not yet in a league */}
-        {draftRaceIds.size > 0 && (
-          <div className="dash-draft-banner">
-            <span className="dash-draft-banner-text">
-              <strong>{draftRaceIds.size} prediction{draftRaceIds.size > 1 ? "s" : ""} saved as draft.</strong>{" "}
-              Join any league — including free ones — to activate them and start scoring.
-            </span>
-            <Link href="/leagues" className="dash-draft-banner-cta">
-              Join a League →
-            </Link>
-          </div>
-        )}
-
         <div className="dash-header">
           <div>
             <p className="gla-page-title">2026 Season</p>
@@ -240,9 +220,9 @@ export default function DashboardPage() {
                   <Link
                     className="gla-race-btn is-edit"
                     href={`/predict/${race.id}`}
-                    title={draftRaceIds.has(race.id) ? "Draft — join a league to activate" : "Active prediction"}
+                    title="Saved prediction"
                   >
-                    {draftRaceIds.has(race.id) ? "Edit (Draft)" : "Edit"}
+                    Edit
                   </Link>
                 ) : (
                   <Link className="gla-race-btn" href={`/predict/${race.id}`}>

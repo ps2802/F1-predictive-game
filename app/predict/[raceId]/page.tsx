@@ -6,6 +6,8 @@ import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { races } from "@/lib/races";
 import { track } from "@/lib/analytics";
+import { PREDICTION_EDIT_FEE_USDC } from "@/lib/gameRules";
+import { formatCountdown, resolvePredictionWindow } from "@/lib/predictionWindows";
 
 type Option = {
   id: string;
@@ -28,6 +30,12 @@ type Question = {
 
 // question_id → option_id[]
 type Answers = Record<string, string[]>;
+type RaceTiming = {
+  qualifying_starts_at: string | null;
+  race_starts_at: string | null;
+  quali_locked: boolean;
+  race_locked: boolean;
+};
 
 const STEPS = ["qualifying", "race", "chaos", "review"] as const;
 const STEP_LABELS: Record<string, string> = {
@@ -55,17 +63,29 @@ export default function PredictPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [predictionStatus, setPredictionStatus] = useState<"draft" | "active">("draft");
   const [error, setError] = useState("");
-  const [isLocked, setIsLocked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [sectionIncomplete, setSectionIncomplete] = useState(false);
+  const [raceTiming, setRaceTiming] = useState<RaceTiming | null>(null);
+  const [chargedEditFee, setChargedEditFee] = useState(false);
 
   const currentCategory = STEPS[step];
   const currentQuestions = questions.filter(
     (q) => q.category === currentCategory
   );
+  const qualifyingWindow = resolvePredictionWindow(
+    raceTiming ?? {},
+    "qualifying"
+  );
+  const raceWindow = resolvePredictionWindow(raceTiming ?? {}, "race");
+  const currentWindow =
+    currentCategory === "qualifying" ? qualifyingWindow : currentCategory === "review" ? null : raceWindow;
+  const allQuestionsComplete = questions.every((q) => {
+    const picks = (answers[q.id] ?? []).filter(Boolean);
+    return picks.length >= q.multi_select;
+  });
+  const anyLiveEditWindow = qualifyingWindow.paidEdit || raceWindow.paidEdit;
 
   const loadData = useCallback(async () => {
     const supabase = createSupabaseBrowserClient();
@@ -95,16 +115,17 @@ export default function PredictPage() {
 
     const { data: raceRow } = await supabase
       .from("races")
-      .select("race_locked, qualifying_starts_at")
+      .select("qualifying_starts_at, race_starts_at, quali_locked, race_locked")
       .eq("id", raceId)
       .single();
 
     if (raceRow) {
-      const manuallyLocked = raceRow.race_locked === true;
-      const pastDeadline =
-        raceRow.qualifying_starts_at != null &&
-        new Date() >= new Date(raceRow.qualifying_starts_at);
-      if (manuallyLocked || pastDeadline) setIsLocked(true);
+      setRaceTiming({
+        qualifying_starts_at: raceRow.qualifying_starts_at,
+        race_starts_at: raceRow.race_starts_at,
+        quali_locked: raceRow.quali_locked === true,
+        race_locked: raceRow.race_locked === true,
+      });
     }
 
     // Load saved answers from localStorage (for anon flow)
@@ -272,7 +293,7 @@ export default function PredictPage() {
       if (!res.ok) throw new Error(data.error ?? "Failed to save");
       track("prediction_submitted", { race_id: raceId });
       localStorage.removeItem(`picks_${raceId}`);
-      setPredictionStatus(data.status ?? "draft");
+      setChargedEditFee(Boolean(data.chargedEditFee));
       setSaved(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -305,45 +326,19 @@ export default function PredictPage() {
     );
   }
 
-  if (isLocked) {
-    return (
-      <div className="gla-root">
-        <div className="gl-stripe" aria-hidden="true" />
-        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
-          <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>🔒</div>
-          <h1 className="gla-page-title">Predictions Closed</h1>
-          <p className="gla-page-sub" style={{ marginTop: "0.5rem" }}>
-            {race.name} · Round {race.round}
-          </p>
-          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.9rem", marginTop: "1rem" }}>
-            The prediction window for this race has closed.
-          </p>
-          <Link
-            href="/dashboard"
-            className="gla-race-btn"
-            style={{ marginTop: "2rem", display: "inline-block" }}
-          >
-            Back to Dashboard
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   if (saved) {
-    const isDraft = predictionStatus === "draft";
     return (
       <div className="gla-root">
         <div className="gl-stripe" aria-hidden="true" />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
-          <div className="predict-success-icon">{isDraft ? "📋" : "✓"}</div>
+          <div className="predict-success-icon">✓</div>
           <h1 className="gla-page-title" style={{ marginTop: "1.5rem" }}>
-            {isDraft ? "Predictions Saved as Draft" : "Predictions Locked In"}
+            {allQuestionsComplete ? "Predictions Saved" : "Progress Saved"}
           </h1>
           <p className="gla-page-sub">
             {race.name} · Round {race.round}
           </p>
-          {isDraft && (
+          {!allQuestionsComplete && (
             <p style={{
               color: "rgba(0, 210, 170, 1)",
               fontSize: "0.9rem",
@@ -352,7 +347,12 @@ export default function PredictPage() {
               marginInline: "auto",
               lineHeight: 1.5,
             }}>
-              Join a league to activate your predictions. Only active predictions count for scoring and leaderboards.
+              You can come back before each lock window to finish the rest of your weekend picks.
+            </p>
+          )}
+          {chargedEditFee && (
+            <p style={{ color: "rgba(255,255,255,0.72)", marginTop: "0.75rem" }}>
+              A ${PREDICTION_EDIT_FEE_USDC} USDC live edit fee was charged for this update.
             </p>
           )}
           <div
@@ -364,39 +364,29 @@ export default function PredictPage() {
               flexWrap: "wrap",
             }}
           >
-            {isDraft ? (
-              <>
-                <Link href="/leagues" className="gla-race-btn">
-                  Join a League to Activate
-                </Link>
-                <Link
-                  href="/dashboard"
-                  className="gla-race-btn"
-                  style={{
-                    background: "transparent",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                  }}
-                >
-                  Back to Dashboard
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/dashboard" className="gla-race-btn">
-                  Back to Dashboard
-                </Link>
-                <Link
-                  href="/leaderboard"
-                  className="gla-race-btn"
-                  style={{
-                    background: "transparent",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                  }}
-                >
-                  View Leaderboard
-                </Link>
-              </>
-            )}
+            <Link href={`/leagues?raceId=${raceId}`} className="gla-race-btn">
+              View Leagues
+            </Link>
+            <Link
+              href={`/leagues/create?raceId=${raceId}`}
+              className="gla-race-btn"
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.2)",
+              }}
+            >
+              Create League
+            </Link>
+            <Link
+              href="/leaderboard"
+              className="gla-race-btn"
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.2)",
+              }}
+            >
+              Global Leaderboard
+            </Link>
           </div>
         </div>
       </div>
@@ -418,10 +408,24 @@ export default function PredictPage() {
         </div>
       </div>
 
-      {/* Edit mode banner */}
+      <div className="league-economics" style={{ marginBottom: "1.5rem" }}>
+        <div className="league-econ-card">
+          <span className="league-econ-value">{formatCountdown(qualifyingWindow.lockAt)}</span>
+          <span className="league-econ-label">
+            Qualifying {qualifyingWindow.paidEdit ? "Live Edit" : qualifyingWindow.locked ? "Closed" : "Locks In"}
+          </span>
+        </div>
+        <div className="league-econ-card">
+          <span className="league-econ-value">{formatCountdown(raceWindow.lockAt)}</span>
+          <span className="league-econ-label">
+            GP {raceWindow.paidEdit ? "Live Edit" : raceWindow.locked ? "Closed" : "Locks In"}
+          </span>
+        </div>
+      </div>
+
       {isEditing && (
         <div className="predict-edit-banner">
-          Editing your predictions — changes save when you submit at the Review step.
+          Editing your predictions. During a live edit window, updates cost ${PREDICTION_EDIT_FEE_USDC} USDC.
         </div>
       )}
 
@@ -432,20 +436,6 @@ export default function PredictPage() {
             key={s}
             className={`predict-step-tab${step === i ? " is-active" : ""}${stepComplete(s) ? " is-done" : ""}`}
             onClick={() => {
-              // Backward navigation is always allowed.
-              if (i <= step) {
-                setSectionIncomplete(false);
-                setStep(i);
-                return;
-              }
-              // Forward jump: find the first incomplete section between here and target.
-              for (let check = step; check < i; check++) {
-                if (!stepComplete(STEPS[check] as string)) {
-                  setSectionIncomplete(true);
-                  setStep(check); // land on the first section that needs completing
-                  return;
-                }
-              }
               setSectionIncomplete(false);
               setStep(i);
             }}
@@ -484,7 +474,7 @@ export default function PredictPage() {
                   {q.options.map((opt) => {
                     const selected = isOptionSelected(q.id, opt.id);
                     const pickIdx = getPickIndex(q.id, opt.id);
-                    const disabled = isLocked || (!selected && isFull);
+                    const disabled = !currentWindow?.editable || (!selected && isFull);
                     return (
                       <button
                         key={opt.id}
@@ -509,19 +499,29 @@ export default function PredictPage() {
           })
         )}
 
-        {/* Race section note — qualifying and race are separate real-world events */}
+        {currentCategory === "qualifying" && (
+          <p className="predict-section-note">
+            Qualifying picks lock 10 minutes before qualifying starts. If you already submitted, you can edit for 10 minutes after lights out by paying ${PREDICTION_EDIT_FEE_USDC} USDC.
+          </p>
+        )}
+
         {currentCategory === "race" && (
           <p className="predict-section-note">
-            Race predictions lock before the race weekend. These are separate from your qualifying picks.
+            GP and chaos picks lock 10 minutes before the Grand Prix. After the start, live edits stay open for 10 minutes with a ${PREDICTION_EDIT_FEE_USDC} USDC fee.
+          </p>
+        )}
+
+        {currentWindow && !currentWindow.editable && (
+          <p className="predict-section-warning">
+            This section is locked. Your previously saved picks are still visible, but you can&apos;t change them now.
           </p>
         )}
 
         {error && <p className="predict-error">{error}</p>}
 
-        {/* Section incomplete warning */}
         {sectionIncomplete && currentCategory !== "review" && (
           <p className="predict-section-warning">
-            Answer all questions in this section before moving on. Missing picks won&apos;t score points.
+            This section is incomplete. You can still keep moving, but unanswered questions won&apos;t score.
           </p>
         )}
 
@@ -539,23 +539,23 @@ export default function PredictPage() {
             <button
               className="predict-nav-btn primary"
               onClick={handleSubmit}
-              disabled={saving || isLocked}
+              disabled={saving}
             >
               {saving
                 ? "Saving..."
                 : isAuthenticated
-                ? isEditing ? "Update Predictions" : "Lock In Predictions"
+                ? anyLiveEditWindow
+                  ? `Pay $${PREDICTION_EDIT_FEE_USDC} to Update`
+                  : allQuestionsComplete
+                    ? isEditing ? "Update Predictions" : "Submit Predictions"
+                    : "Save Progress"
                 : "Continue to Login →"}
             </button>
           ) : (
             <button
               className="predict-nav-btn primary"
               onClick={() => {
-                if (!stepComplete(currentCategory as string)) {
-                  setSectionIncomplete(true);
-                  return;
-                }
-                setSectionIncomplete(false);
+                setSectionIncomplete(!stepComplete(currentCategory as string));
                 setStep(step + 1);
               }}
             >

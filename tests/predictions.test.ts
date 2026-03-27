@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  selectLatestPredictionVersionRows,
   selectLatestPredictionVersions,
   validatePredictionAnswers,
   type PredictionOptionDefinition,
@@ -129,5 +130,32 @@ describe("selectLatestPredictionVersions", () => {
     ]);
 
     expect(latest.get("pred-1")).toEqual({ "q-winner": ["opt-b"] });
+  });
+
+  it("returns the full winning row when submission metadata is needed", () => {
+    const latestRows = selectLatestPredictionVersionRows([
+      {
+        id: "a",
+        prediction_id: "pred-1",
+        version_number: 1,
+        answers_json: { "q-winner": ["opt-a"] },
+        created_at: "2026-03-25T10:00:00.000Z",
+      },
+      {
+        id: "b",
+        prediction_id: "pred-1",
+        version_number: 2,
+        answers_json: { "q-winner": ["opt-b"] },
+        created_at: "2026-03-25T11:00:00.000Z",
+      },
+    ]);
+
+    expect(latestRows.get("pred-1")).toEqual({
+      id: "b",
+      prediction_id: "pred-1",
+      version_number: 2,
+      answers_json: { "q-winner": ["opt-b"] },
+      created_at: "2026-03-25T11:00:00.000Z",
+    });
   });
 });

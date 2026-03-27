@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { AppNav } from "@/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { track } from "@/lib/analytics";
+import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
+import { races } from "@/lib/races";
 
 type League = {
   id: string;
@@ -17,6 +19,7 @@ type League = {
   invite_code: string;
   is_member: boolean;
   prize_pool: number;
+  race_id: string | null;
 };
 
 type NavProfile = {
@@ -26,19 +29,25 @@ type NavProfile = {
 
 export default function LeaguesPage() {
   const router = useRouter();
+  const [raceId] = useState<string | null>(() =>
+    typeof window === "undefined"
+      ? null
+      : new URLSearchParams(window.location.search).get("raceId")
+  );
   const [leagues, setLeagues] = useState<League[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [joinStake, setJoinStake] = useState(String(MINIMUM_LEAGUE_STAKE_USDC));
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState("");
   const [joinSuccess, setJoinSuccess] = useState("");
   const [joinedLeagueId, setJoinedLeagueId] = useState<string | null>(null);
   const [navProfile, setNavProfile] = useState<NavProfile | null>(null);
 
-  async function loadLeagues() {
+  async function loadLeagues(activeRaceId: string | null) {
     setLoadError("");
-    const res = await fetch("/api/leagues");
+    const res = await fetch(activeRaceId ? `/api/leagues?raceId=${activeRaceId}` : "/api/leagues");
     if (res.ok) {
       const data = await res.json();
       setLeagues(data.leagues ?? []);
@@ -60,10 +69,10 @@ export default function LeaguesPage() {
           .eq("id", user.id)
           .single()
           .then(({ data }) => setNavProfile(data));
-        loadLeagues();
+        loadLeagues(raceId);
       }
     });
-  }, [router]);
+  }, [router, raceId]);
 
   async function handleJoin(e: React.FormEvent) {
     e.preventDefault();
@@ -74,7 +83,10 @@ export default function LeaguesPage() {
     const res = await fetch("/api/leagues/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ invite_code: joinCode }),
+      body: JSON.stringify({
+        invite_code: joinCode,
+        stake_amount_usdc: Number(joinStake),
+      }),
     });
     const data = await res.json();
 
@@ -83,18 +95,11 @@ export default function LeaguesPage() {
     } else {
       track("league_joined", { league_id: data.leagueId });
       setJoinedLeagueId(data.leagueId);
-      if (data.activationWarning) {
-        setJoinSuccess(`Joined! Note: ${data.activationWarning}`);
-      } else {
-        const activated = data.activatedCount ?? 0;
-        setJoinSuccess(
-          activated > 0
-            ? `Joined. ${activated} draft prediction${activated > 1 ? "s" : ""} activated.`
-            : "Joined successfully."
-        );
-      }
+      setJoinSuccess(
+        `Joined with $${Number(data.stakeAmountUsdc ?? joinStake).toFixed(2)} USDC.`
+      );
       setJoinCode("");
-      void loadLeagues();
+      void loadLeagues(raceId);
     }
     setJoining(false);
   }
@@ -124,7 +129,7 @@ export default function LeaguesPage() {
           <button
             className="gla-race-btn"
             style={{ marginTop: "2rem" }}
-            onClick={() => { setLoading(true); loadLeagues(); }}
+            onClick={() => { setLoading(true); loadLeagues(raceId); }}
           >
             Retry
           </button>
@@ -148,9 +153,13 @@ export default function LeaguesPage() {
         <div className="league-page-header">
           <div>
             <p className="gla-page-title">Leagues</p>
-            <p className="gla-page-sub">Compete with friends or the world</p>
+            <p className="gla-page-sub">
+              {raceId
+                ? `Race contests for ${races.find((race) => race.id === raceId)?.name ?? "this race"}`
+                : "Compete with friends or the world"}
+            </p>
           </div>
-          <Link href="/leagues/create" className="gla-race-btn">
+          <Link href={raceId ? `/leagues/create?raceId=${raceId}` : "/leagues/create"} className="gla-race-btn">
             + Create League
           </Link>
         </div>
@@ -166,14 +175,26 @@ export default function LeaguesPage() {
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
               maxLength={10}
             />
+            <input
+              className="league-join-input"
+              type="number"
+              min={MINIMUM_LEAGUE_STAKE_USDC}
+              step="1"
+              value={joinStake}
+              onChange={(e) => setJoinStake(e.target.value)}
+              placeholder="Stake in USDC"
+            />
             <button
               type="submit"
               className="gla-race-btn"
-              disabled={joining || !joinCode.trim()}
+              disabled={joining || !joinCode.trim() || Number(joinStake) < MINIMUM_LEAGUE_STAKE_USDC}
             >
               {joining ? "Joining..." : "Join"}
             </button>
           </form>
+          <p className="league-empty" style={{ marginTop: "0.75rem" }}>
+            Minimum stake is ${MINIMUM_LEAGUE_STAKE_USDC} USDC. Your chosen stake joins that league&apos;s prize pool after fees.
+          </p>
           {joinError && <p className="league-join-error">{joinError}</p>}
           {joinSuccess && <p className="league-join-success">{joinSuccess}</p>}
           {joinedLeagueId && (
@@ -223,6 +244,8 @@ export default function LeaguesPage() {
 }
 
 function LeagueCard({ league, isMember }: { league: League; isMember: boolean }) {
+  const leagueRace = races.find((race) => race.id === league.race_id);
+
   return (
     <Link href={`/leagues/${league.id}`} className="league-card">
       <div className="league-card-header">
@@ -231,9 +254,8 @@ function LeagueCard({ league, isMember }: { league: League; isMember: boolean })
       </div>
       <div className="league-card-stats">
         <span>{league.member_count}/{league.max_users} members</span>
-        {league.entry_fee_usdc > 0 && (
-          <span className="league-card-fee">${league.entry_fee_usdc} USDC</span>
-        )}
+        {leagueRace && <span>{leagueRace.name}</span>}
+        <span className="league-card-fee">Min ${league.entry_fee_usdc} USDC</span>
         {league.prize_pool > 0 && (
           <span className="league-card-pool">🏆 ${league.prize_pool}</span>
         )}

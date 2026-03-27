@@ -60,6 +60,9 @@ export default function WalletPage() {
         <div className="wallet-card" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.5rem", marginTop: "1.5rem" }}>
           <span className="wallet-balance-label">Your Beta Balance</span>
           <span className="wallet-balance">₮{balance.toFixed(2)} Test USDC</span>
+          <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.85rem" }}>
+            Prize pools, payouts, and platform fees settle in USDC.
+          </span>
         </div>
 
         {/* Beta disclaimer */}
@@ -69,6 +72,15 @@ export default function WalletPage() {
             Gridlock is in closed beta. Your balance is simulated — it&apos;s not real
             money and cannot be withdrawn. Use it to enter leagues, make predictions,
             and climb the leaderboard.
+          </p>
+          <p className="wallet-deposit-desc" style={{ marginTop: "0.75rem" }}>
+            Production flow: users will be able to deposit any supported asset, Gridlock
+            will swap it into USDC in the background, and the internal balance will stay
+            denominated in USDC for league entry, payouts, and fee accounting.
+          </p>
+          <p className="wallet-deposit-desc" style={{ marginTop: "0.75rem" }}>
+            Any platform fees from deposits or league entry are collected into the Gridlock
+            fee wallet, while league prize pools and winner payouts remain USDC-only.
           </p>
           <p className="wallet-deposit-desc" style={{ marginTop: "0.75rem", color: "rgba(255,255,255,0.35)" }}>
             Real money features launch after beta ends.

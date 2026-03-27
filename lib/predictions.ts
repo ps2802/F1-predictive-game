@@ -99,9 +99,9 @@ export function validatePredictionAnswers(params: {
   return { ok: true, answerRows };
 }
 
-export function selectLatestPredictionVersions(
+export function selectLatestPredictionVersionRows(
   rows: PredictionVersionRow[]
-): Map<string, SubmittedAnswers> {
+): Map<string, PredictionVersionRow> {
   const latestByPrediction = new Map<string, PredictionVersionRow>();
 
   for (const row of rows) {
@@ -140,8 +140,14 @@ export function selectLatestPredictionVersions(
     }
   }
 
+  return latestByPrediction;
+}
+
+export function selectLatestPredictionVersions(
+  rows: PredictionVersionRow[]
+): Map<string, SubmittedAnswers> {
   return new Map(
-    Array.from(latestByPrediction.entries()).map(([predictionId, row]) => [
+    Array.from(selectLatestPredictionVersionRows(rows).entries()).map(([predictionId, row]) => [
       predictionId,
       row.answers_json,
     ])

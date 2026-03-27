@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
+import { races } from "@/lib/races";
 
-const PRESET_FEES = [0, 5, 10, 20, 25];
 const DEFAULT_TIERS = [
   { place: 1, percent: 50 },
   { place: 2, percent: 30 },
@@ -13,10 +14,20 @@ const DEFAULT_TIERS = [
 
 export default function CreateLeaguePage() {
   const router = useRouter();
+  const defaultRaceId =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("raceId") ??
+        races.find((race) => race.status === "upcoming")?.id ??
+        races[0]?.id ??
+        ""
+      : races.find((race) => race.status === "upcoming")?.id ?? races[0]?.id ?? "";
+  const [raceId, setRaceId] = useState(defaultRaceId);
   const [name, setName] = useState("");
   const [type, setType] = useState<"public" | "private">("private");
-  const [entryFee, setEntryFee] = useState(0);
+  const [minimumStake] = useState(MINIMUM_LEAGUE_STAKE_USDC);
+  const [creatorStake, setCreatorStake] = useState(String(MINIMUM_LEAGUE_STAKE_USDC));
   const [maxUsers, setMaxUsers] = useState("1000");
+  const [payoutModel, setPayoutModel] = useState<"manual" | "skill_weighted">("manual");
   const [payoutTiers, setPayoutTiers] = useState(DEFAULT_TIERS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -34,8 +45,14 @@ export default function CreateLeaguePage() {
     setLoading(true);
     setError("");
 
-    if (entryFee > 0 && totalPercent !== 100) {
-      setError("Payout percentages must add up to 100%.");
+    if (payoutModel === "manual" && totalPercent > 100) {
+      setError("Payout percentages must add up to 100% or less.");
+      setLoading(false);
+      return;
+    }
+
+    if (Number(creatorStake) < minimumStake) {
+      setError(`Your opening stake must be at least ${minimumStake} USDC.`);
       setLoading(false);
       return;
     }
@@ -45,10 +62,13 @@ export default function CreateLeaguePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name,
+        race_id: raceId,
         type,
-        entry_fee_usdc: entryFee,
+        minimum_stake_usdc: minimumStake,
+        creator_stake_usdc: Number(creatorStake),
         max_users: parseInt(maxUsers) || 1000,
-        payout_config: entryFee > 0 ? { tiers: payoutTiers } : null,
+        payout_model: payoutModel,
+        payout_config: payoutModel === "manual" ? { tiers: payoutTiers } : null,
       }),
     });
 
@@ -73,6 +93,24 @@ export default function CreateLeaguePage() {
         <p className="gla-page-sub">Set up your competition</p>
 
         <form onSubmit={handleSubmit} className="auth-form" style={{ marginTop: "2rem" }}>
+          <label className="auth-label">
+            Race
+            <select
+              className="auth-input"
+              value={raceId}
+              onChange={(e) => setRaceId(e.target.value)}
+              required
+            >
+              {races
+                .filter((race) => race.status === "upcoming")
+                .map((race) => (
+                  <option key={race.id} value={race.id}>
+                    Round {race.round} · {race.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+
           <label className="auth-label">
             League Name
             <input
@@ -105,24 +143,46 @@ export default function CreateLeaguePage() {
             </div>
           </label>
 
+          <div className="auth-label">
+            <span>League Minimum Stake</span>
+            <p style={{ margin: "0.5rem 0 0", color: "rgba(255,255,255,0.72)" }}>
+              Every member chooses their own stake amount, but no one can enter below ${minimumStake} USDC.
+            </p>
+          </div>
+
           <label className="auth-label">
-            Entry Fee (USDC)
-            <div className="league-fee-presets">
-              {PRESET_FEES.map((fee) => (
-                <button
-                  key={fee}
-                  type="button"
-                  className={`league-fee-btn${entryFee === fee ? " is-active" : ""}`}
-                  onClick={() => setEntryFee(fee)}
-                >
-                  {fee === 0 ? "Free" : `$${fee}`}
-                </button>
-              ))}
+            Your Opening Stake (USDC)
+            <input
+              className="auth-input"
+              type="number"
+              min={minimumStake}
+              step="1"
+              value={creatorStake}
+              onChange={(e) => setCreatorStake(e.target.value)}
+            />
+          </label>
+
+          <label className="auth-label">
+            Payout Model
+            <div className="league-type-toggle">
+              <button
+                type="button"
+                className={`league-type-btn${payoutModel === "skill_weighted" ? " is-active" : ""}`}
+                onClick={() => setPayoutModel("skill_weighted")}
+              >
+                Fair
+              </button>
+              <button
+                type="button"
+                className={`league-type-btn${payoutModel === "manual" ? " is-active" : ""}`}
+                onClick={() => setPayoutModel("manual")}
+              >
+                Custom
+              </button>
             </div>
           </label>
 
-          {/* Payout distribution — only shown for paid leagues */}
-          {entryFee > 0 && (
+          {payoutModel === "manual" && (
             <div className="auth-label">
               <span>Payout Distribution</span>
               <div className="league-payout-editor">
@@ -143,13 +203,19 @@ export default function CreateLeaguePage() {
                     <span style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.5)" }}>%</span>
                   </div>
                 ))}
-                {totalPercent !== 100 && (
+                {totalPercent > 100 && (
                   <p style={{ fontSize: "0.75rem", color: "var(--gl-red)", marginTop: "0.5rem" }}>
-                    Total: {totalPercent}% — must equal 100%
+                    Total: {totalPercent}% — must be 100% or less
                   </p>
                 )}
               </div>
             </div>
+          )}
+
+          {payoutModel === "skill_weighted" && (
+            <p style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.68)", marginTop: "-0.25rem" }}>
+              Fair payouts distribute the prize pool proportionally to final score. Zero-score entries receive nothing.
+            </p>
           )}
 
           <label className="auth-label">
@@ -166,7 +232,11 @@ export default function CreateLeaguePage() {
 
           {error && <p className="predict-error">{error}</p>}
 
-          <button type="submit" className="gla-predict-submit" disabled={loading || !name.trim()}>
+          <button
+            type="submit"
+            className="gla-predict-submit"
+            disabled={loading || !name.trim() || !raceId}
+          >
             {loading ? "Creating..." : "Create League"}
           </button>
         </form>
