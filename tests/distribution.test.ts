@@ -250,4 +250,22 @@ describe("distributePool", () => {
     ]);
     expect(result.payouts.find((payout) => payout.userId === "d")).toBeUndefined();
   });
+
+  it("keeps skill-weighted payouts within the prize pool after rounding", () => {
+    const ranked = rankUsers([
+      { userId: "a", score: 1 },
+      { userId: "b", score: 1 },
+      { userId: "c", score: 1 },
+    ]);
+
+    const result = distributePool("league-1", 0.000002, ranked, null, "skill_weighted");
+
+    expect(result.payouts).toEqual([
+      { userId: "a", rank: 1, amount: 0.000001, held: false },
+      { userId: "b", rank: 1, amount: 0.000001, held: false },
+      { userId: "c", rank: 1, amount: 0, held: false },
+    ]);
+    expect(result.payouts.reduce((sum, payout) => sum + payout.amount, 0)).toBe(0.000002);
+    expect(result.undistributed).toBe(0);
+  });
 });

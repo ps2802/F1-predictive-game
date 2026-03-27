@@ -38,6 +38,33 @@ create policy "wh_select_admin" on public.withdrawal_holds
     )
   );
 
+create table if not exists public.held_payout_reserves (
+  id            uuid primary key default gen_random_uuid(),
+  settlement_id uuid not null references public.league_race_settlements(id) on delete cascade,
+  league_id     uuid not null references public.leagues(id) on delete cascade,
+  race_id       text not null references public.races(id) on delete cascade,
+  user_id       uuid not null references auth.users(id) on delete cascade,
+  amount        numeric(18, 6) not null,
+  released      boolean not null default false,
+  created_at    timestamptz not null default now(),
+  unique (settlement_id, user_id)
+);
+
+create index if not exists idx_held_payout_reserves_user_id
+  on public.held_payout_reserves (user_id);
+
+alter table public.held_payout_reserves enable row level security;
+
+drop policy if exists "hpr_select_admin" on public.held_payout_reserves;
+create policy "hpr_select_admin" on public.held_payout_reserves
+  for select to authenticated
+  using (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and is_admin = true
+    )
+  );
+
 create or replace function public.apply_league_settlement(
   p_league_id uuid,
   p_race_id text,
@@ -61,6 +88,7 @@ declare
   v_item jsonb;
   v_total_refunded numeric(18, 6) := 0;
   v_platform_offset numeric(18, 6) := 0;
+  v_constraint_name text;
 begin
   insert into public.league_race_settlements (
     league_id,
@@ -185,6 +213,21 @@ begin
         nullif(v_item ->> 'rank', '')::integer,
         v_item
       );
+
+      insert into public.held_payout_reserves (
+        settlement_id,
+        league_id,
+        race_id,
+        user_id,
+        amount
+      )
+      values (
+        v_settlement_id,
+        p_league_id,
+        p_race_id,
+        (v_item ->> 'userId')::uuid,
+        coalesce((v_item ->> 'amount')::numeric, 0)
+      );
     elsif coalesce((v_item ->> 'amount')::numeric, 0) > 0 then
       perform public.credit_user_balance(
         (v_item ->> 'userId')::uuid,
@@ -257,6 +300,12 @@ begin
   return 'settled';
 exception
   when unique_violation then
-    return 'already_settled';
+    get stacked diagnostics v_constraint_name = CONSTRAINT_NAME;
+
+    if v_constraint_name = 'league_race_settlements_league_id_race_id_key' then
+      return 'already_settled';
+    end if;
+
+    raise;
 end;
 $$;

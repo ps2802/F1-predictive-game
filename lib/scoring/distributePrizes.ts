@@ -268,12 +268,52 @@ function distributeSkillWeighted(
     return [];
   }
 
-  return scoringUsers.map((user) => ({
-    userId: user.userId,
-    rank: user.rank,
-    amount: roundUsdc((user.score / totalLeagueScore) * prizePool),
-    held: false,
-  }));
+  const prizePoolMicros = toMicros(prizePool);
+  const weighted = scoringUsers.map((user) => {
+    const exactMicros = (user.score / totalLeagueScore) * prizePoolMicros;
+    const baseMicros = Math.floor(exactMicros);
+    return {
+      user,
+      exactMicros,
+      baseMicros,
+      remainder: exactMicros - baseMicros,
+    };
+  });
+
+  let remainingMicros =
+    prizePoolMicros - weighted.reduce((sum, entry) => sum + entry.baseMicros, 0);
+
+  weighted.sort((a, b) => {
+    if (b.remainder !== a.remainder) {
+      return b.remainder - a.remainder;
+    }
+    if (a.user.rank !== b.user.rank) {
+      return a.user.rank - b.user.rank;
+    }
+    return a.user.userId.localeCompare(b.user.userId);
+  });
+
+  for (const entry of weighted) {
+    if (remainingMicros <= 0) {
+      break;
+    }
+    entry.baseMicros += 1;
+    remainingMicros -= 1;
+  }
+
+  return weighted
+    .sort((a, b) => {
+      if (a.user.rank !== b.user.rank) {
+        return a.user.rank - b.user.rank;
+      }
+      return a.user.userId.localeCompare(b.user.userId);
+    })
+    .map((entry) => ({
+      userId: entry.user.userId,
+      rank: entry.user.rank,
+      amount: fromMicros(entry.baseMicros),
+      held: false,
+    }));
 }
 
 function normalizeTiers(tiers: PayoutTier[]): PayoutTier[] {
@@ -336,4 +376,12 @@ function toSubmittedAtValue(submittedAt: string | null): number {
 
 function roundUsdc(value: number): number {
   return Math.round(value * 1_000_000) / 1_000_000;
+}
+
+function toMicros(value: number): number {
+  return Math.round(value * 1_000_000);
+}
+
+function fromMicros(value: number): number {
+  return value / 1_000_000;
 }

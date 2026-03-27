@@ -27,7 +27,7 @@ function haveSamePicks(a: string[], b: string[]): boolean {
 export async function POST(request: NextRequest) {
   // Rate limit: 60 prediction submits per user per minute
   const ip = getClientIp(request.headers);
-  if (isRateLimited(`predictions:${ip}`, 60, 60 * 1000)) {
+  if (await isRateLimited(`predictions:${ip}`, 60, 60 * 1000)) {
     return NextResponse.json({ error: "Too many requests." }, { status: 429 });
   }
 
@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
       p_answers_json: mergedAnswers,
       p_answer_rows: validation.answerRows,
       p_status: "active",
-      p_increment_edit_count: existingPrediction?.id ? true : false,
+      p_increment_edit_count: shouldChargeEditFee,
       p_edit_fee_usdc: shouldChargeEditFee ? PREDICTION_EDIT_FEE_USDC : 0,
       p_edit_description: shouldChargeEditFee
         ? "Prediction edit fee during live edit window"
