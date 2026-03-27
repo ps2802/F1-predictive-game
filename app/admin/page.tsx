@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AppNav } from "@/app/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { races } from "@/lib/races";
 
 type Question = {
   id: string;
@@ -588,9 +587,9 @@ export default function AdminPage() {
                   onChange={(e) => handleRaceChange(e.target.value)}
                 >
                   <option value="">— choose race —</option>
-                  {races.map((r) => (
+                  {dbRaces.map((r) => (
                     <option key={r.id} value={r.id}>
-                      R{r.round} · {r.name}
+                      R{r.round} · {r.grand_prix_name}
                     </option>
                   ))}
                 </select>

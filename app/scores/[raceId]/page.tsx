@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { races } from "@/lib/races";
 import { AppNav } from "@/app/components/AppNav";
+import { findRaceById, useRaceCatalog } from "@/lib/raceCatalog";
 
 type ScoredQuestion = {
   question_id: string;
@@ -64,7 +64,8 @@ export default function ScoreBreakdownPage() {
   const params = useParams();
   const router = useRouter();
   const raceId = params?.raceId as string;
-  const race = races.find((r) => r.id === raceId);
+  const { races, loading: racesLoading } = useRaceCatalog();
+  const race = findRaceById(races, raceId);
 
   const [score, setScore] = useState<RaceScore | null>(null);
   const [rank, setRank] = useState<number | null>(null);
@@ -102,7 +103,7 @@ export default function ScoreBreakdownPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [raceId, router]);
 
-  if (loading) {
+  if (loading || racesLoading) {
     return (
       <div className="gla-root">
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>

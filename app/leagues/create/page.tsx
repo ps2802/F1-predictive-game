@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
-import { races } from "@/lib/races";
+import { useRaceCatalog } from "@/lib/raceCatalog";
 
 const DEFAULT_TIERS = [
   { place: 1, percent: 50 },
@@ -14,14 +14,8 @@ const DEFAULT_TIERS = [
 
 export default function CreateLeaguePage() {
   const router = useRouter();
-  const defaultRaceId =
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("raceId") ??
-        races.find((race) => race.status === "upcoming")?.id ??
-        races[0]?.id ??
-        ""
-      : races.find((race) => race.status === "upcoming")?.id ?? races[0]?.id ?? "";
-  const [raceId, setRaceId] = useState(defaultRaceId);
+  const { races, loading: racesLoading } = useRaceCatalog();
+  const [raceId, setRaceId] = useState("");
   const [name, setName] = useState("");
   const [type, setType] = useState<"public" | "private">("private");
   const [minimumStake] = useState(MINIMUM_LEAGUE_STAKE_USDC);
@@ -33,6 +27,17 @@ export default function CreateLeaguePage() {
   const [error, setError] = useState("");
 
   const totalPercent = payoutTiers.reduce((sum, t) => sum + t.percent, 0);
+  const selectableRaces = races.filter((race) => race.status === "upcoming");
+  const requestedRaceId =
+    typeof window === "undefined"
+      ? null
+      : new URLSearchParams(window.location.search).get("raceId");
+  const effectiveRaceId =
+    raceId ||
+    requestedRaceId ||
+    selectableRaces[0]?.id ||
+    races[0]?.id ||
+    "";
 
   function updateTier(index: number, percent: number) {
     setPayoutTiers((prev) =>
@@ -62,7 +67,7 @@ export default function CreateLeaguePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name,
-        race_id: raceId,
+        race_id: effectiveRaceId,
         type,
         minimum_stake_usdc: minimumStake,
         creator_stake_usdc: Number(creatorStake),
@@ -97,12 +102,12 @@ export default function CreateLeaguePage() {
             Race
             <select
               className="auth-input"
-              value={raceId}
+              value={effectiveRaceId}
               onChange={(e) => setRaceId(e.target.value)}
               required
+              disabled={racesLoading || races.length === 0}
             >
-              {races
-                .filter((race) => race.status === "upcoming")
+              {(selectableRaces.length > 0 ? selectableRaces : races)
                 .map((race) => (
                   <option key={race.id} value={race.id}>
                     Round {race.round} · {race.name}
@@ -110,6 +115,10 @@ export default function CreateLeaguePage() {
                 ))}
             </select>
           </label>
+
+          {!racesLoading && races.length === 0 && (
+            <p className="predict-error">No race schedule is available right now.</p>
+          )}
 
           <label className="auth-label">
             League Name
@@ -235,7 +244,7 @@ export default function CreateLeaguePage() {
           <button
             type="submit"
             className="gla-predict-submit"
-            disabled={loading || !name.trim() || !raceId}
+            disabled={loading || racesLoading || !name.trim() || !effectiveRaceId}
           >
             {loading ? "Creating..." : "Create League"}
           </button>

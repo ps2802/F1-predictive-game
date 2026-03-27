@@ -7,7 +7,7 @@ import { AppNav } from "@/app/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { track } from "@/lib/analytics";
 import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
-import { races } from "@/lib/races";
+import { findRaceById, useRaceCatalog } from "@/lib/raceCatalog";
 
 type League = {
   id: string;
@@ -29,6 +29,7 @@ type NavProfile = {
 
 export default function LeaguesPage() {
   const router = useRouter();
+  const { races, loading: racesLoading } = useRaceCatalog();
   const [raceId] = useState<string | null>(() =>
     typeof window === "undefined"
       ? null
@@ -104,7 +105,7 @@ export default function LeaguesPage() {
     setJoining(false);
   }
 
-  if (loading) {
+  if (loading || racesLoading) {
     return (
       <div className="gla-root">
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
@@ -149,7 +150,7 @@ export default function LeaguesPage() {
             <p className="gla-page-title">Leagues</p>
             <p className="gla-page-sub">
               {raceId
-                ? `Race contests for ${races.find((race) => race.id === raceId)?.name ?? "this race"}`
+                ? `Race contests for ${findRaceById(races, raceId)?.name ?? "this race"}`
                 : "Compete with friends or the world"}
             </p>
           </div>
@@ -213,7 +214,7 @@ export default function LeaguesPage() {
             <h2 className="league-section-title">My Leagues</h2>
             <div className="league-grid">
               {myLeagues.map((l) => (
-                <LeagueCard key={l.id} league={l} isMember />
+                <LeagueCard key={l.id} league={l} isMember races={races} />
               ))}
             </div>
           </section>
@@ -227,7 +228,7 @@ export default function LeaguesPage() {
           ) : (
             <div className="league-grid">
               {publicLeagues.map((l) => (
-                <LeagueCard key={l.id} league={l} isMember={false} />
+                <LeagueCard key={l.id} league={l} isMember={false} races={races} />
               ))}
             </div>
           )}
@@ -237,8 +238,16 @@ export default function LeaguesPage() {
   );
 }
 
-function LeagueCard({ league, isMember }: { league: League; isMember: boolean }) {
-  const leagueRace = races.find((race) => race.id === league.race_id);
+function LeagueCard({
+  league,
+  isMember,
+  races,
+}: {
+  league: League;
+  isMember: boolean;
+  races: ReturnType<typeof useRaceCatalog>["races"];
+}) {
+  const leagueRace = findRaceById(races, league.race_id);
 
   return (
     <Link href={`/leagues/${league.id}`} className="league-card">

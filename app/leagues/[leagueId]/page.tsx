@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppNav } from "@/app/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { races } from "@/lib/races";
+import { findRaceById, useRaceCatalog } from "@/lib/raceCatalog";
 
 type League = {
   id: string;
@@ -49,11 +49,9 @@ const DEFAULT_PAYOUT_TIERS = [
   { place: 3, percent: 20 },
 ];
 
-function getRaceCountdown(raceId: string | null): string {
-  if (!raceId) return "TBD";
-  const race = races.find((entry) => entry.id === raceId);
-  if (!race) return "TBD";
-  const diff = new Date(race.date).getTime() - Date.now();
+function getRaceCountdown(targetIso: string | null, nowMs: number): string {
+  if (!targetIso) return "TBD";
+  const diff = new Date(targetIso).getTime() - nowMs;
   if (diff <= 0) return "Locked";
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -66,6 +64,7 @@ export default function LeaguePage() {
   const params = useParams();
   const router = useRouter();
   const leagueId = params?.leagueId as string;
+  const { races, loading: racesLoading } = useRaceCatalog();
 
   const [league, setLeague] = useState<League | null>(null);
   const [members, setMembers] = useState<MemberScore[]>([]);
@@ -76,16 +75,16 @@ export default function LeaguePage() {
   const [joinError, setJoinError] = useState("");
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [countdown, setCountdown] = useState("TBD");
+  const [countdownTick, setCountdownTick] = useState(() => Date.now());
   const [nextRacePredStatus, setNextRacePredStatus] = useState<"active" | "draft" | "none">("none");
   const [navProfile, setNavProfile] = useState<NavProfile | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCountdown(getRaceCountdown(league?.race_id ?? null));
+      setCountdownTick(Date.now());
     }, 60_000);
     return () => clearInterval(interval);
-  }, [league?.race_id]);
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -114,7 +113,6 @@ export default function LeaguePage() {
       if (!leagueData) { router.push("/leagues"); return; }
       setLeague(leagueData);
       setJoinStake(String(Number(leagueData.entry_fee_usdc ?? 5)));
-      setCountdown(getRaceCountdown(leagueData.race_id));
 
       const { data: membershipData } = await supabase
         .from("league_members")
@@ -183,7 +181,7 @@ export default function LeaguePage() {
     router.refresh();
   }
 
-  if (loading) {
+  if (loading || racesLoading) {
     return (
       <div className="gla-root">
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
@@ -198,7 +196,11 @@ export default function LeaguePage() {
   const payoutTiers: { place: number; percent: number }[] =
     (league.payout_config as PayoutConfig)?.tiers ?? DEFAULT_PAYOUT_TIERS;
   const pool = Number(league.prize_pool);
-  const targetRace = races.find((race) => race.id === league.race_id);
+  const targetRace = findRaceById(races, league.race_id);
+  const countdown = getRaceCountdown(
+    targetRace?.qualifying_starts_at ?? targetRace?.race_starts_at ?? null,
+    countdownTick
+  );
   const isSkillWeighted = league.payout_model === "skill_weighted";
 
   return (
