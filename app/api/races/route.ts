@@ -1,6 +1,20 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
+type RaceRow = {
+  id: string;
+  round: number;
+  country?: string | null;
+  race_date?: string | null;
+  race_starts_at?: string | null;
+  qualifying_starts_at?: string | null;
+  grand_prix_name?: string | null;
+  name?: string | null;
+  season?: number | null;
+  is_locked?: boolean | null;
+  race_locked?: boolean | null;
+};
+
 export async function GET() {
   const admin = createSupabaseAdminClient();
   if (!admin) {
@@ -14,17 +28,21 @@ export async function GET() {
 
   const { data: races, error } = await admin
     .from("races")
-    .select(
-      "id, round, country, race_date, race_starts_at, qualifying_starts_at, grand_prix_name, is_locked, race_locked"
-    )
-    .eq("season", 2026)
+    .select("*")
     .order("round", { ascending: true });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const mappedRaces = (races ?? []).map((race) => {
+  const seasonScopedRaces = ((races ?? []) as RaceRow[]).filter((race) => {
+    if (typeof race.season !== "number") {
+      return true;
+    }
+    return race.season === 2026;
+  });
+
+  const mappedRaces = seasonScopedRaces.map((race) => {
     const qualifyingStart = race.qualifying_starts_at
       ? new Date(race.qualifying_starts_at)
       : null;
@@ -36,8 +54,8 @@ export async function GET() {
     return {
       id: race.id,
       round: race.round,
-      name: race.grand_prix_name,
-      country: race.country,
+      name: race.grand_prix_name ?? race.name ?? race.id,
+      country: race.country ?? null,
       date:
         race.race_starts_at?.slice(0, 10) ??
         race.race_date ??
