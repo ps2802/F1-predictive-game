@@ -131,6 +131,83 @@ function NextRaceCountdownCard() {
   );
 }
 
+function AuthUnavailableMessage() {
+  const { meta } = useRaceCatalog();
+
+  return (
+    <div className="gl-login-root">
+      <div className="gl-login-panel">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/gridlock logo - transparent.png"
+          alt="Gridlock"
+          className="gl-login-logo"
+          draggable={false}
+        />
+
+        <p className="gl-login-eyebrow">
+          <span className="gl-login-dot" />
+          2026 SEASON · WIN REAL MONEY · NOW LIVE
+        </p>
+
+        <h1 className="gl-login-h1">
+          Predict the podium.<br />
+          <em>Win real money.</em>
+        </h1>
+
+        <p className="gl-login-sub">
+          Pick the podium. Win USDC. Your rivals are already in.
+        </p>
+
+        <NextRaceCountdownCard />
+
+        <div className="gl-login-stats">
+          <div className="gl-login-stat">
+            <span className="gl-login-stat-n">{meta.totalRounds || "—"}</span>
+            <span className="gl-login-stat-l">Rounds</span>
+          </div>
+          <div className="gl-login-stat-div" />
+          <div className="gl-login-stat">
+            <span className="gl-login-stat-n">{meta.driverCount ?? "—"}</span>
+            <span className="gl-login-stat-l">Drivers</span>
+          </div>
+          <div className="gl-login-stat-div" />
+          <div className="gl-login-stat">
+            <span className="gl-login-stat-n">$</span>
+            <span className="gl-login-stat-l">USDC Prizes</span>
+          </div>
+        </div>
+
+        <div
+          style={{
+            marginTop: "1.5rem",
+            padding: "1rem 1.1rem",
+            border: "1px solid rgba(225,6,0,0.22)",
+            background: "rgba(225,6,0,0.08)",
+            color: "rgba(255,255,255,0.82)",
+            fontSize: "0.85rem",
+            lineHeight: 1.5,
+            maxWidth: "28rem",
+          }}
+        >
+          Login is temporarily unavailable in this preview because Privy is not configured for this environment.
+        </div>
+      </div>
+
+      <div className="gl-login-visual" aria-hidden="true">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/gridlock f1 driver .png"
+          alt=""
+          className="gl-login-driver"
+          draggable={false}
+        />
+        <div className="gl-login-img-overlay" />
+      </div>
+    </div>
+  );
+}
+
 /**
  * /login — unified auth entry point for Gridlock.
  *
@@ -549,9 +626,11 @@ function AuthForm() {
 }
 
 export default function LoginPage() {
+  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+
   return (
     <Suspense>
-      <AuthForm />
+      {appId ? <AuthForm /> : <AuthUnavailableMessage />}
     </Suspense>
   );
 }
