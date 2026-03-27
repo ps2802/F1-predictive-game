@@ -4,10 +4,10 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { races } from "@/lib/races";
 import { track } from "@/lib/analytics";
 import { PREDICTION_EDIT_FEE_USDC } from "@/lib/gameRules";
 import { formatCountdown, resolvePredictionWindow } from "@/lib/predictionWindows";
+import { findRaceById, useRaceCatalog } from "@/lib/raceCatalog";
 
 type Option = {
   id: string;
@@ -55,7 +55,8 @@ export default function PredictPage() {
   const params = useParams();
   const router = useRouter();
   const raceId = params?.raceId as string;
-  const race = races.find((r) => r.id === raceId);
+  const { races, loading: racesLoading } = useRaceCatalog();
+  const race = findRaceById(races, raceId);
 
   const [step, setStep] = useState(0);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -302,6 +303,17 @@ export default function PredictPage() {
     }
   }
 
+  if (loading || racesLoading) {
+    return (
+      <div className="gla-root">
+        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
+          <div className="gl-spinner" />
+          <p style={{ color: "rgba(255,255,255,0.5)", marginTop: "1rem" }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!race) {
     return (
       <div className="gla-root">
@@ -310,17 +322,6 @@ export default function PredictPage() {
           <Link href="/dashboard" className="gla-race-btn" style={{ marginTop: "1rem", display: "inline-block" }}>
             Back to Dashboard
           </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="gla-root">
-        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
-          <div className="gl-spinner" />
-          <p style={{ color: "rgba(255,255,255,0.5)", marginTop: "1rem" }}>Loading...</p>
         </div>
       </div>
     );

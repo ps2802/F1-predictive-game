@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy, useLogin, type User } from "@privy-io/react-auth";
 import { handlePrivyAuthComplete } from "@/lib/auth";
 import { track } from "@/lib/analytics";
-import { races as fallbackRaces } from "@/lib/races";
+import { useRaceCatalog } from "@/lib/raceCatalog";
 
 type NextRace = {
   id: string;
@@ -37,23 +37,6 @@ function pad(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-function buildFallbackNextRace(): NextRace | null {
-  const now = new Date();
-  const fallbackRace = fallbackRaces.find((race) => new Date(race.date) > now) ?? null;
-
-  if (!fallbackRace) {
-    return null;
-  }
-
-  return {
-    id: fallbackRace.id,
-    round: fallbackRace.round,
-    grand_prix_name: fallbackRace.name,
-    qualifying_starts_at: null,
-    race_starts_at: `${fallbackRace.date}T00:00:00.000Z`,
-  };
-}
-
 function NextRaceCountdownCard() {
   const [nextRace, setNextRace] = useState<NextRace | null>(null);
   const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
@@ -66,7 +49,7 @@ function NextRaceCountdownCard() {
       try {
         const res = await fetch("/api/races/next", { cache: "no-store" });
         const data = (await res.json()) as { race?: NextRace | null };
-        const race = data.race ?? buildFallbackNextRace();
+        const race = data.race ?? null;
         if (cancelled || !race) {
           return;
         }
@@ -82,21 +65,10 @@ function NextRaceCountdownCard() {
           setTimeLeft(calcTimeLeft(targetIso));
         }, 1000);
       } catch {
-        const race = buildFallbackNextRace();
-        if (cancelled || !race) {
-          return;
+        if (!cancelled) {
+          setNextRace(null);
+          setTimeLeft(null);
         }
-
-        setNextRace(race);
-        const targetIso = race.qualifying_starts_at ?? race.race_starts_at;
-        if (!targetIso) {
-          return;
-        }
-
-        setTimeLeft(calcTimeLeft(targetIso));
-        intervalId = setInterval(() => {
-          setTimeLeft(calcTimeLeft(targetIso));
-        }, 1000);
       }
     }
 
@@ -173,6 +145,7 @@ function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams?.get("redirect") ?? null;
+  const { meta } = useRaceCatalog();
 
   const { getAccessToken, authenticated } = usePrivy();
   const [error, setError] = useState<string | null>(null);
@@ -530,12 +503,12 @@ function AuthForm() {
 
         <div className="gl-login-stats">
           <div className="gl-login-stat">
-            <span className="gl-login-stat-n">22</span>
+            <span className="gl-login-stat-n">{meta.totalRounds || "—"}</span>
             <span className="gl-login-stat-l">Rounds</span>
           </div>
           <div className="gl-login-stat-div" />
           <div className="gl-login-stat">
-            <span className="gl-login-stat-n">22</span>
+            <span className="gl-login-stat-n">{meta.driverCount ?? "—"}</span>
             <span className="gl-login-stat-l">Drivers</span>
           </div>
           <div className="gl-login-stat-div" />

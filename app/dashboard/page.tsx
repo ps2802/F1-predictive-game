@@ -3,20 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { races } from "@/lib/races";
 import { AppNav } from "@/app/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useRaceCatalog } from "@/lib/raceCatalog";
 
 type UserProfile = {
   username: string | null;
   balance_usdc: number;
   is_admin: boolean;
-};
-
-type DbRace = {
-  id: string;
-  race_locked: boolean;
-  qualifying_starts_at: string | null;
 };
 
 type Prediction = {
@@ -26,6 +20,7 @@ type Prediction = {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { races, meta, loading: racesLoading, error: racesError } = useRaceCatalog();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [lockedRaceIds, setLockedRaceIds] = useState<Set<string>>(new Set());
   const [predictedRaceIds, setPredictedRaceIds] = useState<Set<string>>(new Set());
@@ -65,13 +60,12 @@ export default function DashboardPage() {
           return;
         }
 
-        const [profileResult, racesResult, predictionsResult] = await Promise.all([
+        const [profileResult, predictionsResult] = await Promise.all([
           supabase
             .from("profiles")
             .select("username, balance_usdc, is_admin")
             .eq("id", user.id)
             .single(),
-          supabase.from("races").select("id, race_locked, qualifying_starts_at"),
           supabase.from("predictions").select("race_id, status").eq("user_id", user.id),
         ]);
 
@@ -88,28 +82,6 @@ export default function DashboardPage() {
 
           if (!cancelled) {
             setProfile(profileResult.data);
-          }
-        }
-
-        if (racesResult.error) {
-          console.error("[Gridlock] Dashboard races load failed:", racesResult.error.message);
-          warningParts.push("live race status");
-          if (!cancelled) {
-            setLockedRaceIds(new Set());
-          }
-        } else {
-          const now = new Date();
-          const locked = new Set<string>();
-          for (const race of (racesResult.data ?? []) as DbRace[]) {
-            const pastDeadline =
-              race.qualifying_starts_at != null &&
-              now >= new Date(race.qualifying_starts_at);
-            if (race.race_locked || pastDeadline) {
-              locked.add(race.id);
-            }
-          }
-          if (!cancelled) {
-            setLockedRaceIds(locked);
           }
         }
 
@@ -158,6 +130,23 @@ export default function DashboardPage() {
     };
   }, [router]);
 
+  useEffect(() => {
+    const now = new Date();
+    const locked = new Set<string>();
+
+    for (const race of races) {
+      const pastDeadline =
+        race.qualifying_starts_at != null &&
+        now >= new Date(race.qualifying_starts_at);
+
+      if (race.race_locked || race.is_locked || pastDeadline || race.status === "closed") {
+        locked.add(race.id);
+      }
+    }
+
+    setLockedRaceIds(locked);
+  }, [races]);
+
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
@@ -170,7 +159,15 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {loading && (
+        {racesError && (
+          <div className="dash-runtime-banner" role="status">
+            <span className="dash-runtime-banner-text">
+              We couldn&apos;t load the live race calendar. Please refresh.
+            </span>
+          </div>
+        )}
+
+        {(loading || racesLoading) && (
           <div className="dash-runtime-banner is-loading" role="status">
             <span className="dash-runtime-banner-text">
               Syncing your latest dashboard data...
@@ -182,7 +179,7 @@ export default function DashboardPage() {
           <div>
             <p className="gla-page-title">2026 Season</p>
             <p className="gla-page-sub">
-              {races.length} rounds · select a race to make your predictions
+              {meta.totalRounds || races.length} rounds · select a race to make your predictions
             </p>
           </div>
           {profile?.balance_usdc !== undefined && (
@@ -203,10 +200,12 @@ export default function DashboardPage() {
                 <p className="gla-race-meta">
                   {race.country}
                   <span className="gla-race-sep" />
-                  {new Date(race.date).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                  })}
+                  {race.date
+                    ? new Date(race.date).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                      })
+                    : "Date TBD"}
                 </p>
                 <span className={`gla-race-status ${isClosed ? "is-closed" : "is-upcoming"}`}>
                   {isClosed ? "Locked" : "Open"}

@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { races } from "@/lib/races";
 import { AppNav } from "@/app/components/AppNav";
+import { findRaceById, useRaceCatalog } from "@/lib/raceCatalog";
 
 type Profile = {
   id: string;
@@ -26,6 +26,7 @@ type RaceScore = {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { races, loading: racesLoading } = useRaceCatalog();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [raceScores, setRaceScores] = useState<RaceScore[]>([]);
   const [totalScore, setTotalScore] = useState(0);
@@ -86,7 +87,7 @@ export default function ProfilePage() {
     setSaving(false);
   }
 
-  if (loading) {
+  if (loading || racesLoading) {
     return (
       <div className="gla-root">
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
@@ -211,7 +212,7 @@ export default function ProfilePage() {
                 <span>Date</span>
               </div>
               {raceScores.map((rs) => {
-                const raceData = races.find((r) => r.id === rs.race_id);
+                const raceData = findRaceById(races, rs.race_id);
                 return (
                   <Link
                     key={rs.race_id}
@@ -234,4 +235,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
