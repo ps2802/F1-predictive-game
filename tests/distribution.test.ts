@@ -176,6 +176,36 @@ describe("distributePool", () => {
     ]);
   });
 
+  it("keeps tied manual payouts within the group allocation after rounding", () => {
+    const ranked = rankUsers([
+      {
+        userId: "a",
+        score: 200,
+        difficultyScore: 20,
+        correctPicks: 3,
+        submittedAt: "2026-03-27T12:00:00.000Z",
+      },
+      {
+        userId: "b",
+        score: 200,
+        difficultyScore: 20,
+        correctPicks: 3,
+        submittedAt: "2026-03-27T12:00:00.000Z",
+      },
+      { userId: "c", score: 100 },
+    ]);
+
+    const result = distributePool("league-1", 0.000001, ranked, undefined, "manual");
+
+    expect(result.payouts).toEqual([
+      { userId: "a", rank: 1, amount: 0.000001, held: false },
+      { userId: "b", rank: 1, amount: 0, held: false },
+      { userId: "c", rank: 3, amount: 0, held: false },
+    ]);
+    expect(result.payouts.reduce((sum, payout) => sum + payout.amount, 0)).toBe(0.000001);
+    expect(result.undistributed).toBe(0);
+  });
+
   it("compresses payout ranks when late joiners are payout-ineligible", () => {
     const ranked = rankUsers([
       { userId: "late", score: 300, payoutEligible: false },

@@ -238,14 +238,25 @@ function distributeManual(
       continue;
     }
 
-    const totalForGroup = roundUsdc((totalPercent / 100) * prizePool);
-    const perUser = roundUsdc(totalForGroup / users.length);
+    const totalForGroupMicros = toMicros((totalPercent / 100) * prizePool);
+    const exactPerUserMicros = totalForGroupMicros / users.length;
+    const basePerUserMicros = Math.floor(exactPerUserMicros);
+    let remainingMicros =
+      totalForGroupMicros - basePerUserMicros * users.length;
 
-    for (const user of users) {
+    const sortedUsers = [...users].sort((a, b) =>
+      a.userId.localeCompare(b.userId)
+    );
+
+    for (const user of sortedUsers) {
+      const userMicros = basePerUserMicros + (remainingMicros > 0 ? 1 : 0);
+      if (remainingMicros > 0) {
+        remainingMicros -= 1;
+      }
       payouts.push({
         userId: user.userId,
         rank: user.rank,
-        amount: perUser,
+        amount: fromMicros(userMicros),
         held: false,
       });
     }
