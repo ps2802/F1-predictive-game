@@ -530,13 +530,13 @@ function AuthForm() {
 
         <div className="gl-login-stats">
           <div className="gl-login-stat">
-            <span className="gl-login-stat-n">24</span>
+            <span className="gl-login-stat-n">22</span>
             <span className="gl-login-stat-l">Rounds</span>
           </div>
           <div className="gl-login-stat-div" />
           <div className="gl-login-stat">
-            <span className="gl-login-stat-n">20</span>
-            <span className="gl-login-stat-l">Rivals</span>
+            <span className="gl-login-stat-n">22</span>
+            <span className="gl-login-stat-l">Drivers</span>
           </div>
           <div className="gl-login-stat-div" />
           <div className="gl-login-stat">
