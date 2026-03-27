@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { AppNav } from "@/app/components/AppNav";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type ProfileData = {
   balance_usdc: number;
+  username: string | null;
+  is_admin: boolean;
 };
 
 export default function WalletPage() {
@@ -22,10 +24,10 @@ export default function WalletPage() {
       if (!user) { router.push("/login"); return; }
       const { data } = await supabase
         .from("profiles")
-        .select("balance_usdc")
+        .select("balance_usdc, username, is_admin")
         .eq("id", user.id)
         .single();
-      setProfile(data ?? { balance_usdc: 0 });
+      setProfile(data ?? { balance_usdc: 0, username: null, is_admin: false });
       setLoading(false);
     });
   }, [router]);
@@ -55,18 +57,39 @@ export default function WalletPage() {
         <div className="wallet-card" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.5rem", marginTop: "1.5rem" }}>
           <span className="wallet-balance-label">Your Beta Balance</span>
           <span className="wallet-balance">₮{balance.toFixed(2)} Test USDC</span>
+          <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.85rem" }}>
+            Prize pools, payouts, and platform fees settle in USDC.
+          </span>
         </div>
 
         {/* Beta disclaimer */}
         <div className="wallet-deposit-card">
+          <p className="wallet-beta-pill">No deposit action during beta</p>
           <p className="wallet-deposit-desc">
             Gridlock is in closed beta. Your balance is simulated — it&apos;s not real
             money and cannot be withdrawn. Use it to enter leagues, make predictions,
             and climb the leaderboard.
           </p>
+          <p className="wallet-deposit-desc" style={{ marginTop: "0.75rem" }}>
+            Production flow: users will be able to deposit any supported asset, Gridlock
+            will swap it into USDC in the background, and the internal balance will stay
+            denominated in USDC for league entry, payouts, and fee accounting.
+          </p>
+          <p className="wallet-deposit-desc" style={{ marginTop: "0.75rem" }}>
+            Any platform fees from deposits or league entry are collected into the Gridlock
+            fee wallet, while league prize pools and winner payouts remain USDC-only.
+          </p>
           <p className="wallet-deposit-desc" style={{ marginTop: "0.75rem", color: "rgba(255,255,255,0.35)" }}>
             Real money features launch after beta ends.
           </p>
+          <div className="wallet-action-row">
+            <Link href="/leagues" className="gla-race-btn">
+              Join a League
+            </Link>
+            <Link href="/dashboard" className="gla-race-btn league-secondary-btn">
+              Back to Dashboard
+            </Link>
+          </div>
         </div>
       </div>
     </div>

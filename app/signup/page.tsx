@@ -7,6 +7,22 @@
  */
 import { redirect } from "next/navigation";
 
-export default function SignupPage() {
-  redirect("/login");
+type SignupPageProps = {
+  searchParams?: Promise<{ redirect?: string }>;
+};
+
+export default async function SignupPage({ searchParams }: SignupPageProps) {
+  const params = await searchParams;
+  const redirectTarget = params?.redirect;
+
+  if (!redirectTarget) {
+    redirect("/login?mode=signup");
+  }
+
+  const nextParams = new URLSearchParams({
+    mode: "signup",
+    redirect: redirectTarget,
+  });
+
+  redirect(`/login?${nextParams.toString()}`);
 }

@@ -1,98 +1,34 @@
 import { config as loadEnv } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
+import { races } from "../lib/races";
 
 loadEnv({ path: ".env.local" });
 loadEnv();
-
-type JolpicaRace = {
-  season: string;
-  round: string;
-  raceName: string;
-  date: string;
-  time?: string;
-  Circuit: {
-    Location: {
-      country: string;
-    };
-  };
-};
-
-type JolpicaResponse = {
-  MRData: {
-    RaceTable: {
-      Races: JolpicaRace[];
-    };
-  };
-};
 
 type RaceRow = {
   id: string;
   season: number;
   round: number;
+  name: string;
   grand_prix_name: string;
-  qualifying_starts_at: string;
-  race_starts_at: string;
-  status: string;
+  country: string;
+  race_date: string;
+  is_locked: boolean;
+  race_locked: boolean;
 };
 
-const JOLPICA_2026_URL = "https://api.jolpi.ca/ergast/f1/2026/races.json";
-
-function slugifyCountry(country: string): string {
-  return country
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function toIsoTimestamp(date: string, time?: string): string {
-  if (time && time.length > 0) {
-    return `${date}T${time}`;
-  }
-
-  return `${date}T00:00:00Z`;
-}
-
-function buildRaceRows(races: JolpicaRace[]): RaceRow[] {
-  const usedIds = new Map<string, number>();
-
-  return races.map((race) => {
-    const countrySlug = slugifyCountry(race.Circuit.Location.country);
-    const baseId = `${countrySlug}-2026`;
-
-    const seenCount = usedIds.get(baseId) ?? 0;
-    usedIds.set(baseId, seenCount + 1);
-
-    const id = seenCount === 0 ? baseId : `${baseId}-${seenCount + 1}`;
-    const raceStartsAt = toIsoTimestamp(race.date, race.time);
-
-    return {
-      id,
-      season: Number(race.season),
-      round: Number(race.round),
-      grand_prix_name: race.raceName,
-      qualifying_starts_at: raceStartsAt,
-      race_starts_at: raceStartsAt,
-      status: "upcoming",
-    };
-  });
-}
-
-async function fetchCalendar(): Promise<JolpicaRace[]> {
-  const response = await fetch(JOLPICA_2026_URL);
-
-  if (!response.ok) {
-    throw new Error(`Failed fetching Jolpica calendar: ${response.status} ${response.statusText}`);
-  }
-
-  const json = (await response.json()) as JolpicaResponse;
-  const races = json?.MRData?.RaceTable?.Races ?? [];
-
-  if (!Array.isArray(races) || races.length === 0) {
-    throw new Error("No races returned from Jolpica.");
-  }
-
-  return races;
+function buildRaceRows(): RaceRow[] {
+  return races.map((race) => ({
+    id: race.id,
+    season: 2026,
+    round: race.round,
+    name: race.name,
+    grand_prix_name: race.name,
+    country: race.country,
+    race_date: race.date,
+    is_locked: race.status === "closed",
+    race_locked: race.status === "closed",
+  }));
 }
 
 async function main() {
@@ -108,13 +44,11 @@ async function main() {
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
+  const raceRows = buildRaceRows();
 
-  const races = await fetchCalendar();
-  const raceRows = buildRaceRows(races);
-
-  const { error } = await supabase
-    .from("races")
-    .upsert(raceRows, { onConflict: "id" });
+  const { error } = await supabase.from("races").upsert(raceRows, {
+    onConflict: "id",
+  });
 
   if (error) {
     throw new Error(`Failed upserting races: ${error.message}`);

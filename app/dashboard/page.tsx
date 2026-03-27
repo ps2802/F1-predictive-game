@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { races } from "@/lib/races";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { AppNav } from "@/app/components/AppNav";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type UserProfile = {
   username: string | null;
@@ -19,93 +19,144 @@ type DbRace = {
   qualifying_starts_at: string | null;
 };
 
-type RaceScore = {
+type Prediction = {
   race_id: string;
-  total_score: number;
+  status: "active" | "draft";
 };
 
 export default function DashboardPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [lockedRaceIds, setLockedRaceIds] = useState<Set<string>>(new Set());
-  const [settledScores, setSettledScores] = useState<Map<string, number>>(new Map());
+  const [predictedRaceIds, setPredictedRaceIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
-
-  async function loadData() {
-    setLoadError("");
-    setLoading(true);
-    const supabase = createSupabaseBrowserClient();
-    if (!supabase) { setLoading(false); return; }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { router.push("/login"); return; }
-
-    const [profileResult, racesResult, scoresResult] = await Promise.all([
-      supabase.from("profiles").select("username, balance_usdc, is_admin").eq("id", user.id).maybeSingle(),
-      supabase.from("races").select("id, race_locked, qualifying_starts_at"),
-      supabase.from("race_scores").select("race_id, total_score").eq("user_id", user.id),
-    ]);
-
-    // Only treat a hard races query error as fatal; missing profile is acceptable (new user)
-    if (racesResult.error) {
-      setLoadError("Couldn't load the race calendar. Please try again.");
-      setLoading(false);
-      return;
-    }
-
-    setProfile(profileResult.data ?? null);
-
-    const now = new Date();
-    const locked = new Set<string>();
-    for (const r of (racesResult.data ?? []) as DbRace[]) {
-      const pastDeadline = r.qualifying_starts_at != null && now >= new Date(r.qualifying_starts_at);
-      if (r.race_locked || pastDeadline) locked.add(r.id);
-    }
-    setLockedRaceIds(locked);
-
-    const scoresMap = new Map<string, number>();
-    for (const s of (scoresResult.data ?? []) as RaceScore[]) {
-      scoresMap.set(s.race_id, s.total_score);
-    }
-    setSettledScores(scoresMap);
-    setLoading(false);
-  }
+  const [loadWarning, setLoadWarning] = useState("");
 
   useEffect(() => {
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let cancelled = false;
+
+    async function loadDashboard() {
+      setLoadWarning("");
+      setLoading(true);
+
+      const supabase = createSupabaseBrowserClient();
+      if (!supabase) {
+        if (!cancelled) {
+          setLoadWarning(
+            "Live data is unavailable in this environment. Showing the season schedule only."
+          );
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError) {
+          throw userError;
+        }
+
+        if (!user) {
+          router.push("/login");
+          return;
+        }
+
+        const [profileResult, racesResult, predictionsResult] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("username, balance_usdc, is_admin")
+            .eq("id", user.id)
+            .single(),
+          supabase.from("races").select("id, race_locked, qualifying_starts_at"),
+          supabase.from("predictions").select("race_id, status").eq("user_id", user.id),
+        ]);
+
+        const warningParts: string[] = [];
+
+        if (profileResult.error) {
+          console.error("[Gridlock] Dashboard profile load failed:", profileResult.error.message);
+          warningParts.push("profile details");
+        } else {
+          if (!profileResult.data?.username) {
+            router.replace("/onboarding");
+            return;
+          }
+
+          if (!cancelled) {
+            setProfile(profileResult.data);
+          }
+        }
+
+        if (racesResult.error) {
+          console.error("[Gridlock] Dashboard races load failed:", racesResult.error.message);
+          warningParts.push("live race status");
+          if (!cancelled) {
+            setLockedRaceIds(new Set());
+          }
+        } else {
+          const now = new Date();
+          const locked = new Set<string>();
+          for (const race of (racesResult.data ?? []) as DbRace[]) {
+            const pastDeadline =
+              race.qualifying_starts_at != null &&
+              now >= new Date(race.qualifying_starts_at);
+            if (race.race_locked || pastDeadline) {
+              locked.add(race.id);
+            }
+          }
+          if (!cancelled) {
+            setLockedRaceIds(locked);
+          }
+        }
+
+        if (predictionsResult.error) {
+          console.error(
+            "[Gridlock] Dashboard predictions load failed:",
+            predictionsResult.error.message
+          );
+          warningParts.push("saved predictions");
+          if (!cancelled) {
+            setPredictedRaceIds(new Set());
+          }
+        } else {
+          const predicted = new Set<string>();
+          for (const prediction of (predictionsResult.data ?? []) as Prediction[]) {
+            predicted.add(prediction.race_id);
+          }
+          if (!cancelled) {
+            setPredictedRaceIds(predicted);
+          }
+        }
+
+        if (!cancelled && warningParts.length > 0) {
+          setLoadWarning(
+            `We couldn't load ${warningParts.join(" and ")}. Showing the season schedule with limited live data.`
+          );
+        }
+      } catch (error) {
+        console.error("[Gridlock] Dashboard bootstrap failed:", error);
+        if (!cancelled) {
+          setLoadWarning(
+            "Live dashboard data is temporarily unavailable. Showing the season schedule only."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadDashboard();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
-
-  if (loading) {
-    return (
-      <div className="gla-root">
-        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
-          <div className="gl-spinner" />
-        </div>
-      </div>
-    );
-  }
-
-  if (loadError) {
-    return (
-      <div className="gla-root">
-        <div className="gl-stripe" aria-hidden="true" />
-        <AppNav profile={profile} />
-        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
-          <h1 className="gla-page-title">Something went wrong</h1>
-          <p className="gla-page-sub" style={{ marginTop: "0.5rem" }}>{loadError}</p>
-          <button
-            className="gla-race-btn"
-            style={{ marginTop: "2rem" }}
-            onClick={loadData}
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="gla-root">
@@ -113,6 +164,20 @@ export default function DashboardPage() {
       <AppNav profile={profile} />
 
       <div className="gla-content">
+        {loadWarning && (
+          <div className="dash-runtime-banner" role="status">
+            <span className="dash-runtime-banner-text">{loadWarning}</span>
+          </div>
+        )}
+
+        {loading && (
+          <div className="dash-runtime-banner is-loading" role="status">
+            <span className="dash-runtime-banner-text">
+              Syncing your latest dashboard data...
+            </span>
+          </div>
+        )}
+
         <div className="dash-header">
           <div>
             <p className="gla-page-title">2026 Season</p>
@@ -120,21 +185,17 @@ export default function DashboardPage() {
               {races.length} rounds · select a race to make your predictions
             </p>
           </div>
+          {profile?.balance_usdc !== undefined && (
+            <Link href="/wallet" className="dash-balance-pill" title="Test USDC · Not real money">
+              ₮{Number(profile.balance_usdc).toFixed(2)}&nbsp;[BETA]
+            </Link>
+          )}
         </div>
-
-        {races.length === 0 ? (
-          <div className="lb-empty" style={{ marginTop: "3rem" }}>
-            <p className="lb-empty-headline">No races on the calendar yet.</p>
-            <p className="lb-empty-sub">Check back soon.</p>
-          </div>
-        ) : null}
 
         <div className="gla-race-grid">
           {races.map((race) => {
             // A race is locked if: DB says so, OR hardcoded status is "closed" (fallback for races not yet in DB)
             const isClosed = lockedRaceIds.has(race.id) || race.status === "closed";
-            const hasScore = settledScores.has(race.id);
-            const score = settledScores.get(race.id);
             return (
               <article className="gla-race-card" key={race.id}>
                 <p className="gla-race-round">Round {race.round}</p>
@@ -147,40 +208,23 @@ export default function DashboardPage() {
                     month: "short",
                   })}
                 </p>
-                {hasScore ? (
-                  /* Post-race: show settled score notification */
-                  <>
-                    <span className="gla-race-status" style={{ background: "rgba(0,210,170,0.12)", color: "rgba(0,210,170,1)", border: "1px solid rgba(0,210,170,0.25)", borderRadius: "6px", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.2rem 0.55rem" }}>
-                      Results In
-                    </span>
-                    <div style={{ marginTop: "auto" }}>
-                      <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.38)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>
-                        Your score
-                      </div>
-                      <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: "0.75rem" }}>
-                        {Number(score).toFixed(1)}
-                      </div>
-                      <Link className="gla-race-btn" href={`/scores/${race.id}`} style={{ fontSize: "0.75rem" }}>
-                        See breakdown →
-                      </Link>
-                    </div>
-                  </>
-                ) : isClosed ? (
-                  <>
-                    <span className={`gla-race-status is-closed`}>
-                      Locked
-                    </span>
-                    <span className="gla-race-btn is-disabled">Locked</span>
-                  </>
+                <span className={`gla-race-status ${isClosed ? "is-closed" : "is-upcoming"}`}>
+                  {isClosed ? "Locked" : "Open"}
+                </span>
+                {isClosed ? (
+                  <span className="gla-race-btn is-disabled">Locked</span>
+                ) : predictedRaceIds.has(race.id) ? (
+                  <Link
+                    className="gla-race-btn is-edit"
+                    href={`/predict/${race.id}`}
+                    title="Saved prediction"
+                  >
+                    Edit
+                  </Link>
                 ) : (
-                  <>
-                    <span className={`gla-race-status is-upcoming`}>
-                      Open
-                    </span>
-                    <Link className="gla-race-btn" href={`/predict/${race.id}`}>
-                      Predict
-                    </Link>
-                  </>
+                  <Link className="gla-race-btn" href={`/predict/${race.id}`}>
+                    Predict
+                  </Link>
                 )}
               </article>
             );
@@ -190,4 +234,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

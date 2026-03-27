@@ -46,13 +46,13 @@ function pad(n: number): string {
 
 function NextRaceCountdown(): React.ReactElement | null {
   const nextRace = getNextRace();
-  const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
+  const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(() =>
+    nextRace ? calcTimeLeft(getQualifyingDate(nextRace.date)) : null
+  );
 
   useEffect(() => {
     if (!nextRace) return;
     const target = getQualifyingDate(nextRace.date);
-
-    setTimeLeft(calcTimeLeft(target));
 
     const id = setInterval(() => {
       setTimeLeft(calcTimeLeft(target));

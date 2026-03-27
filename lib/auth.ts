@@ -75,9 +75,8 @@ export async function handlePrivyAuthComplete(
     throw new Error(`Auth sync failed (${res.status}): ${body}`);
   }
 
-  const { token, email, hasUsername } = (await res.json()) as {
+  const { token, hasUsername } = (await res.json()) as {
     token: string;
-    email: string;
     hasUsername: boolean;
   };
 

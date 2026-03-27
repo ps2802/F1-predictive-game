@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { AppNav } from "@/app/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { races } from "@/lib/races";
-import { AppNav } from "@/app/components/AppNav";
 
 type Question = {
   id: string;
@@ -70,6 +70,8 @@ export default function AdminPage() {
   const [settling, setSettling] = useState(false);
   const [message, setMessage] = useState("");
   const [questionsLoading, setQuestionsLoading] = useState(false);
+  const [resultsDirty, setResultsDirty] = useState(false);
+  const [hasSavedResults, setHasSavedResults] = useState(false);
 
   // ── Race Management functions ─────────────────────────
 
@@ -93,10 +95,10 @@ export default function AdminPage() {
         .single();
       if (!profile?.is_admin) { router.push("/dashboard"); return; }
       setIsAdmin(true);
-      setLoading(false);
       await loadDbRaces();
+      setLoading(false);
     });
-  }, [router, loadDbRaces]);
+  }, [loadDbRaces, router]);
 
   function handleFormChange(field: keyof typeof emptyForm, value: string) {
     setCreateForm((prev) => ({ ...prev, [field]: value }));
@@ -176,21 +178,40 @@ export default function AdminPage() {
   async function loadQuestions(raceId: string) {
     setQuestionsLoading(true);
     setResults({});
+    setResultsDirty(false);
+    setHasSavedResults(false);
+    setMessage("");
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
 
-    const { data } = await supabase
-      .from("prediction_questions")
-      .select("*, options:prediction_options(*)")
-      .eq("race_id", raceId)
-      .order("display_order");
+    const [{ data: questionData }, { data: existingResults }] = await Promise.all([
+      supabase
+        .from("prediction_questions")
+        .select("*, options:prediction_options(*)")
+        .eq("race_id", raceId)
+        .order("display_order"),
+      supabase
+        .from("race_results")
+        .select("question_id, correct_option_id, pick_order")
+        .eq("race_id", raceId),
+    ]);
 
     setQuestions(
-      (data ?? []).map((q) => ({
+      (questionData ?? []).map((q) => ({
         ...q,
         options: q.options ?? [],
       }))
     );
+
+    if (existingResults && existingResults.length > 0) {
+      const loaded: Record<string, string[]> = {};
+      for (const result of existingResults) {
+        if (!loaded[result.question_id]) loaded[result.question_id] = [];
+        loaded[result.question_id][result.pick_order - 1] = result.correct_option_id;
+      }
+      setResults(loaded);
+      setHasSavedResults(true);
+    }
     setQuestionsLoading(false);
   }
 
@@ -201,6 +222,8 @@ export default function AdminPage() {
   }
 
   function handleOptionSelect(questionId: string, optionId: string, pickOrder: number, multiSelect: number) {
+    setResultsDirty(true);
+    setMessage("");
     setResults((prev) => {
       const current = [...(prev[questionId] ?? [])];
       if (multiSelect === 1) return { ...prev, [questionId]: [optionId] };
@@ -215,6 +238,15 @@ export default function AdminPage() {
   }
 
   async function handleSubmitResults() {
+    if (!resultsComplete) {
+      setMessage("Error: complete every result before saving.");
+      return;
+    }
+
+    if (!window.confirm(`Save results for ${selectedRace}? This will overwrite the currently stored answer set for this race.`)) {
+      return;
+    }
+
     setSubmitting(true);
     setMessage("");
 
@@ -233,11 +265,31 @@ export default function AdminPage() {
       body: JSON.stringify({ raceId: selectedRace, results: resultRows }),
     });
     const data = await res.json();
-    setMessage(res.ok ? "✓ Results saved." : `Error: ${data.error}`);
+    if (res.ok) {
+      setHasSavedResults(true);
+      setResultsDirty(false);
+      setMessage("✓ Results saved.");
+    } else {
+      setMessage(`Error: ${data.error}`);
+    }
     setSubmitting(false);
   }
 
   async function handleSettle() {
+    if (!hasSavedResults) {
+      setMessage("Error: save results before running settlement.");
+      return;
+    }
+
+    if (resultsDirty) {
+      setMessage("Error: you have unsaved result changes. Save results before settling.");
+      return;
+    }
+
+    if (!window.confirm(`Run settlement and scoring for ${selectedRace}? Use this only after reviewing the saved results.`)) {
+      return;
+    }
+
     setSettling(true);
     setMessage("");
     const res = await fetch("/api/admin/settle", {
@@ -263,6 +315,12 @@ export default function AdminPage() {
   }
 
   if (!isAdmin) return null;
+
+  const incompleteQuestions = questions.filter((q) => {
+    const picks = (results[q.id] ?? []).filter(Boolean);
+    return picks.length < q.multi_select;
+  });
+  const resultsComplete = questions.length > 0 && incompleteQuestions.length === 0;
 
   return (
     <div className="gla-root">
@@ -543,6 +601,20 @@ export default function AdminPage() {
 
             {questions.length > 0 && (
               <>
+                <div className="admin-results-status">
+                  <span>
+                    {resultsComplete
+                      ? "All required results entered."
+                      : `${incompleteQuestions.length} question${incompleteQuestions.length === 1 ? "" : "s"} still need results.`}
+                  </span>
+                  {hasSavedResults && !resultsDirty && (
+                    <span>Saved results loaded.</span>
+                  )}
+                  {resultsDirty && (
+                    <span>Unsaved changes.</span>
+                  )}
+                </div>
+
                 <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", marginBottom: "2rem" }}>
                   {questions.map((q) => {
                     const currentPicks = results[q.id] ?? [];
@@ -589,15 +661,15 @@ export default function AdminPage() {
                   <button
                     className="gla-race-btn"
                     onClick={handleSubmitResults}
-                    disabled={submitting}
+                    disabled={submitting || !resultsComplete}
                   >
-                    {submitting ? "Saving..." : "Save Results"}
+                    {submitting ? "Saving..." : hasSavedResults ? "Update Results" : "Save Results"}
                   </button>
                   <button
                     className="gla-race-btn"
                     style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.2)" }}
                     onClick={handleSettle}
-                    disabled={settling}
+                    disabled={settling || !hasSavedResults || resultsDirty}
                   >
                     {settling ? "Settling..." : "Trigger Settlement & Scoring"}
                   </button>

@@ -40,7 +40,7 @@ function AuthForm() {
     [getAccessToken, redirect, router]
   );
 
-  const onError = useCallback((_err: unknown) => {
+  const onError = useCallback(() => {
     setError("Sign-in failed. Please try again.");
     setLoading(false);
   }, []);

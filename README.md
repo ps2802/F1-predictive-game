@@ -1,197 +1,36 @@
-# Gridlock
+# Gridlock — F1 Prediction Platform
 
-F1 prediction game for the 2026 season. Users make per-race predictions across qualifying, race, and chaos question categories, then compete on a global leaderboard. Anti-herd scoring rewards unpopular correct picks. Currently in closed beta at [joingridlock.com](https://joingridlock.com) — no real money, simulated balances only.
-
----
-
-## What it is
-
-- Predict outcomes across 24 F1 rounds (2026 season)
-- Three question categories per race: Qualifying, Race, Chaos
-- ~9 questions per race (podium, race winner, fastest lap, points finishers, etc.)
-- Anti-herd scoring: rarer correct picks score higher via a log2 difficulty multiplier
-- Compete on a global leaderboard and in invite-code leagues
-- **Closed beta**: all users start with 100 simulated Beta Credits (₮). No real money, no withdrawals.
-
-Core user loop: Sign up → set username → pick a race → answer questions → submit → check leaderboard after results are entered.
+Next.js 16 + Supabase app. Users sign in with Privy, submit one prediction sheet per race, compete for free on the global leaderboard, and optionally join race-scoped USDC leagues where each member chooses their own stake. The current money flow is custodial and off-chain: supported deposits are normalized into an internal USDC ledger, Gridlock keeps a 10% fee, and payouts are credited back into the same ledger after settlement.
 
 ---
 
-## Current status
+## Local Dev Runbook
 
-### Working
-- Privy-based auth (email, Google, Apple — whatever is enabled in Privy dashboard)
-- Supabase session bridge (Privy JWT → Supabase session via `/api/auth/privy-sync`)
-- Onboarding flow (username setup after first login)
-- Dashboard: 2026 race calendar with open/locked states
-- Prediction form: 3-step multi-question flow (Qualifying / Race / Chaos)
-- Anonymous pick drafting (saved to localStorage, synced to DB on login)
-- Prediction submission and edit (v2 API)
-- Race locking (manual via admin, or automatic when `qualifying_starts_at` is passed)
-- Admin panel: race management, result entry, settlement trigger
-- Scoring engine: anti-herd formula, per-question types, edit penalty, chaos bonus
-- Score settlement: triggered by admin when results are entered
-- Global leaderboard (`/leaderboard`)
-- Leagues: create, join by invite code, per-league leaderboard
-- Profile page
-- Wallet page (displays simulated Beta Credits; no deposit/withdrawal UI)
-
-### Partially complete
-- Leagues: create/join/view works; paid entry fee logic exists in the API but is not wired to real USDC
-- Popularity snapshot: settlement computes pick popularity live from `prediction_answers` (correct, but gameable in theory after lock — no freeze cron)
-- Edit penalty: computed in scoring; the paid-edit deduction flow (charging `balance_usdc` per edit) is not wired up; edits are currently free but do reduce score
-
-### Not live yet
-- Real USDC deposits or withdrawals — wallet shows simulated balance only
-- Automated race locking — admin must manually lock or submit results
-- On-chain deposit watcher (Helius) — USDC credits can only be set manually
-- Payout distribution — `payout_model` column exists, no payout logic
-- Email notifications (race reminders, results)
-- Public league discovery/search
-- Analytics
-
----
-
-## Core features
-
-| Feature | Status |
-|---|---|
-| Privy auth (email/social) | ✅ Live |
-| Supabase session bridge | ✅ Live |
-| Onboarding / username setup | ✅ Live |
-| Race dashboard | ✅ Live |
-| Multi-question prediction form | ✅ Live |
-| Race locking (manual + deadline) | ✅ Live |
-| Admin result entry + settlement | ✅ Live |
-| Anti-herd scoring engine | ✅ Live |
-| Global leaderboard | ✅ Live |
-| Leagues (create/join/view) | ✅ Live |
-| Profile + race history | ✅ Live |
-| Simulated beta wallet | ✅ Live (display only) |
-| Real USDC / payouts | ❌ Not implemented |
-| Automated race lock scheduler | ❌ Not implemented |
-| Email notifications | ❌ Not implemented |
-
----
-
-## Auth flow
-
-Auth entry point is **Privy** only. There is no Supabase login form.
-
-1. User clicks "Sign in" → opens Privy modal
-2. Privy authenticates via email/Google/Apple (methods configured in Privy dashboard)
-3. On success, the client posts the Privy access token to `POST /api/auth/privy-sync`
-4. `privy-sync` server route:
-   - Verifies the Privy JWT using `PRIVY_APP_SECRET`
-   - Fetches the Privy user to get email and embedded Solana wallet address
-   - Finds or creates a Supabase auth user (matched by email, auto-confirmed)
-   - Upserts `profiles` row: sets `privy_user_id`, `wallet_address`, `is_beta_account = true`
-   - Generates a Supabase magic-link OTP and returns `{ token, email }` to the client
-5. Client calls `supabase.auth.verifyOtp({ email, token, type: 'email' })` to establish a Supabase session
-6. From this point all API routes use `supabase.auth.getUser()` as normal
-7. New users (no username) are redirected to `/onboarding`; returning users go to `/dashboard`
-
-New user profile creation (100 Beta Credits) is handled by a Supabase `handle_new_user` trigger on `auth.users`.
-
-Required env vars for auth: `NEXT_PUBLIC_PRIVY_APP_ID`, `PRIVY_APP_SECRET`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
-
----
-
-## Tech stack
-
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 16 (App Router) |
-| UI | React 19 + TypeScript |
-| Styling | Tailwind CSS v4 (PostCSS) |
-| Font | Titillium Web (Google Fonts) |
-| Auth | Privy (`@privy-io/react-auth` + `@privy-io/server-auth`) |
-| Database / backend | Supabase (PostgreSQL + Auth + RLS) |
-| Hosting | Vercel |
-| Tests | Vitest |
-
----
-
-## Project structure
-
-```
-app/
-  page.tsx                   — Landing page (redirects to /dashboard)
-  layout.tsx                 — Root layout, metadata, fonts
-  providers.tsx              — PrivyProvider wrapper
-  login/page.tsx             — Login page (triggers Privy modal)
-  signup/page.tsx            — Signup page (same Privy flow)
-  onboarding/page.tsx        — Username setup (new users only)
-  dashboard/page.tsx         — Race calendar (authenticated)
-  predict/[raceId]/page.tsx  — Multi-question prediction form
-  leaderboard/page.tsx       — Global leaderboard
-  leagues/                   — League list, create, view
-  profile/page.tsx           — User profile + race history
-  wallet/page.tsx            — Beta balance display
-  admin/page.tsx             — Race management + result entry (is_admin only)
-  scores/[raceId]/page.tsx   — Per-race score breakdown
-  api/
-    auth/privy-sync/         — Privy→Supabase session bridge (POST)
-    predictions/             — v1 prediction route (legacy, podium-only)
-    predictions/v2/          — v2 prediction route (multi-question, active)
-    admin/results/           — Enter race results (admin only)
-    admin/settle/            — Trigger score settlement (admin only)
-    admin/races/             — Race CRUD (admin only)
-    leagues/                 — League list + create
-    leagues/join/            — Join league by invite code
-    profile/                 — Get/update profile
-    scores/[raceId]/         — Per-race score data
-    wallet/deposit/          — Manual credit (admin only, no real USDC)
-    waitlist/                — Email waitlist signup (POST)
-lib/
-  races.ts                   — 2026 F1 calendar (static, 24 rounds) + driver list
-  scoring/settleRace.ts      — Scoring engine (deterministic, fully tested)
-  supabase/
-    client.ts                — Browser Supabase client
-    server.ts                — Server Supabase client (SSR)
-    admin.ts                 — Service-role client (server only)
-supabase/migrations/         — 11 SQL migrations (apply in order)
-tests/                       — Vitest unit tests for scoring engine
-scripts/
-  seed-races.ts              — Populate races table from Jolpica API
-```
-
----
-
-## Getting started
-
-### Prerequisites
+### 1. Prerequisites
 
 - Node.js 20+
 - A Supabase project (free tier works)
-- A Privy app (free tier works — create at privy.io)
+- `npm install`
 
-### 1. Install dependencies
-
-```bash
-npm install
-```
-
-### 2. Set up environment variables
-
-There is no `.env.example` in the repo. Create `.env.local` with:
+### 2. Environment
 
 ```bash
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
-SUPABASE_SERVICE_ROLE_KEY=<service role key>
-
-# Privy
-NEXT_PUBLIC_PRIVY_APP_ID=<privy app id>
-PRIVY_APP_SECRET=<privy app secret>
+cp .env.example .env.local
+# Required for local + Vercel:
+# - NEXT_PUBLIC_SUPABASE_URL
+# - NEXT_PUBLIC_SUPABASE_ANON_KEY
+# - SUPABASE_SERVICE_ROLE_KEY
+# - NEXT_PUBLIC_PRIVY_APP_ID
+# - PRIVY_APP_SECRET
+# Optional:
+# - CRON_SECRET
+# - NEXT_PUBLIC_POSTHOG_KEY
+# - NEXT_PUBLIC_POSTHOG_HOST
 ```
 
-Never commit `.env.local`. It is in `.gitignore`.
+### 3. Apply migrations (in order)
 
-### 3. Apply database migrations
-
-Run each file in order via the Supabase SQL editor or `supabase db push`:
+Run each file in the Supabase SQL editor, or via `supabase db push` if using the CLI:
 
 ```
 supabase/migrations/202603100001_init.sql
@@ -201,19 +40,29 @@ supabase/migrations/202603110002_create_leaderboard_view.sql
 supabase/migrations/202603110003_results_ingestion_and_scoring.sql
 supabase/migrations/202603120001_align_predictions_mvp.sql
 supabase/migrations/202603180001_create_waitlist.sql
-supabase/migrations/202603190001_prd_full_schema.sql
-supabase/migrations/202603190002_hardening.sql
-supabase/migrations/202603190003_add_qualifying_starts_at.sql
-supabase/migrations/202603220001_privy_beta.sql
+supabase/migrations/202603190001_prd_full_schema.sql   ← new PRD schema
+supabase/migrations/202603190002_hardening.sql          ← critical fixes
+supabase/migrations/202603260002_security_and_prediction_integrity.sql
+supabase/migrations/202603260003_sync_official_2026_race_calendar.sql
+supabase/migrations/202603260004_sync_official_2026_driver_team_roster.sql
+supabase/migrations/202603270001_prize_distribution_functions.sql
+supabase/migrations/202603270002_prizing_logic_hardening.sql
+supabase/migrations/202603270003_multi_asset_deposit_flow.sql
+supabase/migrations/202603270004_atomic_league_stakes_and_prediction_edits.sql
+supabase/migrations/202603270005_race_scoped_leagues.sql
+supabase/migrations/202603270006_platform_refund_offsets.sql
+supabase/migrations/202603270007_withdrawal_availability_holds.sql
 ```
 
-The PRD migration (`202603190001`) auto-seeds 9 standard questions per race. To re-seed a specific race manually:
+### 4. Seed race questions
+
+The PRD migration auto-seeds 9 standard questions per race when it runs. If you need to re-seed manually, call the SQL function directly:
 
 ```sql
 SELECT public.seed_race_questions('japan-2026');
 ```
 
-### 4. Set yourself as admin
+### 5. Set yourself as admin
 
 ```sql
 UPDATE public.profiles SET is_admin = true WHERE id = '<your-user-uuid>';
@@ -221,86 +70,107 @@ UPDATE public.profiles SET is_admin = true WHERE id = '<your-user-uuid>';
 
 Find your UUID in Supabase → Authentication → Users.
 
-### 5. Run dev server
+### 6. Run dev server
 
 ```bash
 npm run dev
 ```
 
----
-
-## Environment variables
-
-| Variable | Required | Description |
-|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon/public key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Service role key — server only, never expose to browser |
-| `NEXT_PUBLIC_PRIVY_APP_ID` | Yes | Privy app ID — used in browser PrivyProvider |
-| `PRIVY_APP_SECRET` | Yes | Privy app secret — server only (`privy-sync` route) |
-
----
-
-## Database and backend notes
-
-- 11 migrations define the full schema. Apply them in filename order.
-- The `handle_new_user` trigger on `auth.users` auto-creates a `profiles` row with 100 Beta Credits on first signup.
-- Race locking: two signals — `race_locked` boolean (admin-controlled) OR `qualifying_starts_at` timestamp in the past. Either locks the race. No automated scheduler exists; admin must set `race_locked = true` manually or it locks via the deadline.
-- Score settlement runs in `lib/scoring/settleRace.ts` (TypeScript, deterministic). The admin calls `POST /api/admin/settle` which runs settlement for all predictions on a race and writes to `race_scores`.
-- RLS is enabled on all tables. The `leaderboard` and `league_leaderboard` are SQL views.
-- `profiles.points` (legacy column from early schema) is unused — scores live in `race_scores`.
-- The v1 predictions route (`/api/predictions`) writes `first_driver/second_driver/third_driver` (old podium-only format). It is still live but should be treated as dead code — the active form uses v2.
-- `lib/races.ts` is the client-side source of truth for race IDs and names. It must stay in sync with the `races` table manually.
-
----
-
-## Testing
-
-Tests use Vitest. Three test files exist:
+### 7. Run tests
 
 ```bash
 npm test           # run once
 npm run test:watch # watch mode
 ```
 
-| File | Covers |
-|---|---|
-| `tests/scoring.test.ts` | Full scoring engine: difficulty multiplier, edit penalty, confidence tiers, per-question-type scoring, chaos bonus, score caps |
-| `tests/popularity.test.ts` | Pick popularity calculation and snapshot logic |
-| `tests/settlement-edge-cases.test.ts` | Settlement with missing answers, tied scores, multi-select questions |
+---
 
-No E2E tests exist. No UI component tests exist.
+## MVP Launch Checklist
+
+### Infrastructure
+- [ ] Supabase project created and connected
+- [ ] All migrations applied in order (verify with `SELECT * FROM prediction_questions LIMIT 1`)
+- [ ] `is_admin = true` set for at least one user
+- [ ] `NEXT_PUBLIC_PRIVY_APP_ID` and `PRIVY_APP_SECRET` set in Vercel env vars
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` set in Vercel env vars
+- [ ] `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` set in Vercel env vars
+- [ ] Domain configured (if custom)
+
+### Verification
+- [ ] Sign up with Google/Privy → onboarding flow → username saved
+- [ ] Navigate to any upcoming race → prediction form loads qualifying, race, and chaos sections
+- [ ] Save race picks → success screen offers leagues, create league, and global leaderboard actions
+- [ ] Qualifying locks 10 minutes before qualifying start and GP locks 10 minutes before race start
+- [ ] Existing submitted picks can be edited during the 10-minute live edit window and charge the fixed edit fee
+- [ ] Global leaderboard scores the same per-race prediction after admin settlement
+- [ ] Create a race-scoped league → invite code generated → share link works at `/join/[code]`
+- [ ] Join league with a custom stake amount ≥ 5 USDC
+- [ ] Admin: submit results → settlement triggered → underfilled leagues refund, qualified leagues pay out
+
+### Content
+- [ ] 2026 race calendar correct (verify `SELECT id, name FROM races ORDER BY round`)
+- [ ] Driver list updated (`lib/races.ts → drivers[]`)
+- [ ] Season dates verified (Japan R3 next upcoming race as of March 2026)
+
+### Feature flags (hide before launch)
+- [ ] Wallet/USDC deposit UI shows "coming soon" ✓ (already shows placeholder)
+- [ ] Paid league entry fee disabled or clearly marked beta
+- [ ] Withdrawal button disabled ✓ (already disabled)
 
 ---
 
-## Known limitations / beta notes
+## Schema Summary
 
-- **No real money.** All balances are simulated Beta Credits (₮). The wallet page is display-only. No deposits, no withdrawals, no payouts.
-- **Race locking is manual.** No cron job sets `race_locked = true` at race time. Admin must lock races manually or rely on the `qualifying_starts_at` deadline.
-- **Paid leagues are not functional.** The `entry_fee_usdc` column and join-fee logic exist in the API, but there is no real USDC integration. All leagues are effectively free.
-- **No payout logic.** `payout_model` and `payout_config` columns exist in the schema. No distribution code exists.
-- **No on-chain detection.** Wallet credits can only be adjusted via the admin API (`POST /api/wallet/deposit`). Helius (USDC deposit watcher) is not integrated.
-- **Popularity snapshot not frozen.** Settlement computes pick popularity live from `prediction_answers` at settlement time. There is no cron to snapshot popularity at lock. This is accurate but theoretically gameable.
-- **Edit credits not charged.** The edit penalty is applied to scores but `balance_usdc` is not deducted per edit. Edits are free in the current beta.
-- **No email notifications.** No race reminders, results emails, or any transactional email.
-- **Privy login methods depend on dashboard config.** Auth methods (email, Google, Apple) are controlled in the Privy dashboard, not in code. If a method is not enabled there, it will not appear in the modal.
+| Table | Purpose | Key Columns | Used By |
+|-------|---------|-------------|---------|
+| `profiles` | Extended user data | `username`, `balance_usdc`, `is_admin` | All pages |
+| `races` | 2026 F1 calendar | `id`, `round`, `race_starts_at`, `race_locked` | Dashboard, predict form |
+| `prediction_questions` | Per-race prediction prompts | `race_id`, `category`, `base_points`, `multi_select` | Predict form, admin |
+| `prediction_options` | Selectable answers per question | `question_id`, `option_value` | Predict form, admin |
+| `predictions` | User prediction row (one per user per race, shared by global + leagues) | `user_id`, `race_id`, `status`, `edit_count` | v2 API, settle |
+| `prediction_answers` | Actual picks (answer to each question) | `prediction_id`, `question_id`, `option_id` | v2 API, settle |
+| `prediction_versions` | Audit trail of edits | `prediction_id`, `version_number`, `answers_json` | v2 API |
+| `race_results` | Correct answers after race | `race_id`, `question_id`, `correct_option_id` | Admin results API |
+| `race_scores` | Computed score per user per race | `user_id`, `race_id`, `total_score`, `breakdown_json` | Leaderboard, profile |
+| `leagues` | Race-scoped league contests | `race_id`, `name`, `invite_code`, `entry_fee_usdc`, `prize_pool` | Leagues pages, settle |
+| `league_members` | League membership + chosen stake | `league_id`, `user_id`, `paid`, `stake_amount_usdc` | League join, settle |
+| `league_scores` | Per-league score per user for that league race | `league_id`, `user_id`, `race_id`, `score` | League leaderboard |
+| `transactions` | Internal USDC balance ledger | `user_id`, `type`, `amount` | Wallet, league join |
+| `deposit_events` | On-chain deposit records + USDC credit normalization | `tx_hash`, `wallet_address`, `amount`, `token`, `swapped_amount_usdc`, `credited_amount_usdc`, `fee_amount_usdc` | Admin wallet credit |
+| `fee_wallet` | Platform fee ledger in USDC | `amount`, `league_id`, `description` | League rake, deposit/swap fees, edit fees |
+| `edit_events` | Paid live edit audit trail | `prediction_id`, `edit_number`, `cost_usdc` | Prediction edit flow |
+| `payout_holds` | Reserved held payouts pending manual review | `settlement_id`, `user_id`, `amount`, `released` | Settlement |
+| `withdrawal_holds` | 24-hour withdrawal availability holds for credited payouts | `settlement_id`, `user_id`, `amount`, `available_at`, `released` | Future withdrawal flow |
+| `pick_popularity_snapshots` | Frozen pick counts at lock | `question_id`, `option_id`, `popularity_percent` | Settlement |
+
+### Views
+| View | Purpose |
+|------|---------|
+| `leaderboard` | Global rank by `race_scores.total_score` |
+| `league_leaderboard` | Per-league rank for that league's target race |
 
 ---
 
-## Deployment
+## Known Gaps (not in MVP scope)
 
-- Hosted on **Vercel** (Next.js App Router, edge-compatible)
-- All five env vars above must be set in Vercel project settings
-- Database is Supabase (all migrations must be applied before first deploy)
-- No build-time database access — all data fetching is runtime
+### Not implemented
+- **Live wallet rails** — deposits can only be credited manually via admin API (`POST /api/wallet/deposit`). There is no automatic Privy wallet onramp, deposit watcher, swap executor, withdrawal signer, or offramp.
+- **Non-custodial escrow** — this repo does not use on-chain escrow or smart contracts for league pools. All balances and payouts are internal ledger movements in USDC.
+- **Popularity snapshot freeze** — no cron job freezes pick percentages at lock time. Settlement still falls back to computing popularity from active predictions.
+- **Automated race locking** — race and qualifying times exist, but full operational automation around every lock state still needs production scheduling and monitoring.
+- **Withdrawal execution** — normal payouts are credited immediately and tagged with a 24-hour withdrawal hold, but there is still no actual withdrawal endpoint or release worker.
+- **Held payout release flow** — suspicious-account payout holds are reserved, but there is no admin release/disbursement UI yet.
+- **Email / push notifications** — no race reminder or payout notification delivery exists yet.
 
----
+### Technical debt
+- `lib/races.ts` is the source of truth for race IDs/names on the frontend but `races` table is the source of truth in the DB. They must be kept in sync manually.
+- The old `/api/predictions` route (podium-only, v1) is still live. It writes `first_driver/second_driver/third_driver` which are now nullable. It should be deprecated once the new form rolls out.
+- `profiles.points` column from original schema is unused (replaced by `race_scores` table).
+- League creation/join and settlement are transactional in SQL, but there is still no external reconciliation layer against a real custodian or chain indexer.
 
-## Contributor notes
-
-- The critical auth path is: `app/login/page.tsx` → `handlePrivyLoginComplete` → `POST /api/auth/privy-sync` → Supabase `verifyOtp`. Do not break this chain.
-- The scoring engine (`lib/scoring/settleRace.ts`) is the most tested part of the codebase. Do not change scoring logic without updating tests.
-- The prediction form (`app/predict/[raceId]/page.tsx`) uses localStorage for anonymous draft persistence — this is intentional. Server-side answers are loaded on top when the user is authenticated.
-- Do not introduce unrelated refactors during beta hardening. Prefer minimal targeted patches.
-- `lib/races.ts` and the `races` DB table must be kept in sync manually — there is no automated sync.
-- The v1 predictions API route should not be extended; all new work goes through v2.
+### Deferred to post-launch
+- Analytics (PostHog)
+- Email verification flow UI
+- Public league discovery / search
+- Admin: view all predictions per race
+- Season archive / historical leaderboards

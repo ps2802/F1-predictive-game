@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 /**
- * middleware.ts — Route protection for authenticated pages.
+ * proxy.ts — Route protection for authenticated pages.
  *
  * Unauthenticated users hitting protected routes are redirected to /login
  * with a ?redirect= param so they land back where they intended after auth.
@@ -15,7 +15,6 @@ import { createServerClient } from "@supabase/ssr";
 
 const PROTECTED_PREFIXES = [
   "/dashboard",
-  "/predict",
   "/profile",
   "/leagues",
   "/leaderboard",
@@ -28,13 +27,22 @@ const PROTECTED_PREFIXES = [
 
 const AUTH_ROUTES = ["/login", "/signup"];
 
-export async function middleware(request: NextRequest) {
+function isProtectedPath(pathname: string) {
+  return PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
+function isAuthPath(pathname: string) {
+  return AUTH_ROUTES.some((prefix) => pathname.startsWith(prefix));
+}
+
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // If Supabase is not configured, allow all requests through
+  // If Supabase is not configured, allow all requests through. This keeps
+  // preview/static environments from being hard-failed by auth middleware.
   if (!supabaseUrl || !supabaseAnonKey) {
     return NextResponse.next();
   }
@@ -50,12 +58,12 @@ export async function middleware(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value)
-        );
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options)
-        );
+        cookiesToSet.forEach(({ name, value }) => {
+          request.cookies.set(name, value);
+        });
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options);
+        });
       },
     },
   });
@@ -64,18 +72,13 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
-  const isAuthRoute = AUTH_ROUTES.some((p) => pathname.startsWith(p));
-
-  // Unauthenticated user hitting a protected route → redirect to login
-  if (isProtected && !user) {
+  if (isProtectedPath(pathname) && !user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Authenticated user hitting an auth route → redirect to dashboard
-  if (isAuthRoute && user) {
+  if (isAuthPath(pathname) && user) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
@@ -86,11 +89,11 @@ export const config = {
   matcher: [
     /*
      * Match all paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization)
-     * - favicon.ico, site assets, and public files
-     * - API routes (auth is checked inside each route handler)
+     * - API routes
+     * - Next internals and Vercel internals
+     * - metadata files
+     * - static assets in /public
      */
-    "/((?!_next/static|_next/image|favicon|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|otf|css|js|map|webmanifest)).*)",
+    "/((?!api|_next/static|_next/image|_vercel|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest|site.webmanifest|opengraph-image|twitter-image|apple-icon|icon|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|otf|css|js|map|webmanifest|txt|xml)$).*)",
   ],
 };

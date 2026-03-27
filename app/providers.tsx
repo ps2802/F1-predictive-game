@@ -20,12 +20,27 @@ function PostHogInit() {
   return null;
 }
 
+function MissingPrivyConfigNotice() {
+  useEffect(() => {
+    console.error(
+      "[Gridlock] NEXT_PUBLIC_PRIVY_APP_ID is not set. " +
+      "Auth will not work until the variable is configured in the active environment."
+    );
+  }, []);
+
+  return null;
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
   if (!appId) {
-    // No Privy app ID configured — auth will not work. Check .env.local.
-    return <>{children}</>;
+    return (
+      <>
+        <MissingPrivyConfigNotice />
+        {children}
+      </>
+    );
   }
 
   return (
