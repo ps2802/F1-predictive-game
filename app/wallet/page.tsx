@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AppNav } from "@/components/AppNav";
+import { AppNav } from "@/app/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type ProfileData = {
@@ -47,10 +47,7 @@ export default function WalletPage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
-      <AppNav
-        isAdmin={profile?.is_admin ?? false}
-        profileLabel={profile?.username ? `@${profile.username}` : "Profile"}
-      />
+      <AppNav profile={profile} />
 
       <div className="gla-content" style={{ maxWidth: "560px" }}>
         <Link href="/profile" className="predict-back">← Profile</Link>

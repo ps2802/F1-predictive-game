@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AppNav } from "@/components/AppNav";
+import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { AppNav } from "@/app/components/AppNav";
 
 type LeaderboardEntry = {
   user_id: string;
@@ -13,18 +14,12 @@ type LeaderboardEntry = {
   races_played: number;
 };
 
-type NavProfile = {
-  username: string | null;
-  is_admin: boolean;
-};
-
 export default function LeaderboardPage() {
   const router = useRouter();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [navProfile, setNavProfile] = useState<NavProfile | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -37,21 +32,16 @@ export default function LeaderboardPage() {
       if (!user) { router.push("/login"); return; }
       setCurrentUserId(user.id);
 
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("username, is_admin")
-        .eq("id", user.id)
-        .single();
-
-      setNavProfile(profileData);
-
       const { data, error: fetchErr } = await supabase
         .from("leaderboard")
         .select("*")
         .limit(100);
 
-      if (fetchErr) setError("Failed to load leaderboard. Please refresh.");
-      setEntries(data ?? []);
+      if (fetchErr) {
+        setError("Failed to load leaderboard. Please refresh.");
+      } else {
+        setEntries(data ?? []);
+      }
       setLoading(false);
     }
     load();
@@ -71,10 +61,7 @@ export default function LeaderboardPage() {
     return (
       <div className="gla-root">
         <div className="gl-stripe" aria-hidden="true" />
-        <AppNav
-          isAdmin={navProfile?.is_admin ?? false}
-          profileLabel={navProfile?.username ? `@${navProfile.username}` : "Profile"}
-        />
+        <AppNav />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <p style={{ fontSize: "2rem", marginBottom: "1rem" }}>⚠️</p>
           <h1 className="gla-page-title">Something went wrong</h1>
@@ -94,10 +81,7 @@ export default function LeaderboardPage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
-      <AppNav
-        isAdmin={navProfile?.is_admin ?? false}
-        profileLabel={navProfile?.username ? `@${navProfile.username}` : "Profile"}
-      />
+      <AppNav />
 
       <div className="gla-content">
         <p className="gla-page-title">Global Leaderboard</p>
@@ -113,7 +97,11 @@ export default function LeaderboardPage() {
 
           {entries.length === 0 ? (
             <div className="lb-empty">
-              No scores yet — predictions are still being settled.
+              <p className="lb-empty-headline">No predictions locked in yet.</p>
+              <p className="lb-empty-sub">Be first on the board — predict the podium before qualifying locks.</p>
+              <Link href="/dashboard" className="gla-race-btn" style={{ display: "inline-block", marginTop: "1.25rem" }}>
+                Make Your Predictions
+              </Link>
             </div>
           ) : (
             entries.map((entry, i) => (
@@ -142,3 +130,4 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+

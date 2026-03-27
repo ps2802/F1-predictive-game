@@ -6,7 +6,7 @@ import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
 export async function POST(request: NextRequest) {
   // Rate limit: 10 join attempts per IP per minute (prevents invite code brute-force)
   const ip = getClientIp(request.headers);
-  if (isRateLimited(`leagues-join:${ip}`, 10, 60 * 1000)) {
+  if (await isRateLimited(`leagues-join:${ip}`, 10, 60 * 1000)) {
     return NextResponse.json({ error: "Too many requests." }, { status: 429 });
   }
 

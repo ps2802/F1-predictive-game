@@ -3,16 +3,6 @@ import { PrivyClient } from "@privy-io/server-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
-async function generateMagicLink(
-  email: string,
-  admin: NonNullable<ReturnType<typeof createSupabaseAdminClient>>
-) {
-  return admin.auth.admin.generateLink({
-    type: "magiclink",
-    email,
-  });
-}
-
 /**
  * POST /api/auth/privy-sync
  *
@@ -26,13 +16,13 @@ async function generateMagicLink(
  *      browser can establish a Supabase session — keeping all existing API
  *      routes (which use supabase.auth.getUser()) working without any changes.
  *
- * The client calls supabase.auth.verifyOtp({ token_hash, type: 'magiclink' })
+ * The client calls supabase.auth.verifyOtp({ email, token, type: 'email' })
  * with the returned values to complete the session handshake.
  */
 export async function POST(request: NextRequest) {
   // Rate limit: 10 auth attempts per IP per 15 minutes
   const ip = getClientIp(request.headers);
-  if (isRateLimited(`privy-sync:${ip}`, 10, 15 * 60 * 1000)) {
+  if (await isRateLimited(`privy-sync:${ip}`, 10, 15 * 60 * 1000)) {
     return NextResponse.json(
       { error: "Too many requests. Please wait before trying again." },
       { status: 429 }
@@ -106,7 +96,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // ── 3. Find or create Supabase auth user ───────────────────────────────
+  // ── 3 + 5. Find/create Supabase user AND generate OTP in parallel ──────
+  // createUser is fire-and-forget for new users (fires handle_new_user trigger).
+  // generateLink works whether or not the user exists and returns the user ID.
   const admin = createSupabaseAdminClient();
   if (!admin) {
     return NextResponse.json(
@@ -115,27 +107,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Returning users are the common path. Try generating the magic link first
-  // and only create the auth user if the email has never been seen before.
-  let { data: linkData, error: linkError } = await generateMagicLink(email, admin);
-  let isNewUser = false;
-
-  if (linkError || !linkData?.properties?.hashed_token) {
-    const { data: newUserData, error: createUserError } = await admin.auth.admin.createUser({
-      email,
-      email_confirm: true,
-    });
-
-    if (createUserError || !newUserData?.user?.id) {
-      return NextResponse.json(
-        { error: "Could not create Supabase user." },
-        { status: 500 }
-      );
-    }
-
-    isNewUser = true;
-    ({ data: linkData, error: linkError } = await generateMagicLink(email, admin));
-  }
+  const [{ data: newUserData }, { data: linkData, error: linkError }] =
+    await Promise.all([
+      admin.auth.admin.createUser({ email, email_confirm: true }),
+      admin.auth.admin.generateLink({ type: "magiclink", email }),
+    ]);
 
   if (linkError || !linkData?.properties?.hashed_token) {
     return NextResponse.json(
@@ -144,17 +120,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const resolvedUserId = linkData.user?.id;
+  // Resolve the Supabase user ID (prefer createUser response; fall back to
+  // generateLink which also returns the user for existing accounts).
+  const resolvedUserId = newUserData?.user?.id ?? linkData.user?.id;
 
-  // Upsert profile: set privy_user_id and wallet_address.
-  // Use upsert (not update) so that if the handle_new_user trigger hasn't
-  // run yet for a brand-new user the row is still written. On conflict only
-  // the specified columns are touched — balance_usdc is intentionally
-  // excluded and is never overwritten here.
+  // ── 4. Upsert profile + check username in parallel ──────────────────────
+  // Check for existing username at the same time as writing privy/wallet fields
+  // so the client doesn't need a separate round-trip to decide where to redirect.
+  let hasUsername = false;
+
   if (resolvedUserId) {
-    await admin
-      .from("profiles")
-      .upsert(
+    const [, { data: profileRow }] = await Promise.all([
+      admin.from("profiles").upsert(
         {
           id: resolvedUserId,
           privy_user_id: privyUserId,
@@ -162,12 +139,15 @@ export async function POST(request: NextRequest) {
           is_beta_account: true,
         },
         { onConflict: "id" }
-      );
+      ),
+      admin.from("profiles").select("username").eq("id", resolvedUserId).single(),
+    ]);
+    hasUsername = !!profileRow?.username;
   }
 
   return NextResponse.json({
     token: linkData.properties.hashed_token,
     email,
-    is_new_user: isNewUser,
+    hasUsername,
   });
 }

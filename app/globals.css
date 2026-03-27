@@ -76,7 +76,6 @@ h1, h2, h3 { margin-top: 0; }
   padding: 0;
 }
 .gla-nav-link:hover { color: rgba(255,255,255,.75); }
-.gla-nav-link.is-active { color: #fff; }
 
 /* ── Page content ── */
 .gla-content {
@@ -501,29 +500,24 @@ h1, h2, h3 { margin-top: 0; }
 
 /* ── Responsive ── */
 @media (max-width: 700px) {
-  /* Nav: keep a single horizontal row that scrolls on mobile */
+  /* Nav: wrap to two rows on mobile so links don't overflow */
   .gla-nav {
     padding: 0 1rem;
     height: auto;
     min-height: 52px;
-    flex-wrap: nowrap;
-    gap: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0;
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
-    align-items: center;
   }
   .gla-nav-logo { width: 100px; }
   .gla-nav-right {
     gap: 0.6rem;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     padding: 0.25rem 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    width: 100%;
-    scrollbar-width: none;
   }
-  .gla-nav-right::-webkit-scrollbar { display: none; }
+  /* Hide leaderboard + leagues on very small screens to prevent overflow */
   .gla-content { padding: 1.75rem 1rem 3rem; }
   .gla-race-grid { grid-template-columns: 1fr; }
   .gla-auth-card { padding: 1.5rem 1.25rem; }
@@ -1669,8 +1663,21 @@ h1, h2, h3 { margin-top: 0; }
 .lb-races { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
 .lb-score { font-size: 0.95rem; font-weight: 700; color: #fff; text-align: right; }
 .lb-empty {
-  padding: 2rem; text-align: center;
+  padding: 3rem 2rem; text-align: center;
   color: rgba(255,255,255,0.3); font-size: 0.9rem;
+}
+.lb-empty-headline {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  color: rgba(255,255,255,0.75);
+  margin: 0 0 0.4rem;
+}
+.lb-empty-sub {
+  font-size: 0.83rem;
+  color: rgba(255,255,255,0.35);
+  margin: 0;
+  line-height: 1.55;
 }
 
 /* =============================================================
@@ -1696,12 +1703,6 @@ h1, h2, h3 { margin-top: 0; }
 .league-join-input:focus { border-color: var(--gl-red, #E10600); }
 .league-join-error { color: var(--gl-red, #E10600); font-size: 0.85rem; margin-top: 0.5rem; }
 .league-join-success { color: #4caf50; font-size: 0.85rem; margin-top: 0.5rem; }
-.league-join-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-top: 1rem;
-}
 
 .league-section { margin-bottom: 2.5rem; }
 .league-section-title {
@@ -1775,9 +1776,12 @@ h1, h2, h3 { margin-top: 0; }
   transition: background 0.12s;
 }
 .league-copy-btn:hover { background: #c40500; }
-.league-secondary-btn {
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.2);
+.league-invite-hint {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.3);
+  text-align: right;
+  line-height: 1.4;
+  max-width: 200px;
 }
 
 /* =============================================================
@@ -1820,26 +1824,8 @@ h1, h2, h3 { margin-top: 0; }
   background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
   display: flex; flex-direction: column; gap: 1rem;
 }
-.wallet-beta-pill {
-  align-self: flex-start;
-  margin: 0;
-  padding: 0.35rem 0.7rem;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #ffd166;
-  background: rgba(255,209,102,0.12);
-  border: 1px solid rgba(255,209,102,0.24);
-}
 .wallet-deposit-title { font-size: 1rem; font-weight: 700; color: #fff; margin: 0; }
 .wallet-deposit-desc { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin: 0; }
-.wallet-action-row {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
 .wallet-address-box {
   display: flex; align-items: center; gap: 0.75rem;
   background: rgba(255,255,255,0.06); padding: 0.75rem 1rem; border-radius: 8px;
@@ -1852,20 +1838,6 @@ h1, h2, h3 { margin-top: 0; }
 .wallet-no-address { color: rgba(255,255,255,0.4); font-size: 0.9rem; }
 .wallet-notes { display: flex; flex-direction: column; gap: 0.4rem; }
 .wallet-notes p { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin: 0; }
-.admin-results-status {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-bottom: 1rem;
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.55);
-}
-.admin-results-status span {
-  padding: 0.35rem 0.65rem;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-}
 
 /* =============================================================
    MOBILE RESPONSIVE
@@ -1918,14 +1890,23 @@ h1, h2, h3 { margin-top: 0; }
     linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 70%, rgba(0,0,0,0.7) 100%);
 }
 
-/* Vertical red glow strip — left edge of image, bridges panels */
+/* Vertical red glow strip — removed, replaced by full-width top bar */
 .gl-login-vstrip {
+  display: none;
+}
+
+/* ── Full-width neon top bar on root ── */
+.gl-login-root::before {
+  content: "";
   position: absolute;
-  top: 0; bottom: 0; left: 0;
-  width: 2px;
-  background: linear-gradient(to bottom, transparent 0%, #E10600 30%, #E10600 70%, transparent 100%);
-  box-shadow: 0 0 24px 4px rgba(225,6,0,0.45);
-  z-index: 2;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #E10600 0%, #ff2a26 40%, #E10600 70%, #b00400 100%);
+  box-shadow:
+    0 0 8px 2px rgba(225,6,0,0.9),
+    0 0 24px 4px rgba(225,6,0,0.55),
+    0 0 60px 8px rgba(225,6,0,0.25);
+  z-index: 20;
 }
 
 /* ── Left: content panel ── */
@@ -1937,16 +1918,47 @@ h1, h2, h3 { margin-top: 0; }
   justify-content: center;
   padding: 3.5rem 4rem 3rem;
   background: #000;
+  overflow: hidden;
 }
 
-/* Top red bar */
+/* Panel ::before now unused — top bar moved to root */
 .gl-login-panel::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: #E10600;
+  display: none;
 }
+
+/* ── Full-panel F1 engineering blueprint background ── */
+.gl-login-engineering-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* ── Ensure panel content sits above engineering bg ── */
+.gl-login-panel > *:not(.gl-login-engineering-bg) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Sector indicator dots — decorative F1 timing elements ── */
+.gl-login-sectors {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1.6rem;
+  position: relative;
+  z-index: 1;
+}
+
+.gl-login-sector {
+  width: 28px;
+  height: 3px;
+  border-radius: 1px;
+}
+
+.gl-login-sector-1 { background: #E10600; box-shadow: 0 0 6px rgba(225,6,0,0.6); }
+.gl-login-sector-2 { background: #E10600; box-shadow: 0 0 6px rgba(225,6,0,0.6); opacity: 0.6; }
+.gl-login-sector-3 { background: rgba(255,255,255,0.15); }
 
 .gl-login-logo {
   width: 130px;
@@ -2001,15 +2013,6 @@ h1, h2, h3 { margin-top: 0; }
   font-size: 0.82rem;
   line-height: 1.65;
   color: rgba(255,255,255,0.42);
-  letter-spacing: 0.02em;
-  max-width: 380px;
-  margin: 0 0 0.8rem;
-}
-
-.gl-login-helper {
-  font-size: 0.72rem;
-  line-height: 1.6;
-  color: rgba(255,255,255,0.58);
   letter-spacing: 0.02em;
   max-width: 380px;
   margin: 0 0 2rem;
@@ -2137,19 +2140,6 @@ h1, h2, h3 { margin-top: 0; }
   max-width: 340px;
 }
 
-.gl-login-switch {
-  margin-top: 1rem;
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.38);
-  letter-spacing: 0.03em;
-}
-
-.gl-login-switch a {
-  color: #fff;
-  text-decoration: underline;
-  text-underline-offset: 0.18em;
-}
-
 .gl-login-footer {
   margin-top: 2rem;
   padding-top: 1.2rem;
@@ -2173,13 +2163,12 @@ h1, h2, h3 { margin-top: 0; }
 @media (max-width: 768px) {
   .gl-login-root {
     grid-template-columns: 1fr;
-    grid-template-rows: 52vh 1fr;
+    grid-template-rows: 1fr 45vh;
   }
 
-  /* Image first on mobile */
+  /* Text panel first, image below on mobile */
   .gl-login-visual {
-    order: -1;
-    min-height: 52vh;
+    min-height: 45vh;
   }
 
   .gl-login-img-overlay {
@@ -2190,6 +2179,10 @@ h1, h2, h3 { margin-top: 0; }
 
   .gl-login-vstrip {
     display: none;
+  }
+
+  .gl-login-engineering-bg {
+    opacity: 0.45;
   }
 
   .gl-login-panel {
@@ -2215,612 +2208,847 @@ h1, h2, h3 { margin-top: 0; }
   }
 }
 
-/* ========================================
-   LANDING PAGE
-   ======================================== */
+/* ═══════════════════════════════════════════════════════════════
+   PUBLIC HOMEPAGE — /app/page.tsx
+   Dark · F1 red #E10600 · teal accent rgba(0,210,170,1)
+═══════════════════════════════════════════════════════════════ */
 
-.landing-hero {
-  text-align: center;
-  padding: 4rem 0 3rem;
-}
-
-.landing-round {
-  font-size: 0.85rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 0.75rem;
-}
-
-.landing-race-name {
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  margin-bottom: 1.5rem;
-}
-
-.landing-countdown {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  margin-bottom: 2.5rem;
-}
-
-.landing-countdown-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.landing-countdown-value {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--gl-red, #e10600);
-  font-variant-numeric: tabular-nums;
-}
-
-.landing-ctas {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.landing-cta-primary {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.85rem 2rem;
-  background: var(--gl-red, #e10600);
+.home-root {
+  min-height: 100svh;
+  background: #000;
   color: #fff;
-  font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  transition: background 0.15s, box-shadow 0.15s;
-}
-
-.landing-cta-primary:hover {
-  background: #ff1a0e;
-  box-shadow: 0 0 20px rgba(225, 6, 0, 0.4);
-}
-
-.landing-cta-secondary {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.85rem 2rem;
-  background: transparent;
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.95rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  cursor: pointer;
-  text-decoration: none;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.landing-cta-secondary:hover {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.landing-stats {
-  display: flex;
-  justify-content: center;
-  gap: 3rem;
-  padding: 2rem 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 3rem;
-}
-
-.landing-stat {
+  font-family: var(--font-titillium, "Titillium Web", "Arial Narrow", Arial, sans-serif);
   display: flex;
   flex-direction: column;
+}
+
+/* Top speed stripe */
+.home-stripe {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: #E10600;
+  z-index: 100;
+}
+
+/* ── Nav ── */
+.home-nav {
+  position: sticky;
+  top: 3px;
+  z-index: 90;
+  display: flex;
   align-items: center;
-  gap: 0.25rem;
-}
-
-.landing-stat-value {
-  font-size: 1.6rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.landing-stat-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.landing-section {
-  margin-bottom: 3rem;
-}
-
-.landing-section-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin-bottom: 1.5rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.landing-steps-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-}
-
-.landing-step-card {
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.landing-step-card h3 {
-  font-size: 1rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.landing-step-card p {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.55);
-  line-height: 1.5;
-}
-
-.landing-step-num {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--gl-red, #e10600);
-  letter-spacing: 0.1em;
-  display: block;
-  margin-bottom: 0.75rem;
-}
-
-.landing-footer {
-  text-align: center;
-  padding: 3rem 0 2rem;
-  color: rgba(255, 255, 255, 0.25);
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-}
-
-/* ========================================
-   PREDICT — REVIEW STEP
-   ======================================== */
-
-.predict-review {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.predict-review-category {
-  padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.predict-review-category h3 {
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 1rem;
-}
-
-.predict-review-row {
-  display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 0.6rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0 3rem;
+  height: 60px;
+  background: rgba(0,0,0,.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.06);
 }
 
-.predict-review-row:last-child {
-  border-bottom: none;
+.home-nav-logo {
+  width: 130px;
+  height: auto;
+  display: block;
 }
 
-.predict-review-label {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.6);
-  flex: 1;
-}
-
-.predict-review-picks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  justify-content: flex-end;
-  flex: 1;
-}
-
-.predict-review-pick {
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 0.2rem 0.6rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.predict-review-missing {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.25);
-  font-style: italic;
-}
-
-.predict-review-edit-btn {
-  font-size: 0.75rem;
-  color: rgba(0, 210, 170, 1);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.2rem 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 600;
-}
-
-.predict-review-edit-btn:hover {
-  text-decoration: underline;
-}
-
-@media (max-width: 600px) {
-  .landing-stats {
-    gap: 1.5rem;
-  }
-
-  .landing-hero {
-    padding: 2.5rem 0 2rem;
-  }
-}
-
-/* ========================================
-   LEAGUE ECONOMICS & PAYOUT
-   ======================================== */
-
-.league-economics {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.league-econ-card {
-  flex: 1;
-  min-width: 120px;
-  padding: 1rem 1.25rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.league-econ-value {
-  font-size: 1.3rem;
+.home-nav-cta {
+  font-size: .7rem;
   font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.league-econ-label {
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
+  letter-spacing: .14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255,255,255,.75);
+  padding: 0.45rem 1.1rem;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 3px;
+  transition: color .18s, border-color .18s;
+}
+.home-nav-cta:hover {
+  color: #fff;
+  border-color: rgba(255,255,255,.5);
 }
 
-.league-payout-section {
-  margin-top: 2rem;
-}
-
-.league-payout-tiers {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.league-payout-tier {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.league-payout-place {
-  width: 36px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.league-payout-bar-bg {
+/* ── Hero ── */
+.home-hero {
   flex: 1;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: calc(100svh - 63px);
   overflow: hidden;
 }
 
-.league-payout-bar {
-  height: 100%;
-  background: var(--gl-red, #e10600);
-  transition: width 0.3s ease;
-}
-
-.league-payout-pct {
-  width: 40px;
-  text-align: right;
-  font-size: 0.8rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.league-payout-amt {
-  width: 70px;
-  text-align: right;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ========================================
-   LEAGUE CREATE — FEE PRESETS & PAYOUT EDITOR
-   ======================================== */
-
-.league-fee-presets {
+.home-hero-inner {
+  padding: 4rem 3rem 4rem;
   display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+}
+
+.home-hero-eyebrow {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-top: 0.5rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.45);
+  margin-bottom: 1.2rem;
 }
 
-.league-fee-btn {
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
+.home-hero-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #E10600;
+  display: inline-block;
+  animation: home-dot-pulse 1.8s ease-in-out infinite;
+}
+@keyframes home-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .55; transform: scale(.85); }
 }
 
-.league-fee-btn.is-active {
-  background: var(--gl-red, #e10600);
-  border-color: var(--gl-red, #e10600);
+.home-hero-h1 {
+  font-size: clamp(2.4rem, 4.5vw, 4.2rem);
+  font-weight: 900;
+  letter-spacing: -.025em;
+  text-transform: uppercase;
+  line-height: 1.02;
+  margin: 0 0 1.4rem;
+}
+
+.home-hero-em {
+  font-style: normal;
+  color: rgba(0, 210, 170, 1);
+}
+
+.home-hero-sub {
+  font-size: .92rem;
+  color: rgba(255,255,255,.52);
+  line-height: 1.65;
+  max-width: 460px;
+  margin-bottom: 2rem;
+}
+
+/* ── Countdown widget ── */
+.home-countdown-box {
+  border: 1px solid rgba(255,255,255,.09);
+  border-left: 3px solid #E10600;
+  background: rgba(255,255,255,.03);
+  border-radius: 4px;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 2rem;
+  max-width: 440px;
+}
+
+.home-countdown-label {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.38);
+  margin: 0 0 .4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.home-countdown-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #E10600;
+  display: inline-block;
+  animation: home-dot-pulse 1.8s ease-in-out infinite;
+}
+
+.home-countdown-race {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  margin: 0 0 .2rem;
   color: #fff;
 }
 
-.league-fee-btn:hover:not(.is-active) {
-  border-color: rgba(255, 255, 255, 0.3);
+.home-countdown-date {
+  font-size: .72rem;
+  color: rgba(255,255,255,.38);
+  margin: 0 0 1rem;
+  letter-spacing: .04em;
 }
 
-.league-payout-editor {
+.home-countdown-timer {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.home-countdown-unit {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  margin-top: 0.5rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  align-items: center;
+  min-width: 3rem;
 }
 
-.league-payout-edit-row {
+.home-countdown-n {
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: -.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  color: rgba(0, 210, 170, 1);
+}
+
+.home-countdown-u {
+  font-size: .58rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.3);
+  margin-top: .2rem;
+}
+
+.home-countdown-sep {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: rgba(255,255,255,.2);
+  margin-bottom: .4rem;
+  line-height: 1;
+}
+
+/* ── CTA actions ── */
+.home-hero-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.home-cta-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 2.2rem;
+  background: #E10600;
+  color: #fff;
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  border-radius: 3px;
+  transition: background .18s, transform .15s;
+}
+.home-cta-primary:hover {
+  background: #c80500;
+  transform: translateY(-1px);
+}
+
+/* ── Stats strip ── */
+.home-hero-stats {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0;
 }
 
-.league-payout-place-label {
-  width: 36px;
-  font-size: 0.85rem;
+.home-stat {
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+  padding: 0 1.4rem 0 0;
+}
+
+.home-stat-n {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -.03em;
+  line-height: 1;
+  color: #fff;
+}
+
+.home-stat-l {
+  font-size: .6rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.35);
 }
 
-/* ========================================
-   PROFILE — WALLET SECTION (INLINE)
-   ======================================== */
-
-.profile-wallet-section {
-  margin-top: 2rem;
+.home-stat-div {
+  width: 1px;
+  height: 30px;
+  background: rgba(255,255,255,.1);
+  margin: 0 1.4rem 0 0;
 }
 
-.profile-wallet-card {
+/* ── Hero visual panel ── */
+.home-hero-visual {
+  position: relative;
+  overflow: hidden;
+}
+
+.home-hero-driver {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.home-hero-img-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, #000 0%, transparent 35%),
+    linear-gradient(to top, #000 0%, transparent 20%);
+}
+
+.home-hero-vstrip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #E10600;
+}
+
+/* ── How it works ── */
+.home-how {
+  background: rgba(255,255,255,.02);
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding: 5rem 0;
+}
+
+.home-how-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 3rem;
+}
+
+.home-how-title {
+  font-size: clamp(1.2rem, 2vw, 1.6rem);
+  font-weight: 900;
+  letter-spacing: -.02em;
+  text-transform: uppercase;
+  margin: 0 0 3rem;
+}
+
+.home-how-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.home-step {
+  border-top: 2px solid rgba(255,255,255,.08);
+  padding-top: 1.5rem;
+}
+
+.home-step-n {
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .2em;
+  color: #E10600;
+  display: block;
+  margin-bottom: .75rem;
+}
+
+.home-step-h {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  margin: 0 0 .7rem;
+}
+
+.home-step-p {
+  font-size: .84rem;
+  color: rgba(255,255,255,.48);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── Footer ── */
+.home-footer {
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding: 1.5rem 3rem;
+  font-size: .7rem;
+  color: rgba(255,255,255,.25);
+  letter-spacing: .04em;
+}
+
+.home-footer-link {
+  color: rgba(255,255,255,.4);
+  text-decoration: underline;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .home-nav {
+    padding: 0 1.5rem;
+  }
+
+  .home-hero {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    min-height: auto;
+  }
+
+  .home-hero-visual {
+    height: 52vw;
+    min-height: 220px;
+    order: -1;
+  }
+
+  .home-hero-img-overlay {
+    background:
+      linear-gradient(to bottom, rgba(0,0,0,.2) 0%, transparent 30%, transparent 60%, #000 100%),
+      linear-gradient(to right, rgba(0,0,0,.3) 0%, transparent 100%);
+  }
+
+  .home-hero-inner {
+    padding: 2rem 1.5rem 3rem;
+  }
+
+  .home-hero-h1 {
+    font-size: clamp(1.8rem, 6vw, 2.6rem);
+  }
+
+  .home-countdown-n {
+    font-size: 1.4rem;
+  }
+
+  .home-how {
+    padding: 3rem 0;
+  }
+
+  .home-how-inner {
+    padding: 0 1.5rem;
+  }
+
+  .home-how-steps {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .home-footer {
+    padding: 1.2rem 1.5rem;
+  }
+}
+
+/* =============================================================
+   F1P-22: MOBILE-FIRST RESPONSIVE PASS
+   Target: 375px (iPhone SE) and up. No horizontal scroll.
+   Touch targets ≥ 44px. Text ≥ 14px. Grids → single column.
+============================================================= */
+
+/* ── Driver dropdown (predict page) ── */
+.driver-dd { position: relative; width: 100%; }
+.driver-dd-trigger {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.5rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  gap: 1rem;
-  flex-wrap: wrap;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  min-height: 44px;
+  text-align: left;
 }
+.driver-dd-trigger:hover:not(.is-disabled) { border-color: rgba(255,255,255,0.3); }
+.driver-dd-trigger.is-open { border-color: var(--gl-red, #E10600); }
+.driver-dd-trigger.is-disabled { opacity: 0.5; cursor: not-allowed; }
+.driver-dd-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.driver-dd-arrow { font-size: 0.65rem; color: rgba(255,255,255,0.4); flex-shrink: 0; margin-left: 0.5rem; }
 
-.profile-wallet-balance {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
+.driver-dd-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: #0d0d0d;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  z-index: 50;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.7);
 }
-
-.profile-wallet-amount {
-  font-size: 1.8rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+.driver-dd-search-wrap { padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.driver-dd-search {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  outline: none;
 }
-
-.profile-wallet-currency {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.4);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.profile-wallet-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.profile-wallet-address {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.3);
-  margin-top: 0.5rem;
-  font-family: monospace;
-}
-
-/* ========================================
-   PREDICT — EDIT BANNER & SECTION NOTES
-   ======================================== */
-
-.predict-edit-banner {
-  margin: 0 auto;
-  max-width: var(--predict-max-width, 640px);
-  padding: 0.6rem 1rem;
-  background: rgba(0, 210, 170, 0.08);
-  border: 1px solid rgba(0, 210, 170, 0.25);
-  color: rgba(0, 210, 170, 1);
-  font-size: 0.8rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-}
-
-.predict-section-note {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.35);
-  margin-top: 1rem;
-  font-style: italic;
-}
-
-.predict-section-warning {
-  padding: 0.6rem 0.875rem;
-  background: rgba(225, 6, 0, 0.08);
-  border: 1px solid rgba(225, 6, 0, 0.3);
-  color: rgba(255, 160, 160, 1);
-  font-size: 0.82rem;
-  margin-top: 0.75rem;
-}
-
-/* ========================================
-   DASHBOARD — EDIT STATE BUTTON
-   ======================================== */
-
-.gla-race-btn.is-edit {
-  background: transparent;
-  border: 1px solid rgba(0, 210, 170, 0.5);
-  color: rgba(0, 210, 170, 1);
-}
-
-.gla-race-btn.is-edit:hover {
-  background: rgba(0, 210, 170, 0.08);
-  border-color: rgba(0, 210, 170, 0.8);
-}
-
-/* ========================================
-   LEAGUE — PREDICT CTA STRIP
-   ======================================== */
-
-.league-predict-cta {
+.driver-dd-search:focus { border-color: var(--gl-red, #E10600); }
+.driver-dd-list { max-height: 280px; overflow-y: auto; overscroll-behavior: contain; }
+.driver-dd-item {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  padding: 1rem 1.25rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  margin-top: 1.5rem;
-  flex-wrap: wrap;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.85);
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+  min-height: 44px;
+}
+.driver-dd-item:hover:not(.is-disabled) { background: rgba(255,255,255,0.06); }
+.driver-dd-item.is-selected { background: rgba(225,6,0,0.12); color: #fff; }
+.driver-dd-item.is-disabled { opacity: 0.35; cursor: not-allowed; }
+.driver-dd-num {
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+  min-width: 26px;
+  text-align: center;
+}
+.driver-dd-name { font-weight: 600; flex: 1; }
+.driver-dd-team { font-size: 0.72rem; white-space: nowrap; opacity: 0.75; }
+.driver-dd-check { margin-left: auto; font-size: 0.85rem; color: var(--gl-red, #E10600); flex-shrink: 0; }
+.driver-dd-empty { padding: 1rem; text-align: center; color: rgba(255,255,255,0.3); font-size: 0.875rem; }
+
+/* ── Predict page header + countdown ── */
+.predict-countdown {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.5);
+}
+.predict-countdown-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.35);
+}
+.predict-countdown-value {
+  font-weight: 700;
+  color: rgba(0,210,170,1);
+  font-size: 0.9rem;
+}
+.predict-already-banner {
+  max-width: 900px;
+  margin: 0.75rem auto 0;
+  padding: 0.65rem clamp(1rem, 5vw, 2.5rem);
+  font-size: 0.82rem;
+  color: rgba(0,210,170,0.85);
+  background: rgba(0,210,170,0.06);
+  border-bottom: 1px solid rgba(0,210,170,0.15);
+}
+.predict-step-note {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0.65rem clamp(1rem, 5vw, 2.5rem);
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.predict-step-error {
+  color: #f87171;
+  font-size: 0.85rem;
+  margin: 0;
 }
 
-.league-predict-cta-text {
+/* ── Profile-specific classes not yet defined ── */
+.profile-stats-strip {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+.profile-stat-block {
   flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem 1rem;
   gap: 0.25rem;
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.6);
-  line-height: 1.5;
 }
-
-.league-predict-cta-text strong {
-  color: rgba(255, 255, 255, 0.9);
+.profile-stat-num {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
 }
-
-/* ========================================
-   PROFILE — IDENTITY HEADER
-   ======================================== */
-
-.profile-identity {
-  margin-bottom: 1.5rem;
+.profile-stat-lbl {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.4);
+  font-weight: 700;
+  text-align: center;
 }
-
-/* ========================================
-   DASHBOARD — DRAFT PREDICTIONS BANNER
-   ======================================== */
-
-.dash-runtime-banner {
+.profile-stat-divider {
+  width: 1px;
+  background: rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+.profile-identity-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 1.5rem;
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.875rem 1.25rem;
-  margin-bottom: 1rem;
-  background: rgba(225, 106, 0, 0.08);
-  border: 1px solid rgba(225, 106, 0, 0.3);
+  flex-direction: column;
+  gap: 1.25rem;
 }
-
-.dash-runtime-banner.is-loading {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.14);
+.profile-field-group { display: flex; flex-direction: column; gap: 0.4rem; }
+.profile-field-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.4);
 }
-
-.dash-runtime-banner-text {
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.76);
-  line-height: 1.5;
-}
-
-.dash-draft-banner {
+.profile-field-row { display: flex; gap: 0.75rem; align-items: center; }
+.profile-field-static {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.875rem 1.25rem;
-  margin-bottom: 1.5rem;
-  background: rgba(255, 200, 0, 0.06);
-  border: 1px solid rgba(255, 200, 0, 0.25);
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.75);
+}
+.profile-field-note { font-size: 0.72rem; color: rgba(255,255,255,0.3); }
+.profile-wallet-addr { word-break: break-all; }
+.profile-wallet-text { font-family: monospace; font-size: 0.8rem; color: rgba(255,255,255,0.7); }
+.profile-save-msg { font-size: 0.82rem; margin: 0.25rem 0 0; }
+.profile-save-msg.is-ok { color: #4ade80; }
+.profile-save-msg.is-err { color: #f87171; }
+
+/* ── League card prize ── */
+.league-card-prize {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.league-card-prize-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,215,0,0.6);
+  font-weight: 700;
+}
+.league-card-prize-amount {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffd700;
+}
+.league-card-contribution {
+  font-size: 0.75rem;
+  color: rgba(0,210,170,0.7);
+}
+.league-prize-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  background: rgba(255,215,0,0.08);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 8px;
+  padding: 0.75rem 1.1rem;
+}
+.league-prize-banner-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,215,0,0.6);
+  font-weight: 700;
+}
+.league-prize-banner-amount {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #ffd700;
 }
 
-.dash-draft-banner-text {
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.75);
-  line-height: 1.5;
+/* =============================================================
+   BREAKPOINT: ≤ 768px  (tablets + large phones)
+============================================================= */
+@media (max-width: 768px) {
+  /* ── Shared: reduce horizontal padding on page content ── */
+  .gla-content { padding: 1.5rem 1rem 3rem; }
+
+  /* ── Nav: tighten horizontal padding, reduce font-clutter ── */
+  .gla-nav { padding: 0 1rem; }
+  /* Shrink balance pill so it doesn't overflow nav ── */
+  .dash-balance-pill { font-size: 0.75rem; padding: 0.4rem 0.7rem; }
+
+  /* ── Dashboard: full-width race cards ── */
+  .gla-race-grid { grid-template-columns: 1fr; }
+
+  /* ── Prediction form: full-width navigation buttons ── */
+  .predict-nav { flex-direction: column; }
+  .predict-nav-btn { width: 100%; text-align: center; min-height: 44px; }
+
+  /* ── Leaderboard: tighten columns for small viewports ── */
+  .lb-header,
+  .lb-row { grid-template-columns: 44px 1fr 56px 72px; padding: 0.75rem 0.85rem; }
+
+  /* ── Leagues: single-column card grid ── */
+  .league-grid { grid-template-columns: 1fr; }
+
+  /* ── League detail: stack header vertically ── */
+  .league-detail-header { flex-direction: column; }
+  .league-invite-box { align-items: flex-start; }
+  .league-invite-hint { max-width: 100%; text-align: left; }
+
+  /* ── League join form: stack on small screens ── */
+  .league-join-form { flex-direction: column; align-items: stretch; }
+  .league-join-form .gla-race-btn { width: 100%; min-height: 44px; }
+  .league-join-input { min-width: unset; width: 100%; }
+
+  /* ── Profile: stats strip — reduce padding on small screens ── */
+  .profile-stats-strip { flex-direction: column; }
+  .profile-stat-divider { width: 100%; height: 1px; }
+  .profile-stat-block { padding: 1rem; align-items: flex-start; }
+  .profile-field-row { flex-direction: column; align-items: stretch; }
+  .profile-field-row .gla-race-btn { width: 100%; min-height: 44px; }
+
+  /* ── Scores page: category summary 3-col → 1-col on small ── */
+  .scores-category-grid { grid-template-columns: 1fr !important; }
+
+  /* ── Score breakdown: question rows handle overflow ── */
+  .score-question-row { grid-template-columns: 1.25rem 1fr auto !important; gap: 0.5rem !important; }
+
+  /* ── Onboarding action buttons stack ── */
+  .onboarding-actions { flex-direction: column; }
+  .onboarding-actions button,
+  .onboarding-actions .gla-race-btn { width: 100%; min-height: 44px; }
+
+  /* ── Auth card: remove extra horizontal padding ── */
+  .gla-auth-card { padding: 1.5rem 1rem; }
+
+  /* ── How it works section already handled but ensure proper mobile ── */
+  .home-hero-sub { font-size: 0.88rem; }
+  .home-countdown-box { max-width: 100%; }
 }
 
-.dash-draft-banner-text strong {
-  color: rgba(255, 210, 60, 1);
-}
+/* =============================================================
+   BREAKPOINT: ≤ 480px  (iPhone SE and similar narrow phones)
+============================================================= */
+@media (max-width: 480px) {
+  /* ── App-wide content padding at narrowest ── */
+  .gla-content { padding: 1.25rem 0.875rem 2.5rem; }
 
-.dash-draft-banner-cta {
-  font-size: 0.85rem;
-  padding: 0.4rem 0.875rem;
-  background: transparent;
-  border: 1px solid rgba(255, 210, 60, 0.45);
-  color: rgba(255, 210, 60, 1);
-  text-decoration: none;
-  white-space: nowrap;
-  transition: background 0.15s;
-}
+  /* ── Nav: all items must fit in a single tight row ── */
+  .gla-nav { padding: 0 0.75rem; flex-wrap: wrap; min-height: 52px; height: auto; padding-top: 0.4rem; padding-bottom: 0.4rem; gap: 0.25rem; }
+  .gla-nav-logo { width: 96px; }
+  .gla-nav-right { gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end; }
+  .gla-nav-link { font-size: 0.6rem; letter-spacing: 0.08em; }
+  /* Hide leaderboard link in nav on very small screens — accessible via bottom of app */
+  .gla-nav-right .gla-nav-link[href="/leaderboard"] { display: none; }
+  /* Shorten admin link text won't truncate */
+  .dash-balance-pill { font-size: 0.68rem; padding: 0.35rem 0.55rem; }
 
-.dash-draft-banner-cta:hover {
-  background: rgba(255, 210, 60, 0.08);
+  /* ── Race cards: tighten padding ── */
+  .gla-race-card { padding: 1rem 1.1rem; }
+  /* Ensure race action buttons are full-width touch-friendly ── */
+  .gla-race-btn { min-height: 44px; display: flex; align-items: center; justify-content: center; }
+
+  /* ── Prediction step tabs: scrollable, never overflow ── */
+  .predict-steps { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; padding-bottom: 0.25rem; }
+  .predict-step-tab { white-space: nowrap; flex-shrink: 0; padding: 0.65rem 1rem; min-height: 44px; }
+
+  /* ── Prediction options: full-width on mobile ── */
+  .predict-options { flex-direction: column; }
+  .predict-option { width: 100%; min-height: 44px; display: flex; align-items: center; }
+
+  /* ── Driver dropdown list: bigger touch targets ── */
+  .driver-dd-item { min-height: 48px; }
+  .driver-dd-list { max-height: 240px; }
+
+  /* ── Leaderboard: only rank, name, score on very narrow ── */
+  .lb-header { grid-template-columns: 40px 1fr 70px; padding: 0.65rem 0.75rem; }
+  .lb-row { grid-template-columns: 40px 1fr 70px; padding: 0.75rem 0.75rem; }
+  /* Hide "Races" column on very narrow screens ── */
+  .lb-header span:nth-child(3),
+  .lb-row .lb-races { display: none; }
+
+  /* ── Profile stats: horizontal row of numbers stays compact ── */
+  .profile-stats-strip { flex-direction: row; }
+  .profile-stat-divider { width: 1px; height: auto; }
+  .profile-stat-block { padding: 0.875rem 0.5rem; }
+  .profile-stat-num { font-size: 1.3rem; }
+  .profile-stat-lbl { font-size: 0.58rem; }
+
+  /* ── Scores: category summary 3-col preserved when wide enough else 1 col ── */
+  /* Already handled at 768px via .scores-category-grid override */
+
+  /* ── League page header title: prevent overflow ── */
+  .gla-page-title { font-size: clamp(1.4rem, 7vw, 2rem); }
+
+  /* ── League join: compact ── */
+  .league-join-box { padding: 1.1rem; }
+
+  /* ── Auth form: ensure inputs don't overflow ── */
+  .gla-auth-card { padding: 1.25rem 0.875rem; }
+  .gla-field-input { font-size: 0.875rem; }
+
+  /* ── Home page: tighten nav ── */
+  .home-nav { padding: 0 1rem; }
+  .home-nav-logo { width: 100px; }
+  .home-hero-inner { padding: 1.75rem 1rem 2.5rem; }
+  .home-hero-actions { flex-direction: column; }
+  .home-cta-primary { width: 100%; justify-content: center; }
+  .home-how-inner { padding: 0 1rem; }
+  .home-footer { padding: 1rem; }
+
+  /* ── Countdown timer: shrink numbers slightly ── */
+  .home-countdown-n { font-size: 1.25rem; }
+  .home-countdown-unit { min-width: 2.5rem; }
+  .home-countdown-sep { font-size: 1.1rem; }
+
+  /* ── Login page: single column always, tighter padding ── */
+  .gl-login-panel { padding: 1.75rem 1rem 2rem; }
+  .gl-login-h1 { font-size: 1.8rem; }
+  .gl-login-stats { flex-wrap: wrap; width: 100%; }
+  .gl-login-stat { flex: 1 1 40%; }
+  .gl-login-btn { max-width: 100%; }
+
+  /* ── Dashboard: page sub text wrap ── */
+  .gla-page-sub { font-size: 0.78rem; }
+
+  /* ── League detail invite code: no overflow ── */
+  .league-invite-code { font-size: 0.95rem; letter-spacing: 0.1em; word-break: break-all; }
+  .league-invite-box { width: 100%; }
+
+  /* ── League type toggle: stack vertically on very narrow ── */
+  .league-type-toggle { flex-direction: column; }
+  .league-type-btn { min-height: 44px; }
+
+  /* ── Predict locked/saved: inline-flex to block ── */
+  .predict-locked-box-inner { flex-direction: column; align-items: stretch; }
+  .predict-locked-box-inner .gla-race-btn { width: 100%; min-height: 44px; text-align: center; display: flex; align-items: center; justify-content: center; }
+
+  /* ── Create league form: submit button full width ── */
+  .gla-predict-submit { width: 100%; min-height: 44px; justify-content: center; }
 }

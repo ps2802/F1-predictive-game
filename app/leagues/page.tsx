@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AppNav } from "@/components/AppNav";
+import { AppNav } from "@/app/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { track } from "@/lib/analytics";
 import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
@@ -118,10 +118,7 @@ export default function LeaguesPage() {
     return (
       <div className="gla-root">
         <div className="gl-stripe" aria-hidden="true" />
-        <AppNav
-          isAdmin={navProfile?.is_admin ?? false}
-          profileLabel={navProfile?.username ? `@${navProfile.username}` : "Profile"}
-        />
+        <AppNav profile={navProfile} />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <p style={{ fontSize: "2rem", marginBottom: "1rem" }}>⚠️</p>
           <h1 className="gla-page-title">Something went wrong</h1>
@@ -144,10 +141,7 @@ export default function LeaguesPage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
-      <AppNav
-        isAdmin={navProfile?.is_admin ?? false}
-        profileLabel={navProfile?.username ? `@${navProfile.username}` : "Profile"}
-      />
+      <AppNav profile={navProfile} />
 
       <div className="gla-content">
         <div className="league-page-header">

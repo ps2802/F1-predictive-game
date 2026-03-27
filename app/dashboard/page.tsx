@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { races } from "@/lib/races";
-import { AppNav } from "@/components/AppNav";
+import { AppNav } from "@/app/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type UserProfile = {
@@ -161,10 +161,7 @@ export default function DashboardPage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
-      <AppNav
-        isAdmin={profile?.is_admin ?? false}
-        profileLabel={profile?.username ? `@${profile.username}` : "Profile"}
-      />
+      <AppNav profile={profile} />
 
       <div className="gla-content">
         {loadWarning && (

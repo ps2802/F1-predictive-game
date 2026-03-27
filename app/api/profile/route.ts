@@ -12,24 +12,26 @@ export async function GET() {
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, username, avatar_url, balance_usdc, is_admin, created_at")
-    .eq("id", user.id)
-    .single();
-
-  const { data: scores } = await supabase
-    .from("race_scores")
-    .select("race_id, total_score, calculated_at")
-    .eq("user_id", user.id)
-    .order("calculated_at", { ascending: false });
-
-  // Count submitted predictions (any status) — race_scores only exist post-settlement
-  // so "Races Predicted" would always show 0 pre-season if counting from scores.
-  const { count: predictionsCount } = await supabase
-    .from("predictions")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id);
+  const [
+    { data: profile },
+    { data: scores },
+    { count: predictionsCount },
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, username, avatar_url, balance_usdc, is_admin, created_at, wallet_address")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("race_scores")
+      .select("race_id, total_score, calculated_at")
+      .eq("user_id", user.id)
+      .order("calculated_at", { ascending: false }),
+    supabase
+      .from("predictions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id),
+  ]);
 
   const totalScore = (scores ?? []).reduce((sum, s) => sum + (s.total_score ?? 0), 0);
 

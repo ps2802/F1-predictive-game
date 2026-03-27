@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { AppNav } from "@/components/AppNav";
+import { AppNav } from "@/app/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { races } from "@/lib/races";
 
@@ -204,10 +204,7 @@ export default function LeaguePage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
-      <AppNav
-        isAdmin={navProfile?.is_admin ?? false}
-        profileLabel={navProfile?.username ? `@${navProfile.username}` : "Profile"}
-      />
+      <AppNav profile={navProfile} />
 
       <div className="gla-content">
         <Link href="/leagues" className="predict-back">← Leagues</Link>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { AppNav } from "@/components/AppNav";
+import { AppNav } from "@/app/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { races } from "@/lib/races";
 
@@ -325,7 +325,7 @@ export default function AdminPage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
-      <AppNav isAdmin profileLabel="Profile" />
+      <AppNav profile={{ is_admin: true }} />
 
       <div className="gla-content">
         <p className="gla-page-title">Admin Panel</p>
