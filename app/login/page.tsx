@@ -1,10 +1,163 @@
 "use client";
 
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePrivy, useLogin, type User } from "@privy-io/react-auth";
 import { handlePrivyAuthComplete } from "@/lib/auth";
 import { track } from "@/lib/analytics";
+import { races as fallbackRaces } from "@/lib/races";
+
+type NextRace = {
+  id: string;
+  round: number;
+  grand_prix_name: string;
+  qualifying_starts_at: string | null;
+  race_starts_at: string | null;
+};
+
+type TimeLeft = {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+};
+
+function calcTimeLeft(targetIso: string): TimeLeft {
+  const diff = Math.max(0, new Date(targetIso).getTime() - Date.now());
+
+  return {
+    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((diff / (1000 * 60)) % 60),
+    seconds: Math.floor((diff / 1000) % 60),
+  };
+}
+
+function pad(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+function buildFallbackNextRace(): NextRace | null {
+  const now = new Date();
+  const fallbackRace = fallbackRaces.find((race) => new Date(race.date) > now) ?? null;
+
+  if (!fallbackRace) {
+    return null;
+  }
+
+  return {
+    id: fallbackRace.id,
+    round: fallbackRace.round,
+    grand_prix_name: fallbackRace.name,
+    qualifying_starts_at: null,
+    race_starts_at: `${fallbackRace.date}T00:00:00.000Z`,
+  };
+}
+
+function NextRaceCountdownCard() {
+  const [nextRace, setNextRace] = useState<NextRace | null>(null);
+  const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    async function loadNextRace() {
+      try {
+        const res = await fetch("/api/races/next", { cache: "no-store" });
+        const data = (await res.json()) as { race?: NextRace | null };
+        const race = data.race ?? buildFallbackNextRace();
+        if (cancelled || !race) {
+          return;
+        }
+
+        setNextRace(race);
+        const targetIso = race.qualifying_starts_at ?? race.race_starts_at;
+        if (!targetIso) {
+          return;
+        }
+
+        setTimeLeft(calcTimeLeft(targetIso));
+        intervalId = setInterval(() => {
+          setTimeLeft(calcTimeLeft(targetIso));
+        }, 1000);
+      } catch {
+        const race = buildFallbackNextRace();
+        if (cancelled || !race) {
+          return;
+        }
+
+        setNextRace(race);
+        const targetIso = race.qualifying_starts_at ?? race.race_starts_at;
+        if (!targetIso) {
+          return;
+        }
+
+        setTimeLeft(calcTimeLeft(targetIso));
+        intervalId = setInterval(() => {
+          setTimeLeft(calcTimeLeft(targetIso));
+        }, 1000);
+      }
+    }
+
+    void loadNextRace();
+
+    return () => {
+      cancelled = true;
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, []);
+
+  if (!nextRace || !timeLeft) {
+    return null;
+  }
+
+  const targetIso = nextRace.qualifying_starts_at ?? nextRace.race_starts_at;
+  if (!targetIso) {
+    return null;
+  }
+
+  const dateLabel = new Date(targetIso).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+
+  return (
+    <div className="home-countdown-box gl-login-countdown-box">
+      <p className="home-countdown-label">
+        <span className="home-countdown-dot" aria-hidden="true" />
+        NEXT RACE - QUALIFYING LOCKS IN
+      </p>
+      <p className="home-countdown-race">{nextRace.grand_prix_name}</p>
+      <p className="home-countdown-date">{dateLabel} · Round {nextRace.round}</p>
+      <div className="home-countdown-timer" aria-live="polite" aria-atomic="true">
+        <div className="home-countdown-unit">
+          <span className="home-countdown-n">{pad(timeLeft.days)}</span>
+          <span className="home-countdown-u">Days</span>
+        </div>
+        <span className="home-countdown-sep" aria-hidden="true">:</span>
+        <div className="home-countdown-unit">
+          <span className="home-countdown-n">{pad(timeLeft.hours)}</span>
+          <span className="home-countdown-u">Hrs</span>
+        </div>
+        <span className="home-countdown-sep" aria-hidden="true">:</span>
+        <div className="home-countdown-unit">
+          <span className="home-countdown-n">{pad(timeLeft.minutes)}</span>
+          <span className="home-countdown-u">Min</span>
+        </div>
+        <span className="home-countdown-sep" aria-hidden="true">:</span>
+        <div className="home-countdown-unit">
+          <span className="home-countdown-n">{pad(timeLeft.seconds)}</span>
+          <span className="home-countdown-u">Sec</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /**
  * /login — unified auth entry point for Gridlock.
@@ -366,13 +519,14 @@ function AuthForm() {
 
         <h1 className="gl-login-h1">
           Predict the podium.<br />
-          Win real money.<br />
-          <em>Or just watch someone else.</em>
+          <em>Win real money.</em>
         </h1>
 
         <p className="gl-login-sub">
           Pick the podium. Win USDC. Your rivals are already in.
         </p>
+
+        <NextRaceCountdownCard />
 
         <div className="gl-login-stats">
           <div className="gl-login-stat">

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function GET() {
   const supabase = await createSupabaseServerClient();
@@ -48,6 +49,10 @@ export async function PATCH(request: Request) {
   if (!supabase)
     return NextResponse.json({ error: "Supabase env vars missing." }, { status: 500 });
 
+  const admin = createSupabaseAdminClient();
+  if (!admin)
+    return NextResponse.json({ error: "Supabase admin client not configured." }, { status: 500 });
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -59,17 +64,19 @@ export async function PATCH(request: Request) {
     avatar_url?: string;
   };
 
-  if (username !== undefined && (username.length < 2 || username.length > 30))
+  const trimmedUsername = username?.trim();
+
+  if (trimmedUsername !== undefined && (trimmedUsername.length < 2 || trimmedUsername.length > 30))
     return NextResponse.json(
       { error: "Username must be 2–30 characters." },
       { status: 400 }
     );
 
   const updates: Record<string, string> = {};
-  if (username !== undefined) updates.username = username.trim();
+  if (trimmedUsername !== undefined) updates.username = trimmedUsername;
   if (avatar_url !== undefined) updates.avatar_url = avatar_url;
 
-  const { error } = await supabase
+  const { error } = await admin
     .from("profiles")
     .upsert(
       {
