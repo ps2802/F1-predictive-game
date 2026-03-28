@@ -31,14 +31,20 @@ type LeaguesPageClientProps = {
   initialRaceId: string | null;
 };
 
+const hasSupabaseEnv = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
 export default function LeaguesPageClient({
   initialRaceId,
 }: LeaguesPageClientProps) {
   const router = useRouter();
   const { races, loading: racesLoading } = useRaceCatalog();
   const [leagues, setLeagues] = useState<League[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
+  const [loading, setLoading] = useState(hasSupabaseEnv);
+  const [loadError, setLoadError] = useState(
+    hasSupabaseEnv ? "" : "Live league data is unavailable in this environment."
+  );
   const [joinCode, setJoinCode] = useState("");
   const [joinStake, setJoinStake] = useState(String(MINIMUM_LEAGUE_STAKE_USDC));
   const [joining, setJoining] = useState(false);
@@ -62,8 +68,14 @@ export default function LeaguesPageClient({
   }
 
   useEffect(() => {
+    if (!hasSupabaseEnv) {
+      return;
+    }
+
     const supabase = createSupabaseBrowserClient();
-    if (!supabase) return;
+    if (!supabase) {
+      return;
+    }
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) {

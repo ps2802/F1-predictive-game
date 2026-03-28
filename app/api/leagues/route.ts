@@ -48,34 +48,65 @@ export async function GET(request: Request) {
 
   const raceId = new URL(request.url).searchParams.get("raceId");
 
-  // Return public leagues + leagues the user is a member of
-  let query = supabase
+  const { data: memberships, error: membershipsError } = await supabase
+    .from("league_members")
+    .select("league_id")
+    .eq("user_id", user.id);
+
+  if (membershipsError) {
+    return NextResponse.json({ error: membershipsError.message }, { status: 400 });
+  }
+
+  const joinedIds = [...new Set((memberships ?? []).map((membership) => membership.league_id))];
+
+  // Public leagues should always be visible. Private leagues should also appear
+  // if the user created them or has already joined them via invite.
+  let baseQuery = supabase
     .from("leagues")
     .select("*, member_count")
     .or(`type.eq.public,creator_id.eq.${user.id}`)
     .eq("is_active", true);
 
   if (raceId) {
-    query = query.eq("race_id", raceId);
+    baseQuery = baseQuery.eq("race_id", raceId);
   }
 
-  const { data: leagues, error } = await query.order("created_at", { ascending: false });
+  const [{ data: baseLeagues, error: baseLeaguesError }, joinedLeaguesResult] = await Promise.all([
+    baseQuery.order("created_at", { ascending: false }),
+    joinedIds.length === 0
+      ? Promise.resolve({ data: [], error: null })
+      : (() => {
+          let joinedQuery = supabase
+            .from("leagues")
+            .select("*, member_count")
+            .in("id", joinedIds)
+            .eq("is_active", true);
 
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 400 });
+          if (raceId) {
+            joinedQuery = joinedQuery.eq("race_id", raceId);
+          }
 
-  // Get leagues user has joined
-  const { data: memberships } = await supabase
-    .from("league_members")
-    .select("league_id")
-    .eq("user_id", user.id);
+          return joinedQuery.order("created_at", { ascending: false });
+        })(),
+  ]);
 
-  const joinedIds = new Set((memberships ?? []).map((m) => m.league_id));
+  if (baseLeaguesError) {
+    return NextResponse.json({ error: baseLeaguesError.message }, { status: 400 });
+  }
+
+  if (joinedLeaguesResult.error) {
+    return NextResponse.json({ error: joinedLeaguesResult.error.message }, { status: 400 });
+  }
+
+  const leaguesById = new Map<string, Record<string, unknown>>();
+  for (const league of [...(baseLeagues ?? []), ...(joinedLeaguesResult.data ?? [])]) {
+    leaguesById.set(String(league.id), league as Record<string, unknown>);
+  }
 
   return NextResponse.json({
-    leagues: (leagues ?? []).map((l) => ({
-      ...l,
-      is_member: joinedIds.has(l.id),
+    leagues: Array.from(leaguesById.values()).map((league) => ({
+      ...league,
+      is_member: joinedIds.includes(String(league.id)),
     })),
   });
 }
