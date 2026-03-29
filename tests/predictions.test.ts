@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  findPredictionIdsMissingVersionRows,
+  formatMissingPredictionVersionsError,
   selectLatestPredictionVersionRows,
   selectLatestPredictionVersions,
   validatePredictionAnswers,
@@ -157,5 +159,29 @@ describe("selectLatestPredictionVersions", () => {
       answers_json: { "q-winner": ["opt-b"] },
       created_at: "2026-03-25T11:00:00.000Z",
     });
+  });
+});
+
+describe("prediction version coverage", () => {
+  it("identifies active predictions that would be silently skipped during settlement", () => {
+    const latestRows = selectLatestPredictionVersionRows([
+      {
+        id: "row-1",
+        prediction_id: "pred-1",
+        version_number: 2,
+        answers_json: { "q-winner": ["opt-b"] },
+        created_at: "2026-03-25T11:00:00.000Z",
+      },
+    ]);
+
+    expect(
+      findPredictionIdsMissingVersionRows(["pred-1", "pred-2", "pred-3"], latestRows)
+    ).toEqual(["pred-2", "pred-3"]);
+  });
+
+  it("formats a clear settlement error when every active prediction is missing a snapshot", () => {
+    expect(formatMissingPredictionVersionsError(3, 3)).toContain(
+      "none of the 3 active predictions have a frozen snapshot in prediction_versions"
+    );
   });
 });

@@ -153,3 +153,24 @@ export function selectLatestPredictionVersions(
     ])
   );
 }
+
+export function findPredictionIdsMissingVersionRows(
+  predictionIds: string[],
+  latestByPrediction: Map<string, PredictionVersionRow>
+): string[] {
+  return predictionIds.filter((predictionId) => !latestByPrediction.has(predictionId));
+}
+
+export function formatMissingPredictionVersionsError(
+  missingCount: number,
+  totalCount: number
+): string {
+  const predictionLabel = totalCount === 1 ? "prediction" : "predictions";
+  const verb = missingCount === 1 ? "is" : "are";
+
+  if (missingCount === totalCount) {
+    return `Cannot settle race: none of the ${totalCount} active ${predictionLabel} have a frozen snapshot in prediction_versions. Apply the latest Supabase migrations and backfill prediction_versions before retrying settlement.`;
+  }
+
+  return `Cannot settle race: ${missingCount} of ${totalCount} active ${predictionLabel} ${verb} missing a frozen snapshot in prediction_versions. Settlement was aborted to avoid partial scores.`;
+}

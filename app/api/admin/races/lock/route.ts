@@ -40,7 +40,18 @@ export async function PATCH(request: Request) {
 
   // Freeze popularity snapshot when locking; a no-op when unlocking
   if (locked) {
-    await admin.rpc("freeze_pick_popularity", { p_race_id: raceId });
+    const { error: snapshotErr } = await admin.rpc("freeze_pick_popularity", { p_race_id: raceId });
+    if (snapshotErr) {
+      return NextResponse.json(
+        {
+          error: `Race was locked, but popularity snapshots were not frozen: ${snapshotErr.message}. Apply the missing Supabase migrations and retry freezing before settlement.`,
+          partial: true,
+          raceId,
+          locked,
+        },
+        { status: 500 }
+      );
+    }
   }
 
   return NextResponse.json({ success: true, raceId, locked });

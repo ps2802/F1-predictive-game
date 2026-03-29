@@ -62,8 +62,26 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: updateErr.message }, { status: 500 });
 
   // Snapshot pick popularity at lock time so settlement uses deterministic data
+  const snapshotErrors: { raceId: string; error: string }[] = [];
   for (const raceId of ids) {
-    await admin.rpc("freeze_pick_popularity", { p_race_id: raceId });
+    const { error: snapshotErr } = await admin.rpc("freeze_pick_popularity", { p_race_id: raceId });
+    if (snapshotErr) {
+      snapshotErrors.push({ raceId, error: snapshotErr.message });
+    }
+  }
+
+  if (snapshotErrors.length > 0) {
+    return NextResponse.json(
+      {
+        error: "Some races were locked, but popularity snapshots were not frozen. Apply the missing Supabase migrations and retry before settlement.",
+        locked: ids,
+        count: ids.length,
+        lockedAt: now,
+        snapshotsFrozen: ids.length - snapshotErrors.length,
+        snapshotErrors,
+      },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({

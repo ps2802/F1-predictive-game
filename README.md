@@ -28,7 +28,7 @@ cp .env.example .env.local
 # - NEXT_PUBLIC_POSTHOG_HOST
 ```
 
-### 3. Apply migrations (in order)
+### 3. Apply migrations (in exact file order)
 
 Run each file in the Supabase SQL editor, or via `supabase db push` if using the CLI:
 
@@ -42,9 +42,19 @@ supabase/migrations/202603120001_align_predictions_mvp.sql
 supabase/migrations/202603180001_create_waitlist.sql
 supabase/migrations/202603190001_prd_full_schema.sql   ← new PRD schema
 supabase/migrations/202603190002_hardening.sql          ← critical fixes
+supabase/migrations/202603190003_add_qualifying_starts_at.sql
+supabase/migrations/202603220001_privy_beta.sql
+supabase/migrations/202603250001_atomic_ops_and_settlement_jobs.sql
+supabase/migrations/202603250001_draft_active_flow.sql
+supabase/migrations/202603250001_freeze_popularity_and_fixes.sql
+supabase/migrations/202603250002_supabase_rate_limits.sql
+supabase/migrations/202603250003_race_status.sql
+supabase/migrations/202603260001_fix_drivers_seed_all_races.sql
+supabase/migrations/202603260001_profile_auto_create.sql
 supabase/migrations/202603260002_security_and_prediction_integrity.sql
 supabase/migrations/202603260003_sync_official_2026_race_calendar.sql
 supabase/migrations/202603260004_sync_official_2026_driver_team_roster.sql
+supabase/migrations/202603260005_prediction_versions_insert_policy.sql
 supabase/migrations/202603270001_prize_distribution_functions.sql
 supabase/migrations/202603270002_prizing_logic_hardening.sql
 supabase/migrations/202603270003_multi_asset_deposit_flow.sql
@@ -53,6 +63,8 @@ supabase/migrations/202603270005_race_scoped_leagues.sql
 supabase/migrations/202603270006_platform_refund_offsets.sql
 supabase/migrations/202603270007_withdrawal_availability_holds.sql
 ```
+
+Do not skip files that share the same timestamp prefix. Preview and staging environments will drift behind the current app code if any file above is omitted.
 
 ### 4. Seed race questions
 

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { selectLatestPredictionVersionRows } from "@/lib/predictions";
+import {
+  findPredictionIdsMissingVersionRows,
+  formatMissingPredictionVersionsError,
+  selectLatestPredictionVersionRows,
+} from "@/lib/predictions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
@@ -124,9 +128,17 @@ export async function POST(request: Request) {
   if (snapshotData?.length) {
     snapshots = snapshotData as PopularitySnapshot[];
   } else {
-    const { data: countData } = await admin.rpc("compute_pick_popularity", {
+    const { data: countData, error: countErr } = await admin.rpc("compute_pick_popularity", {
       p_race_id: raceId,
     });
+    if (countErr) {
+      return NextResponse.json(
+        {
+          error: `Unable to load pick popularity for settlement: ${countErr.message}. Apply the latest Supabase migrations and retry.`,
+        },
+        { status: 503 }
+      );
+    }
     snapshots = (countData ?? []) as PopularitySnapshot[];
   }
 
@@ -150,12 +162,21 @@ export async function POST(request: Request) {
   //    Use the highest version_number per prediction — this is the immutable state
   //    captured at the time of the user's last submission and cannot change retroactively.
   //    Ordering DESC means the first row per prediction_id is always the latest version.
-  const { data: allVersions } = await admin
+  const { data: allVersions, error: versionsErr } = await admin
     .from("prediction_versions")
     .select("id, prediction_id, version_number, answers_json, created_at")
     .in("prediction_id", predictionIds)
     .order("version_number", { ascending: false })
     .order("created_at", { ascending: false });
+
+  if (versionsErr) {
+    return NextResponse.json(
+      {
+        error: `Settlement requires prediction_versions and the current preview database is behind the app schema: ${versionsErr.message}`,
+      },
+      { status: 503 }
+    );
+  }
 
   const latestByPrediction = selectLatestPredictionVersionRows(
     (allVersions ?? []).map((version) => ({
@@ -166,6 +187,25 @@ export async function POST(request: Request) {
       created_at: version.created_at,
     }))
   );
+
+  const missingPredictionIds = findPredictionIdsMissingVersionRows(
+    predictionIds,
+    latestByPrediction
+  );
+
+  if (missingPredictionIds.length > 0) {
+    return NextResponse.json(
+      {
+        error: formatMissingPredictionVersionsError(
+          missingPredictionIds.length,
+          predictionIds.length
+        ),
+        missing_prediction_count: missingPredictionIds.length,
+        total_prediction_count: predictionIds.length,
+      },
+      { status: 503 }
+    );
+  }
 
   // 6. Run scoring engine using frozen snapshots
   const { scores } = settleRace({
@@ -236,9 +276,13 @@ export async function POST(request: Request) {
   }
 
   if (leagueScoreRows.length > 0) {
-    await admin
+    const { error: leagueScoresErr } = await admin
       .from("league_scores")
       .upsert(leagueScoreRows, { onConflict: "league_id,user_id,race_id" });
+
+    if (leagueScoresErr) {
+      return NextResponse.json({ error: leagueScoresErr.message }, { status: 400 });
+    }
   }
 
   // ── 9. Distribute league prize pools ──────────────────────────

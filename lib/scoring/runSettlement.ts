@@ -10,6 +10,11 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  findPredictionIdsMissingVersionRows,
+  formatMissingPredictionVersionsError,
+  selectLatestPredictionVersionRows,
+} from "@/lib/predictions";
+import {
   settleRace,
   type PredictionQuestion,
   type PredictionAnswer,
@@ -63,9 +68,14 @@ export async function runSettlement(
   if (snapshotData?.length) {
     snapshots = snapshotData as PopularitySnapshot[];
   } else {
-    const { data: countData } = await admin.rpc("compute_pick_popularity", {
+    const { data: countData, error: countErr } = await admin.rpc("compute_pick_popularity", {
       p_race_id: raceId,
     });
+    if (countErr) {
+      throw new Error(
+        `Unable to load pick popularity for settlement: ${countErr.message}. Apply the latest Supabase migrations and retry.`
+      );
+    }
     snapshots = (countData ?? []) as PopularitySnapshot[];
   }
 
@@ -81,17 +91,41 @@ export async function runSettlement(
   const predictionIds = predictions.map((p) => p.id);
 
   // 5. Load frozen answer snapshots (latest version per prediction)
-  const { data: allVersions } = await admin
+  const { data: allVersions, error: versionsErr } = await admin
     .from("prediction_versions")
-    .select("prediction_id, version_number, answers_json")
+    .select("id, prediction_id, version_number, answers_json, created_at")
     .in("prediction_id", predictionIds)
-    .order("version_number", { ascending: false });
+    .order("version_number", { ascending: false })
+    .order("created_at", { ascending: false });
 
-  const latestByPrediction = new Map<string, Record<string, string[]>>();
-  for (const v of allVersions ?? []) {
-    if (!latestByPrediction.has(v.prediction_id)) {
-      latestByPrediction.set(v.prediction_id, v.answers_json as Record<string, string[]>);
-    }
+  if (versionsErr) {
+    throw new Error(
+      `Settlement requires prediction_versions and the current database is behind the app schema: ${versionsErr.message}`
+    );
+  }
+
+  const latestByPrediction = selectLatestPredictionVersionRows(
+    (allVersions ?? []).map((version) => ({
+      id: version.id,
+      prediction_id: version.prediction_id,
+      version_number: version.version_number,
+      answers_json: version.answers_json as Record<string, string[]>,
+      created_at: version.created_at,
+    }))
+  );
+
+  const missingPredictionIds = findPredictionIdsMissingVersionRows(
+    predictionIds,
+    latestByPrediction
+  );
+
+  if (missingPredictionIds.length > 0) {
+    throw new Error(
+      formatMissingPredictionVersionsError(
+        missingPredictionIds.length,
+        predictionIds.length
+      )
+    );
   }
 
   // 6. Run scoring engine
@@ -104,8 +138,9 @@ export async function runSettlement(
       .filter((p) => latestByPrediction.has(p.id))
       .map((p) => ({
         userId: p.user_id,
-        answers: versionToAnswers(latestByPrediction.get(p.id)!),
+        answers: versionToAnswers(latestByPrediction.get(p.id)!.answers_json),
         editCount: p.edit_count ?? 0,
+        submittedAt: latestByPrediction.get(p.id)?.created_at ?? null,
       })),
   });
 
@@ -147,9 +182,11 @@ export async function runSettlement(
   }
 
   if (leagueScoreRows.length > 0) {
-    await admin
+    const { error: leagueScoresErr } = await admin
       .from("league_scores")
       .upsert(leagueScoreRows, { onConflict: "league_id,user_id,race_id" });
+
+    if (leagueScoresErr) throw new Error(leagueScoresErr.message);
   }
 
   return { scores_computed: scores.length };
