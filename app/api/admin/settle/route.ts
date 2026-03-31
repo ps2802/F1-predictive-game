@@ -79,7 +79,7 @@ export async function POST(request: Request) {
   // A race is considered locked if race_locked = true OR qualifying_starts_at has passed.
   const { data: raceRow } = await admin
     .from("races")
-    .select("race_locked, qualifying_starts_at")
+    .select("race_locked, qualifying_starts_at, race_starts_at")
     .eq("id", raceId)
     .single();
 
@@ -277,7 +277,9 @@ export async function POST(request: Request) {
   // compute payouts and credit winner balances.
   const distributionResults = [];
   const scoreByUser = new Map(scores.map((score) => [score.user_id, score]));
-  const settlementLockDeadline = raceRow.qualifying_starts_at ?? null;
+  // Use qualifying_starts_at if available, fallback to race_starts_at for determining late joiners.
+  // This ensures all races (with or without qualifying) can correctly identify late joiners.
+  const settlementLockDeadline = raceRow.qualifying_starts_at ?? raceRow.race_starts_at ?? null;
 
   if (leagueScoreRows.length > 0) {
     // Find all distinct leagues involved
