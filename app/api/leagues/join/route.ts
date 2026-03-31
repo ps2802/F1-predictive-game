@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
+import {
+  joinLeagueWithoutRpc,
+  shouldFallbackLeagueJoin,
+} from "@/lib/leagueMutations";
 
 export async function POST(request: NextRequest) {
   // Rate limit: 10 join attempts per IP per minute (prevents invite code brute-force)
@@ -40,7 +45,7 @@ export async function POST(request: NextRequest) {
 
   const { data: league } = await supabase
     .from("leagues")
-    .select("id, name, entry_fee_usdc, member_count, max_users, is_active")
+    .select("id, name, entry_fee_usdc, member_count, max_users, is_active, prize_pool")
     .eq("invite_code", invite_code.trim().toUpperCase())
     .single();
 
@@ -60,12 +65,48 @@ export async function POST(request: NextRequest) {
   });
 
   if (joinErr) {
-    const status = joinErr.message.includes("Insufficient balance")
-      ? 402
-      : joinErr.message.includes("Already a member")
-        ? 409
-        : 400;
-    return NextResponse.json({ error: joinErr.message }, { status });
+    if (!shouldFallbackLeagueJoin(joinErr.message)) {
+      const status = joinErr.message.includes("Insufficient balance")
+        ? 402
+        : joinErr.message.includes("Already a member")
+          ? 409
+          : 400;
+      return NextResponse.json({ error: joinErr.message }, { status });
+    }
+
+    const admin = createSupabaseAdminClient();
+    if (!admin) {
+      return NextResponse.json(
+        { error: "Supabase admin client not configured." },
+        { status: 500 }
+      );
+    }
+
+    try {
+      const fallback = await joinLeagueWithoutRpc(admin, {
+        league: {
+          ...league,
+          entry_fee_usdc: Number(league.entry_fee_usdc ?? 0),
+          prize_pool: Number(league.prize_pool ?? 0),
+        },
+        userId: user.id,
+        stakeAmountUsdc: stake_amount_usdc,
+      });
+
+      return NextResponse.json({
+        success: true,
+        leagueId: fallback.leagueId,
+        stakeAmountUsdc: fallback.chargedAmountUsdc,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to join league.";
+      const status = message.includes("Insufficient balance")
+        ? 402
+        : message.includes("Already a member")
+          ? 409
+          : 400;
+      return NextResponse.json({ error: message }, { status });
+    }
   }
 
   const joinedRow = Array.isArray(joined) ? joined[0] : joined;

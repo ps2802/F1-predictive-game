@@ -32,15 +32,12 @@ export default function LeaderboardPage() {
       if (!user) { router.push("/login"); return; }
       setCurrentUserId(user.id);
 
-      const { data, error: fetchErr } = await supabase
-        .from("leaderboard")
-        .select("*")
-        .limit(100);
-
-      if (fetchErr) {
+      const res = await fetch("/api/leaderboard");
+      if (!res.ok) {
         setError("Failed to load leaderboard. Please refresh.");
       } else {
-        setEntries(data ?? []);
+        const data = await res.json();
+        setEntries(data.entries ?? []);
       }
       setLoading(false);
     }
@@ -130,4 +127,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-

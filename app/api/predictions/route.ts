@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { buildFallbackRaceRecord } from "@/lib/races";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type PredictionPayload = {
@@ -35,11 +37,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Each podium position must be different." }, { status: 400 });
   }
 
-  const { data: race, error: raceError } = await supabase
+  let { data: race, error: raceError } = await supabase
     .from("races")
     .select("race_starts_at")
     .eq("id", raceId)
-    .single();
+    .maybeSingle();
+
+  if (!race) {
+    const fallbackRace = buildFallbackRaceRecord(raceId);
+    if (fallbackRace) {
+      const admin = createSupabaseAdminClient();
+      if (admin) {
+        const { error: upsertError } = await admin.from("races").upsert(fallbackRace, {
+          onConflict: "id",
+        });
+        if (upsertError) {
+          return NextResponse.json({ error: upsertError.message }, { status: 400 });
+        }
+      }
+
+      race = { race_starts_at: fallbackRace.race_starts_at };
+      raceError = null;
+    }
+  }
 
   if (raceError || !race) {
     return NextResponse.json({ error: "Race not found." }, { status: 404 });

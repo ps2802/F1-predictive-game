@@ -1,35 +1,9 @@
 import { config as loadEnv } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
-import { races } from "../lib/races";
+import { buildRaceSeedRows, fetchSeasonSchedule } from "../lib/jolpica";
 
 loadEnv({ path: ".env.local" });
 loadEnv();
-
-type RaceRow = {
-  id: string;
-  season: number;
-  round: number;
-  name: string;
-  grand_prix_name: string;
-  country: string;
-  race_date: string;
-  is_locked: boolean;
-  race_locked: boolean;
-};
-
-function buildRaceRows(): RaceRow[] {
-  return races.map((race) => ({
-    id: race.id,
-    season: 2026,
-    round: race.round,
-    name: race.name,
-    grand_prix_name: race.name,
-    country: race.country,
-    race_date: race.date,
-    is_locked: race.status === "closed",
-    race_locked: race.status === "closed",
-  }));
-}
 
 async function main() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -44,7 +18,8 @@ async function main() {
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
-  const raceRows = buildRaceRows();
+  const seasonRaces = await fetchSeasonSchedule(2026);
+  const raceRows = buildRaceSeedRows(seasonRaces);
 
   const { error } = await supabase.from("races").upsert(raceRows, {
     onConflict: "id",

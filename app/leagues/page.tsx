@@ -7,7 +7,7 @@ import { AppNav } from "@/app/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { track } from "@/lib/analytics";
 import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
-import { findRaceById, useRaceCatalog } from "@/lib/raceCatalog";
+import { races } from "@/lib/races";
 
 type League = {
   id: string;
@@ -29,7 +29,6 @@ type NavProfile = {
 
 export default function LeaguesPage() {
   const router = useRouter();
-  const { races, loading: racesLoading } = useRaceCatalog();
   const [raceId] = useState<string | null>(() =>
     typeof window === "undefined"
       ? null
@@ -105,7 +104,7 @@ export default function LeaguesPage() {
     setJoining(false);
   }
 
-  if (loading || racesLoading) {
+  if (loading) {
     return (
       <div className="gla-root">
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
@@ -136,7 +135,7 @@ export default function LeaguesPage() {
     );
   }
 
-  const publicLeagues = leagues.filter((l) => l.type === "public" && !l.is_member);
+  const publicLeagues = leagues.filter((l) => l.type === "public");
   const myLeagues = leagues.filter((l) => l.is_member);
 
   return (
@@ -150,7 +149,7 @@ export default function LeaguesPage() {
             <p className="gla-page-title">Leagues</p>
             <p className="gla-page-sub">
               {raceId
-                ? `Race contests for ${findRaceById(races, raceId)?.name ?? "this race"}`
+                ? `Race contests for ${races.find((race) => race.id === raceId)?.name ?? "this race"}`
                 : "Compete with friends or the world"}
             </p>
           </div>
@@ -214,7 +213,7 @@ export default function LeaguesPage() {
             <h2 className="league-section-title">My Leagues</h2>
             <div className="league-grid">
               {myLeagues.map((l) => (
-                <LeagueCard key={l.id} league={l} isMember races={races} />
+                <LeagueCard key={l.id} league={l} isMember />
               ))}
             </div>
           </section>
@@ -222,13 +221,13 @@ export default function LeaguesPage() {
 
         {/* Public leagues */}
         <section className="league-section">
-          <h2 className="league-section-title">Public Leagues</h2>
+          <h2 className="league-section-title">All Public Leagues</h2>
           {publicLeagues.length === 0 ? (
             <p className="league-empty">No public leagues yet. Create one!</p>
           ) : (
             <div className="league-grid">
               {publicLeagues.map((l) => (
-                <LeagueCard key={l.id} league={l} isMember={false} races={races} />
+                <LeagueCard key={l.id} league={l} isMember={l.is_member} />
               ))}
             </div>
           )}
@@ -238,16 +237,8 @@ export default function LeaguesPage() {
   );
 }
 
-function LeagueCard({
-  league,
-  isMember,
-  races,
-}: {
-  league: League;
-  isMember: boolean;
-  races: ReturnType<typeof useRaceCatalog>["races"];
-}) {
-  const leagueRace = findRaceById(races, league.race_id);
+function LeagueCard({ league, isMember }: { league: League; isMember: boolean }) {
+  const leagueRace = races.find((race) => race.id === league.race_id);
 
   return (
     <Link href={`/leagues/${league.id}`} className="league-card">

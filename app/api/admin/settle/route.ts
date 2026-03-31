@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { selectLatestPredictionVersionRows } from "@/lib/predictions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { sendRaceResultEmail } from "@/lib/email";
 import {
   settleRace,
   type PredictionQuestion,
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
   // A race is considered locked if race_locked = true OR qualifying_starts_at has passed.
   const { data: raceRow } = await admin
     .from("races")
-    .select("race_locked, qualifying_starts_at")
+    .select("race_locked, qualifying_starts_at, race_starts_at")
     .eq("id", raceId)
     .single();
 
@@ -207,6 +208,36 @@ export async function POST(request: Request) {
   if (upsertErr)
     return NextResponse.json({ error: upsertErr.message }, { status: 400 });
 
+  // 7b. Send result emails (fire-and-forget — settlement must not fail if email fails)
+  const { data: raceMeta } = await admin
+    .from("races")
+    .select("grand_prix_name")
+    .eq("id", raceId)
+    .single();
+
+  if (raceMeta) {
+    const scoredUserIds = scores.map((s) => s.user_id);
+    const { data: authUsers } = await admin.auth.admin.listUsers();
+    const emailByUserId = new Map(
+      (authUsers?.users ?? [])
+        .filter((u) => scoredUserIds.includes(u.id) && !!u.email)
+        .map((u) => [u.id, u.email as string])
+    );
+
+    for (const score of scores) {
+      const email = emailByUserId.get(score.user_id);
+      if (!email) continue;
+      sendRaceResultEmail({
+        to: email,
+        raceName: raceMeta.grand_prix_name,
+        raceId,
+        totalScore: score.total_score,
+        correctPicks: score.correct_picks,
+        totalQuestions: questions.length,
+      }).catch(() => {});
+    }
+  }
+
   // 8. Update league_scores for all affected users
   const { data: leagueMembers } = await admin
     .from("league_members")
@@ -246,7 +277,9 @@ export async function POST(request: Request) {
   // compute payouts and credit winner balances.
   const distributionResults = [];
   const scoreByUser = new Map(scores.map((score) => [score.user_id, score]));
-  const settlementLockDeadline = raceRow.qualifying_starts_at ?? null;
+  // Use qualifying_starts_at if available, fallback to race_starts_at for determining late joiners.
+  // This ensures all races (with or without qualifying) can correctly identify late joiners.
+  const settlementLockDeadline = raceRow.qualifying_starts_at ?? raceRow.race_starts_at ?? null;
 
   if (leagueScoreRows.length > 0) {
     // Find all distinct leagues involved

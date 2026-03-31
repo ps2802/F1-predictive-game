@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     template: "%s | Gridlock",
   },
   description:
-    "The F1 prediction game. Predict the grid. Outsmart the crowd. Skill over consensus — always. 22 rounds, 2026 season.",
+    "The F1 prediction game. Predict the grid. Outsmart the crowd. Skill over consensus — always. 2026 season.",
   keywords: [
     "F1 prediction game",
     "Formula 1 predictions",
@@ -120,7 +120,7 @@ const jsonLd = {
       url: BASE_URL,
       name: "Gridlock",
       description:
-        "The F1 prediction game. Predict the grid. Outsmart the crowd. 22 rounds, 2026 season.",
+        "The F1 prediction game. Predict the grid. Outsmart the crowd. 2026 season.",
       inLanguage: "en-US",
     },
     {
@@ -141,7 +141,7 @@ const jsonLd = {
       "@id": `${BASE_URL}/#game`,
       name: "Gridlock — F1 Prediction Game",
       description:
-        "Predict qualifying results and podium finishes across all 22 rounds of the 2026 Formula 1 season. Compete on a global leaderboard.",
+        "Predict qualifying results and podium finishes across the 2026 Formula 1 season. Compete on a global leaderboard.",
       url: BASE_URL,
       genre: ["Sports", "Strategy", "Prediction"],
       gamePlatform: "Web Browser",

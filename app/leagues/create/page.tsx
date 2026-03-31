@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
-import { useRaceCatalog } from "@/lib/raceCatalog";
+import { races } from "@/lib/races";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const DEFAULT_TIERS = [
   { place: 1, percent: 50 },
@@ -12,10 +13,20 @@ const DEFAULT_TIERS = [
   { place: 3, percent: 20 },
 ];
 
+type ProfileData = {
+  balance_usdc: number;
+};
+
 export default function CreateLeaguePage() {
   const router = useRouter();
-  const { races, loading: racesLoading } = useRaceCatalog();
-  const [raceId, setRaceId] = useState("");
+  const defaultRaceId =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("raceId") ??
+        races.find((race) => race.status === "upcoming")?.id ??
+        races[0]?.id ??
+        ""
+      : races.find((race) => race.status === "upcoming")?.id ?? races[0]?.id ?? "";
+  const [raceId, setRaceId] = useState(defaultRaceId);
   const [name, setName] = useState("");
   const [type, setType] = useState<"public" | "private">("private");
   const [minimumStake] = useState(MINIMUM_LEAGUE_STAKE_USDC);
@@ -25,19 +36,51 @@ export default function CreateLeaguePage() {
   const [payoutTiers, setPayoutTiers] = useState(DEFAULT_TIERS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [profileLoading, setProfileLoading] = useState(
+    () => createSupabaseBrowserClient() !== null
+  );
 
   const totalPercent = payoutTiers.reduce((sum, t) => sum + t.percent, 0);
-  const selectableRaces = races.filter((race) => race.status === "upcoming");
-  const requestedRaceId =
-    typeof window === "undefined"
-      ? null
-      : new URLSearchParams(window.location.search).get("raceId");
-  const effectiveRaceId =
-    raceId ||
-    requestedRaceId ||
-    selectableRaces[0]?.id ||
-    races[0]?.id ||
-    "";
+  const creatorStakeAmount = Number(creatorStake) || 0;
+  const balanceUsdc = Number(profile?.balance_usdc ?? 0);
+  const hasInsufficientBalance =
+    !profileLoading && creatorStakeAmount > 0 && creatorStakeAmount > balanceUsdc;
+  const balanceShortfall = Math.max(0, creatorStakeAmount - balanceUsdc);
+
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) {
+      return;
+    }
+
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (cancelled) {
+        return;
+      }
+
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("balance_usdc")
+        .eq("id", user.id)
+        .single();
+
+      if (!cancelled) {
+        setProfile(data ?? { balance_usdc: 0 });
+        setProfileLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   function updateTier(index: number, percent: number) {
     setPayoutTiers((prev) =>
@@ -62,12 +105,20 @@ export default function CreateLeaguePage() {
       return;
     }
 
+    if (hasInsufficientBalance) {
+      setError(
+        `You need $${balanceShortfall.toFixed(2)} more Test USDC to open this league.`
+      );
+      setLoading(false);
+      return;
+    }
+
     const res = await fetch("/api/leagues", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name,
-        race_id: effectiveRaceId,
+        race_id: raceId,
         type,
         minimum_stake_usdc: minimumStake,
         creator_stake_usdc: Number(creatorStake),
@@ -79,7 +130,13 @@ export default function CreateLeaguePage() {
 
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error ?? "Failed to create league.");
+      if ((data.error ?? "").includes("Insufficient balance")) {
+        setError(
+          `You need $${Math.max(0, creatorStakeAmount - balanceUsdc).toFixed(2)} more Test USDC to open this league.`
+        );
+      } else {
+        setError(data.error ?? "Failed to create league.");
+      }
       setLoading(false);
     } else {
       router.push(`/leagues/${data.league.id}`);
@@ -102,12 +159,12 @@ export default function CreateLeaguePage() {
             Race
             <select
               className="auth-input"
-              value={effectiveRaceId}
+              value={raceId}
               onChange={(e) => setRaceId(e.target.value)}
               required
-              disabled={racesLoading || races.length === 0}
             >
-              {(selectableRaces.length > 0 ? selectableRaces : races)
+              {races
+                .filter((race) => race.status === "upcoming")
                 .map((race) => (
                   <option key={race.id} value={race.id}>
                     Round {race.round} · {race.name}
@@ -115,10 +172,6 @@ export default function CreateLeaguePage() {
                 ))}
             </select>
           </label>
-
-          {!racesLoading && races.length === 0 && (
-            <p className="predict-error">No race schedule is available right now.</p>
-          )}
 
           <label className="auth-label">
             League Name
@@ -169,7 +222,36 @@ export default function CreateLeaguePage() {
               value={creatorStake}
               onChange={(e) => setCreatorStake(e.target.value)}
             />
+            <p style={{ margin: "0.5rem 0 0", color: "rgba(255,255,255,0.58)", fontSize: "0.85rem" }}>
+              {profileLoading
+                ? "Loading your wallet balance..."
+                : `Available balance: $${balanceUsdc.toFixed(2)} Test USDC`}
+            </p>
           </label>
+
+          {hasInsufficientBalance && (
+            <div
+              style={{
+                border: "1px solid rgba(225, 6, 0, 0.4)",
+                background: "rgba(225, 6, 0, 0.08)",
+                borderRadius: "14px",
+                padding: "0.9rem 1rem",
+                marginTop: "-0.25rem",
+              }}
+            >
+              <p style={{ color: "#ff7a7a", fontSize: "0.9rem", margin: 0 }}>
+                You need ${balanceShortfall.toFixed(2)} more Test USDC to open this league.
+              </p>
+              <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.82rem", margin: "0.45rem 0 0" }}>
+                Reduce your opening stake or check your wallet balance before creating the league.
+              </p>
+              <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                <Link href="/wallet" className="league-secondary-btn gla-race-btn">
+                  Open Wallet
+                </Link>
+              </div>
+            </div>
+          )}
 
           <label className="auth-label">
             Payout Model
@@ -244,7 +326,7 @@ export default function CreateLeaguePage() {
           <button
             type="submit"
             className="gla-predict-submit"
-            disabled={loading || racesLoading || !name.trim() || !effectiveRaceId}
+            disabled={loading || profileLoading || hasInsufficientBalance || !name.trim() || !raceId}
           >
             {loading ? "Creating..." : "Create League"}
           </button>

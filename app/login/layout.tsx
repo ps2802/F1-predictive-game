@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Enter the Grid",
   description:
-    "Sign in or create your Gridlock account. Predict the 2026 F1 season — 22 rounds, 22 drivers, one champion.",
+    "Sign in or create your Gridlock account. Predict the 2026 F1 season with every race weekend that matters.",
   robots: { index: false, follow: false },
   alternates: { canonical: "/login" },
   openGraph: {

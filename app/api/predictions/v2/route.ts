@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { validatePredictionAnswers } from "@/lib/predictions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { PREDICTION_EDIT_FEE_USDC } from "@/lib/gameRules";
+import { buildFallbackRaceRecord } from "@/lib/races";
 import { resolvePredictionWindow } from "@/lib/predictionWindows";
 
 const PredictionBody = z.object({
@@ -22,6 +24,50 @@ function normalizeAnswers(answers: Record<string, string[]>): Record<string, str
 function haveSamePicks(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false;
   return a.every((value, index) => value === b[index]);
+}
+
+async function ensureRaceRecord(
+  raceId: string,
+  supabase: NonNullable<Awaited<ReturnType<typeof createSupabaseServerClient>>>
+) {
+  const { data: existingRace } = await supabase
+    .from("races")
+    .select("qualifying_starts_at, race_starts_at, quali_locked, race_locked")
+    .eq("id", raceId)
+    .maybeSingle();
+
+  if (existingRace) {
+    return existingRace;
+  }
+
+  const fallbackRace = buildFallbackRaceRecord(raceId);
+  if (!fallbackRace) {
+    return null;
+  }
+
+  const admin = createSupabaseAdminClient();
+  if (!admin) {
+    return {
+      qualifying_starts_at: fallbackRace.qualifying_starts_at,
+      race_starts_at: fallbackRace.race_starts_at,
+      quali_locked: fallbackRace.quali_locked,
+      race_locked: fallbackRace.race_locked,
+    };
+  }
+
+  const { error: upsertError } = await admin.from("races").upsert(fallbackRace, {
+    onConflict: "id",
+  });
+  if (upsertError) {
+    throw new Error(upsertError.message);
+  }
+
+  return {
+    qualifying_starts_at: fallbackRace.qualifying_starts_at,
+    race_starts_at: fallbackRace.race_starts_at,
+    quali_locked: fallbackRace.quali_locked,
+    race_locked: fallbackRace.race_locked,
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -48,11 +94,7 @@ export async function POST(request: NextRequest) {
   const { raceId, answers } = parsed.data;
 
   // Check race timing windows.
-  const { data: race } = await supabase
-    .from("races")
-    .select("qualifying_starts_at, race_starts_at, quali_locked, race_locked")
-    .eq("id", raceId)
-    .single();
+  const race = await ensureRaceRecord(raceId, supabase);
 
   if (!race)
     return NextResponse.json({ error: "Race not found." }, { status: 404 });
