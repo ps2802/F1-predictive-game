@@ -12,9 +12,27 @@ type ProfileData = {
   is_admin: boolean;
 };
 
+type Transaction = {
+  id: string;
+  type: "deposit" | "entry_fee" | "edit_fee" | "payout" | "refund" | "withdrawal";
+  amount: number;
+  description: string | null;
+  created_at: string;
+};
+
+const TX_LABELS: Record<Transaction["type"], string> = {
+  deposit: "Deposit",
+  entry_fee: "League Entry",
+  edit_fee: "Edit Fee",
+  payout: "Payout",
+  refund: "Refund",
+  withdrawal: "Withdrawal",
+};
+
 export default function WalletPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,12 +40,20 @@ export default function WalletPage() {
     if (!supabase) return;
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push("/login"); return; }
-      const { data } = await supabase
-        .from("profiles")
-        .select("balance_usdc, username, is_admin")
-        .eq("id", user.id)
-        .single();
-      setProfile(data ?? { balance_usdc: 0, username: null, is_admin: false });
+      const [{ data: profileData }, { data: txData }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("balance_usdc, username, is_admin")
+          .eq("id", user.id)
+          .single(),
+        supabase
+          .from("transactions")
+          .select("id, type, amount, description, created_at")
+          .order("created_at", { ascending: false })
+          .limit(20),
+      ]);
+      setProfile(profileData ?? { balance_usdc: 0, username: null, is_admin: false });
+      setTransactions((txData ?? []) as Transaction[]);
       setLoading(false);
     });
   }, [router]);
@@ -90,6 +116,40 @@ export default function WalletPage() {
               Back to Dashboard
             </Link>
           </div>
+        </div>
+
+        {/* Transaction history */}
+        <div style={{ marginTop: "2rem" }}>
+          <p className="gla-page-title" style={{ fontSize: "1rem", marginBottom: "1rem" }}>Recent Activity</p>
+          {transactions.length === 0 ? (
+            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.9rem" }}>No transactions yet.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {transactions.map((tx) => {
+                const isCredit = tx.type === "payout" || tx.type === "deposit" || tx.type === "refund";
+                const sign = isCredit ? "+" : "-";
+                const color = isCredit ? "rgba(0,210,170,1)" : "rgba(255,255,255,0.6)";
+                return (
+                  <div key={tx.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem 1rem", background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
+                    <div>
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: "0.9rem" }}>
+                        {tx.type === "payout" ? "🏆 " : ""}{TX_LABELS[tx.type]}
+                      </p>
+                      {tx.description && (
+                        <p style={{ margin: 0, color: "rgba(255,255,255,0.45)", fontSize: "0.8rem", marginTop: "0.2rem" }}>{tx.description}</p>
+                      )}
+                      <p style={{ margin: 0, color: "rgba(255,255,255,0.3)", fontSize: "0.75rem", marginTop: "0.2rem" }}>
+                        {new Date(tx.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span style={{ color, fontWeight: 700, fontSize: "1rem", fontVariantNumeric: "tabular-nums" }}>
+                      {sign}₮{Math.abs(tx.amount).toFixed(2)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

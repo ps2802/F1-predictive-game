@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { races } from "@/lib/races";
 import { AppNav } from "@/app/components/AppNav";
-import { findRaceById, useRaceCatalog } from "@/lib/raceCatalog";
 
 type Profile = {
   id: string;
@@ -20,15 +20,16 @@ type Profile = {
 
 type RaceScore = {
   race_id: string;
-  total_score: number;
-  calculated_at: string;
+  total_score: number | null;
+  calculated_at: string | null;
+  submitted_at?: string | null;
+  status?: "pending" | "scored";
 };
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { races, loading: racesLoading } = useRaceCatalog();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [raceScores, setRaceScores] = useState<RaceScore[]>([]);
+  const [raceHistory, setRaceHistory] = useState<RaceScore[]>([]);
   const [totalScore, setTotalScore] = useState(0);
   const [predictionsCount, setPredictionsCount] = useState(0);
   const [username, setUsername] = useState("");
@@ -51,7 +52,7 @@ export default function ProfilePage() {
       const data = await res.json();
       setProfile(data.profile);
       setUsername(data.profile?.username ?? "");
-      setRaceScores(data.raceScores ?? []);
+      setRaceHistory(data.raceHistory ?? data.raceScores ?? []);
       setTotalScore(data.totalScore ?? 0);
       setPredictionsCount(data.predictionsCount ?? 0);
     } else {
@@ -87,7 +88,7 @@ export default function ProfilePage() {
     setSaving(false);
   }
 
-  if (loading || racesLoading) {
+  if (loading) {
     return (
       <div className="gla-root">
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
@@ -196,7 +197,7 @@ export default function ProfilePage() {
         {/* Race scores history */}
         <div style={{ marginTop: "2rem" }}>
           <h3 className="league-section-title">Race History</h3>
-          {raceScores.length === 0 ? (
+          {raceHistory.length === 0 ? (
             <div className="lb-empty">
               <p className="lb-empty-headline">No predictions yet.</p>
               <p className="lb-empty-sub">Pick your first podium to start scoring points.</p>
@@ -205,25 +206,33 @@ export default function ProfilePage() {
               </Link>
             </div>
           ) : (
-            <div className="lb-table">
-              <div className="lb-header" style={{ gridTemplateColumns: "1fr 120px 100px" }}>
+            <div className="lb-table profile-history-table">
+              <div className="lb-header profile-history-header">
                 <span>Race</span>
-                <span>Score</span>
+                <span>Result</span>
                 <span>Date</span>
               </div>
-              {raceScores.map((rs) => {
-                const raceData = findRaceById(races, rs.race_id);
+              {raceHistory.map((rs) => {
+                const raceData = races.find((r) => r.id === rs.race_id);
+                const destination =
+                  rs.total_score === null ? `/predict/${rs.race_id}` : `/scores/${rs.race_id}`;
+                const displayDate =
+                  rs.submitted_at ?? rs.calculated_at ?? raceData?.date ?? null;
                 return (
                   <Link
                     key={rs.race_id}
-                    href={`/scores/${rs.race_id}`}
-                    className="lb-row"
-                    style={{ gridTemplateColumns: "1fr 120px 100px", textDecoration: "none", display: "grid", cursor: "pointer" }}
+                    href={destination}
+                    className="lb-row profile-history-row"
+                    style={{ textDecoration: "none", display: "grid", cursor: "pointer" }}
                   >
                     <span className="lb-name">{raceData?.name ?? rs.race_id}</span>
-                    <span className="lb-score">{Number(rs.total_score).toFixed(1)}</span>
-                    <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)" }}>
-                      {new Date(rs.calculated_at).toLocaleDateString()}
+                    <span
+                      className={`lb-score profile-history-result${rs.total_score === null ? " is-pending" : ""}`}
+                    >
+                      {rs.total_score === null ? "Pending" : Number(rs.total_score).toFixed(1)}
+                    </span>
+                    <span className="profile-history-date">
+                      {displayDate ? new Date(displayDate).toLocaleDateString() : "—"}
                     </span>
                   </Link>
                 );

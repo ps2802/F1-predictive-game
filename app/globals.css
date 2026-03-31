@@ -209,6 +209,15 @@ h1, h2, h3 { margin-top: 0; }
   color: rgba(255,255,255,.22);
   cursor: not-allowed;
 }
+.league-secondary-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.18);
+  color: rgba(255,255,255,.86);
+}
+.league-secondary-btn:hover {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.3);
+}
 
 /* ── Auth card (login / signup) ── */
 .gla-auth-root {
@@ -1535,6 +1544,36 @@ h1, h2, h3 { margin-top: 0; }
   color: var(--gl-red, #E10600); font-weight: 700; margin: 0 0 0.25rem; }
 .predict-race-name { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800;
   color: #fff; margin: 0; line-height: 1.1; }
+.predict-timing-grid {
+  max-width: 900px;
+  margin: 1.5rem auto 0;
+  padding: 0 clamp(1rem, 5vw, 2.5rem);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.predict-timing-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+}
+.predict-timing-value {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+}
+.predict-timing-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+}
 
 .predict-steps {
   display: flex; gap: 0; border-bottom: 1px solid rgba(255,255,255,0.08);
@@ -1642,6 +1681,10 @@ h1, h2, h3 { margin-top: 0; }
   font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.08em; color: rgba(255,255,255,0.4);
 }
+.lb-header span:nth-child(3),
+.lb-header span:nth-child(4) {
+  justify-self: end;
+}
 .lb-row {
   display: grid; grid-template-columns: 60px 1fr 80px 100px;
   padding: 0.9rem 1.25rem; align-items: center;
@@ -1660,8 +1703,40 @@ h1, h2, h3 { margin-top: 0; }
   color: #fff; padding: 1px 5px; border-radius: 4px;
   margin-left: 6px; vertical-align: middle;
 }
-.lb-races { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+.lb-races {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.5);
+  justify-self: end;
+  text-align: right;
+}
 .lb-score { font-size: 0.95rem; font-weight: 700; color: #fff; text-align: right; }
+.profile-history-header,
+.profile-history-row {
+  grid-template-columns: minmax(0, 1fr) 110px 120px;
+}
+.profile-history-header span:nth-child(2),
+.profile-history-header span:nth-child(3) {
+  justify-self: end;
+}
+.profile-history-result {
+  justify-self: end;
+}
+.profile-history-result.is-pending {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.78);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 999px;
+  padding: 0.28rem 0.55rem;
+  line-height: 1;
+}
+.profile-history-date {
+  justify-self: end;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+}
 .lb-empty {
   padding: 3rem 2rem; text-align: center;
   color: rgba(255,255,255,0.3); font-size: 0.9rem;
@@ -1703,6 +1778,18 @@ h1, h2, h3 { margin-top: 0; }
 .league-join-input:focus { border-color: var(--gl-red, #E10600); }
 .league-join-error { color: var(--gl-red, #E10600); font-size: 0.85rem; margin-top: 0.5rem; }
 .league-join-success { color: #4caf50; font-size: 0.85rem; margin-top: 0.5rem; }
+.league-entry-summary {
+  margin: 0 0 0.9rem;
+  color: rgba(255,255,255,0.88);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.league-entry-note {
+  margin: 0.75rem 0 0;
+  color: rgba(255,255,255,0.52);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
 
 .league-section { margin-bottom: 2.5rem; }
 .league-section-title {
@@ -1783,6 +1870,137 @@ h1, h2, h3 { margin-top: 0; }
   line-height: 1.4;
   max-width: 200px;
 }
+.league-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.9fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+  align-items: stretch;
+}
+.league-economics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+.league-econ-card,
+.league-payout-section {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
+.league-econ-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 150px;
+  padding: 1.15rem 1.15rem 1rem;
+  gap: 0.65rem;
+}
+.league-econ-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+}
+.league-econ-value {
+  font-size: clamp(1.35rem, 2vw, 1.85rem);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+.league-econ-meta {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: rgba(255,255,255,0.52);
+}
+.league-payout-section {
+  padding: 1.15rem 1.15rem 1rem;
+}
+.league-payout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+.league-payout-header .league-section-title {
+  margin: 0;
+}
+.league-payout-mode {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.7);
+  white-space: nowrap;
+}
+.league-payout-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.league-payout-copy p {
+  margin: 0;
+  color: rgba(255,255,255,0.78);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+.league-payout-note {
+  color: rgba(255,255,255,0.48) !important;
+  font-size: 0.8rem !important;
+}
+.league-payout-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.league-payout-tier {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 54px 72px;
+  gap: 0.75rem;
+  align-items: center;
+}
+.league-payout-place,
+.league-payout-pct,
+.league-payout-amt {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.league-payout-place {
+  color: #fff;
+}
+.league-payout-pct {
+  text-align: right;
+  color: rgba(255,255,255,0.65);
+}
+.league-payout-amt {
+  text-align: right;
+  color: #ffd24d;
+}
+.league-payout-bar-bg {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.08);
+}
+.league-payout-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #E10600 0%, #ff7b29 100%);
+}
 
 /* =============================================================
    PROFILE
@@ -1824,6 +2042,21 @@ h1, h2, h3 { margin-top: 0; }
   background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
   display: flex; flex-direction: column; gap: 1rem;
 }
+.wallet-action-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+.wallet-action-row .gla-race-btn {
+  margin-top: 0;
+  flex: 1 1 220px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
 .wallet-deposit-title { font-size: 1rem; font-weight: 700; color: #fff; margin: 0; }
 .wallet-deposit-desc { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin: 0; }
 .wallet-address-box {
@@ -1850,6 +2083,12 @@ h1, h2, h3 { margin-top: 0; }
   .dash-header { flex-direction: column; }
   .league-detail-header { flex-direction: column; }
   .league-invite-box { align-items: flex-start; }
+  .league-overview-grid { grid-template-columns: 1fr; }
+  .league-payout-header { flex-direction: column; align-items: flex-start; }
+  .league-payout-tier { grid-template-columns: 40px minmax(0, 1fr) 48px 64px; }
+  .predict-timing-grid { grid-template-columns: 1fr; }
+  .wallet-action-row { flex-direction: column; }
+  .wallet-action-row .gla-race-btn { width: 100%; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -2917,6 +3156,8 @@ h1, h2, h3 { margin-top: 0; }
   /* ── Leaderboard: tighten columns for small viewports ── */
   .lb-header,
   .lb-row { grid-template-columns: 44px 1fr 56px 72px; padding: 0.75rem 0.85rem; }
+  .profile-history-header,
+  .profile-history-row { grid-template-columns: minmax(0, 1fr) 84px 92px; }
 
   /* ── Leagues: single-column card grid ── */
   .league-grid { grid-template-columns: 1fr; }
@@ -2994,6 +3235,8 @@ h1, h2, h3 { margin-top: 0; }
   /* ── Leaderboard: only rank, name, score on very narrow ── */
   .lb-header { grid-template-columns: 40px 1fr 70px; padding: 0.65rem 0.75rem; }
   .lb-row { grid-template-columns: 40px 1fr 70px; padding: 0.75rem 0.75rem; }
+  .profile-history-header,
+  .profile-history-row { grid-template-columns: minmax(0, 1fr) 72px 84px; }
   /* Hide "Races" column on very narrow screens ── */
   .lb-header span:nth-child(3),
   .lb-row .lb-races { display: none; }

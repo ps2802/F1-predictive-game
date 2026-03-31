@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { selectLatestPredictionVersionRows } from "@/lib/predictions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { sendRaceResultEmail } from "@/lib/email";
 import {
   settleRace,
   type PredictionQuestion,
@@ -206,6 +207,36 @@ export async function POST(request: Request) {
 
   if (upsertErr)
     return NextResponse.json({ error: upsertErr.message }, { status: 400 });
+
+  // 7b. Send result emails (fire-and-forget — settlement must not fail if email fails)
+  const { data: raceMeta } = await admin
+    .from("races")
+    .select("grand_prix_name")
+    .eq("id", raceId)
+    .single();
+
+  if (raceMeta) {
+    const scoredUserIds = scores.map((s) => s.user_id);
+    const { data: authUsers } = await admin.auth.admin.listUsers();
+    const emailByUserId = new Map(
+      (authUsers?.users ?? [])
+        .filter((u) => scoredUserIds.includes(u.id) && !!u.email)
+        .map((u) => [u.id, u.email as string])
+    );
+
+    for (const score of scores) {
+      const email = emailByUserId.get(score.user_id);
+      if (!email) continue;
+      sendRaceResultEmail({
+        to: email,
+        raceName: raceMeta.grand_prix_name,
+        raceId,
+        totalScore: score.total_score,
+        correctPicks: score.correct_picks,
+        totalQuestions: questions.length,
+      }).catch(() => {});
+    }
+  }
 
   // 8. Update league_scores for all affected users
   const { data: leagueMembers } = await admin
