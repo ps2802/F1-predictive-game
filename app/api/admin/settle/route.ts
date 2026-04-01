@@ -7,6 +7,7 @@ import {
 import { detectIdenticalPicks } from "@/lib/scoring/runSettlement";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isAdminEmail } from "@/lib/admin";
 import {
   settleRace,
   type PredictionQuestion,
@@ -57,6 +58,9 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!isAdminEmail(user.email))
+    return NextResponse.json({ error: "Forbidden: admin only." }, { status: 403 });
 
   const { data: profile } = await supabase
     .from("profiles")

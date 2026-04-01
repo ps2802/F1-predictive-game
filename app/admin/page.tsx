@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AppNav } from "@/app/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { isAdminEmail } from "@/lib/admin";
+import { PLATFORM_FEE_WALLET_ADDRESS } from "@/lib/gameRules";
 
 type Question = {
   id: string;
@@ -108,6 +110,7 @@ export default function AdminPage() {
     if (!supabase) return;
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push("/login"); return; }
+      if (!isAdminEmail(user.email)) { router.push("/dashboard"); return; }
       const { data: profile } = await supabase
         .from("profiles")
         .select("is_admin")
@@ -667,9 +670,10 @@ export default function AdminPage() {
                   </div>
                 )}
 
-                <p className="admin-fee-note">
-                  Withdrawals are manual — transfer from your platform Solana wallet after confirming balance.
-                </p>
+                <div className="admin-fee-note" style={{ fontFamily: "monospace", wordBreak: "break-all" }}>
+                  <span style={{ opacity: 0.6, fontSize: "0.75rem", display: "block", marginBottom: "0.25rem" }}>Fee collection wallet</span>
+                  {PLATFORM_FEE_WALLET_ADDRESS}
+                </div>
               </>
             ) : (
               <p className="admin-loading">Loading revenue data...</p>
@@ -682,7 +686,7 @@ export default function AdminPage() {
           <section className="admin-section">
             <h2 className="admin-section-title">User Wallets</h2>
             <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", marginBottom: "1.25rem" }}>
-              Wallets automatically enroll when users log in via Privy. Use "Enroll All" to backfill existing accounts.
+              Wallets automatically enroll when users log in via Privy. Use &quot;Enroll All&quot; to backfill existing accounts.
             </p>
 
             {walletMsg && (

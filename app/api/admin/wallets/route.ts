@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { addAddressToHeliusWebhook } from "@/lib/helius/addWebhookAddress";
+import { isAdminEmail } from "@/lib/admin";
 
 // Solana addresses are base58-encoded 32-byte public keys (32–44 chars)
 const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -26,6 +27,7 @@ async function requireAdmin() {
   if (!supabase) return null;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
+  if (!isAdminEmail(user.email)) return null;
   const { data: profile } = await supabase
     .from("profiles")
     .select("is_admin")

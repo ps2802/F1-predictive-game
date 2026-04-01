@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isAdminEmail } from "@/lib/admin";
 
 const CreateRaceBody = z.object({
   id: z.string().regex(/^[a-z0-9-]+$/, "id must be lowercase alphanumeric with hyphens only (e.g. japan-2026)").min(1),
@@ -15,6 +16,7 @@ const CreateRaceBody = z.object({
 async function requireAdmin(supabase: NonNullable<Awaited<ReturnType<typeof createSupabaseServerClient>>>) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { user: null, error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  if (!isAdminEmail(user.email)) return { user: null, error: NextResponse.json({ error: "Forbidden: admin only." }, { status: 403 }) };
   const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single();
   if (!profile?.is_admin) return { user: null, error: NextResponse.json({ error: "Forbidden: admin only." }, { status: 403 }) };
   return { user, error: null };
