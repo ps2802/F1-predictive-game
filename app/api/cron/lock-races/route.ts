@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
   const { error: updateErr } = await admin
     .from("races")
-    .update({ race_locked: true, is_locked: true })
+    .update({ race_locked: true })
     .in("id", ids);
 
   if (updateErr)

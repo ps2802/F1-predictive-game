@@ -101,8 +101,9 @@ export async function handlePrivyAuthComplete(
     throw new Error(`Session handshake failed: ${otpError.message}`);
   }
 
-  // Step 4: Redirect — use hasUsername from API to skip extra profile query
-  if (redirectTo) {
+  // Step 4: Redirect — use hasUsername from API to skip extra profile query.
+  // Only allow relative paths (starting with /) to prevent open redirect attacks.
+  if (redirectTo && /^\/[^/]/.test(redirectTo)) {
     router.push(redirectTo);
     return;
   }

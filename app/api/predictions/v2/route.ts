@@ -175,8 +175,8 @@ export async function POST(request: NextRequest) {
   }
 
   if (changedQuestionIds.size === 0) {
-    // No changes — preserve existing status (don't downgrade active to draft)
-    const existingStatus = existingPrediction?.id ? "active" : "draft";
+    // No changes — return the actual stored status so the client stays in sync
+    const existingStatus = existingPrediction?.status ?? "draft";
     return NextResponse.json({
       success: true,
       predictionId: existingPrediction?.id ?? null,
