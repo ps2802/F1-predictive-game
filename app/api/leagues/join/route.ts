@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
   const { data: league } = await supabase
     .from("leagues")
-    .select("id, name, entry_fee_usdc, member_count, max_users, is_active")
+    .select("id, name, entry_fee_usdc, member_count, max_users, is_active, race_id")
     .eq("invite_code", invite_code.trim().toUpperCase())
     .single();
 
@@ -69,6 +69,16 @@ export async function POST(request: NextRequest) {
   }
 
   const joinedRow = Array.isArray(joined) ? joined[0] : joined;
+
+  // Activate the user's draft prediction for this league's race (if applicable)
+  if (league.race_id) {
+    await supabase
+      .from("predictions")
+      .update({ status: "active" })
+      .eq("user_id", user.id)
+      .eq("race_id", league.race_id)
+      .eq("status", "draft");
+  }
 
   return NextResponse.json({
     success: true,

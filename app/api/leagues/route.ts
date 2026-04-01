@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import {
   DEFAULT_PAYOUT_MODEL,
   DEFAULT_PAYOUT_TIERS,
@@ -35,7 +36,7 @@ const CreateLeagueBody = z.object({
     .optional(),
 });
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const supabase = await createSupabaseServerClient();
   if (!supabase)
     return NextResponse.json({ error: "Supabase env vars missing." }, { status: 500 });
@@ -47,6 +48,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const raceId = new URL(request.url).searchParams.get("raceId");
+
+  // Guard: user.id must be a UUID — prevents filter string injection in .or() below
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(user.id)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const { data: memberships, error: membershipsError } = await supabase
     .from("league_members")
@@ -111,7 +118,13 @@ export async function GET(request: Request) {
   });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Rate limit: 10 league creates per IP per hour
+  const ip = getClientIp(request.headers);
+  if (await isRateLimited(`leagues-create:${ip}`, 10, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   const supabase = await createSupabaseServerClient();
   if (!supabase)
     return NextResponse.json({ error: "Supabase env vars missing." }, { status: 500 });

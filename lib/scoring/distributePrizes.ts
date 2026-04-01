@@ -9,6 +9,8 @@
  * - frozen payout holds without reallocating the held amount
  */
 
+import { MINIMUM_LEAGUE_SIZE_FOR_PAYOUT } from "@/lib/gameRules";
+
 export const PLATFORM_RAKE_PERCENT = 0.10;
 export const MIN_RAKE_USDC = 0;
 export const MINIMUM_PAID_ENTRANTS = 5;
@@ -52,6 +54,7 @@ export interface PayoutAllocation {
   rank: number;
   amount: number;
   held: boolean;
+  is_refund?: boolean;
 }
 
 export interface DistributionResult {
@@ -126,6 +129,27 @@ export function distributePool(
       payouts: [],
       withheldAmount: 0,
       undistributed: Math.max(prizePool, 0),
+    };
+  }
+
+  // Refund all stakes if league is too small to run a real competition
+  if (rankedUsers.length < MINIMUM_LEAGUE_SIZE_FOR_PAYOUT) {
+    const refundPerUser = roundUsdc(prizePool / rankedUsers.length);
+    return {
+      leagueId,
+      model: payoutModel,
+      prizePool,
+      platformRake: 0,
+      distributablePool: prizePool,
+      payouts: rankedUsers.map((u) => ({
+        userId: u.userId,
+        rank: 0,
+        amount: refundPerUser,
+        held: false,
+        is_refund: true,
+      })),
+      withheldAmount: 0,
+      undistributed: 0,
     };
   }
 

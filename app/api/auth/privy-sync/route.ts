@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrivyClient } from "@privy-io/server-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
+import { addAddressToHeliusWebhook } from "@/lib/helius/addWebhookAddress";
 
 /**
  * POST /api/auth/privy-sync
@@ -149,6 +150,13 @@ export async function POST(request: NextRequest) {
       { error: "Failed to sync user profile." },
       { status: 500 }
     );
+  }
+
+  // Register wallet address with Helius so USDC deposits are auto-detected.
+  // Awaited so the enrollment completes before the serverless function exits.
+  // Non-fatal — addAddressToHeliusWebhook has its own try/catch and never throws.
+  if (walletAddress) {
+    await addAddressToHeliusWebhook(walletAddress);
   }
 
   return NextResponse.json({

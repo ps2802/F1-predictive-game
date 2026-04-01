@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { usePrivy } from "@privy-io/react-auth";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export interface AppNavProfile {
@@ -40,17 +39,15 @@ function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppNav({
-  profile,
-  isAdmin,
-  profileLabel,
-}: AppNavProps): React.JSX.Element {
-  const pathname = usePathname();
-  const router = useRouter();
+// Only rendered when NEXT_PUBLIC_PRIVY_APP_ID is set — safe to call usePrivy() here.
+function PrivySignOutButton(): React.JSX.Element {
+  // Lazy import at call-site so the bundle only pulls in Privy when actually used.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { usePrivy } = require("@privy-io/react-auth") as {
+    usePrivy: () => { logout: () => Promise<void> };
+  };
   const { logout } = usePrivy();
-  const resolvedIsAdmin = isAdmin ?? profile?.is_admin ?? false;
-  const resolvedProfileLabel =
-    profileLabel ?? (profile?.username ? `@${profile.username}` : null);
+  const router = useRouter();
 
   async function handleLogout(): Promise<void> {
     const supabase = createSupabaseBrowserClient();
@@ -60,6 +57,42 @@ export function AppNav({
     await logout();
     router.push("/login");
   }
+
+  return (
+    <button className="gla-nav-link" onClick={handleLogout}>
+      Sign out
+    </button>
+  );
+}
+
+function SimpleSignOutButton(): React.JSX.Element {
+  const router = useRouter();
+
+  async function handleLogout(): Promise<void> {
+    const supabase = createSupabaseBrowserClient();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    router.push("/login");
+  }
+
+  return (
+    <button className="gla-nav-link" onClick={handleLogout}>
+      Sign out
+    </button>
+  );
+}
+
+export function AppNav({
+  profile,
+  isAdmin,
+  profileLabel,
+}: AppNavProps): React.JSX.Element {
+  const pathname = usePathname();
+  const hasPrivy = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
+  const resolvedIsAdmin = isAdmin ?? profile?.is_admin ?? false;
+  const resolvedProfileLabel =
+    profileLabel ?? (profile?.username ? `@${profile.username}` : null);
 
   return (
     <nav className="gla-nav">
@@ -99,9 +132,7 @@ export function AppNav({
             ${Number(profile.balance_usdc).toFixed(2)}
           </Link>
         )}
-        <button className="gla-nav-link" onClick={handleLogout}>
-          Sign out
-        </button>
+        {hasPrivy ? <PrivySignOutButton /> : <SimpleSignOutButton />}
       </div>
     </nav>
   );

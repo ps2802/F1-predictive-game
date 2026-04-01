@@ -104,6 +104,13 @@ export default function WalletPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [addressCopied, setAddressCopied] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawAddress, setWithdrawAddress] = useState("");
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawMsg, setWithdrawMsg] = useState("");
+  const [withdrawErr, setWithdrawErr] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -153,6 +160,33 @@ export default function WalletPage() {
       cancelled = true;
     };
   }, [router]);
+
+  async function handleWithdraw(e: React.FormEvent) {
+    e.preventDefault();
+    setWithdrawing(true);
+    setWithdrawErr("");
+    setWithdrawMsg("");
+    const res = await fetch("/api/wallet/withdraw", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount_usdc: Number(withdrawAmount),
+        destination_address: withdrawAddress.trim(),
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setWithdrawErr(data.error ?? "Withdrawal failed.");
+    } else {
+      setWithdrawMsg(`Withdrawal of $${Number(withdrawAmount).toFixed(2)} queued. Admin review within 24 hours.`);
+      setWithdrawAmount("");
+      setWithdrawAddress("");
+      setShowWithdraw(false);
+      // Reload wallet data
+      window.location.reload();
+    }
+    setWithdrawing(false);
+  }
 
   if (loading) {
     return (
@@ -235,22 +269,106 @@ export default function WalletPage() {
         </div>
 
         <div className="wallet-deposit-card">
-          <p className="wallet-beta-pill">Testing mode</p>
-          <p className="wallet-deposit-desc">
-            Use this page to verify the actual ledger state: credits, entry fees, refunds, payouts, and any withdrawal-release holds created during settlement.
-          </p>
-          <p className="wallet-deposit-desc" style={{ marginTop: "0.75rem" }}>
-            Manual top-ups still go through the admin route during testing, but the user-facing balance and activity feed are now reading from the real Supabase tables instead of placeholder copy.
-          </p>
-          <div className="wallet-action-row">
-            <Link href="/leagues" className="gla-race-btn">
-              Join a League
-            </Link>
-            <Link href="/profile" className="gla-race-btn league-secondary-btn">
-              Back to Profile
-            </Link>
+          <p className="wallet-deposit-title">Deposit USDC</p>
+          {profile?.wallet_address ? (
+            <>
+              <p className="wallet-deposit-desc">
+                Send USDC (SPL token on Solana) to your embedded wallet. Your balance updates automatically once confirmed on-chain.
+              </p>
+              <div className="wallet-address-box">
+                <span className="wallet-address-text">{profile.wallet_address}</span>
+                <button
+                  className="league-copy-btn"
+                  onClick={() => {
+                    navigator.clipboard.writeText(profile.wallet_address!).then(() => {
+                      setAddressCopied(true);
+                      setTimeout(() => setAddressCopied(false), 2000);
+                    });
+                  }}
+                >
+                  {addressCopied ? "Copied!" : "Copy"}
+                </button>
+              </div>
+              <p className="wallet-deposit-note">
+                Only send USDC on Solana. Other tokens or chains are not supported.
+              </p>
+            </>
+          ) : (
+            <p className="wallet-deposit-desc">
+              No embedded wallet linked yet. Sign out and sign back in to generate your Solana wallet, then return here to deposit.
+            </p>
+          )}
+          <div className="wallet-action-row" style={{ marginTop: "1rem" }}>
+            <Link href="/leagues" className="gla-race-btn">Join a League</Link>
+            <Link href="/profile" className="gla-race-btn league-secondary-btn">Back to Profile</Link>
           </div>
         </div>
+
+        {/* Withdrawal */}
+        {balance > 0 && (
+          <div className="wallet-deposit-card" style={{ marginTop: "1.5rem" }}>
+            <p className="wallet-deposit-title">Withdraw USDC</p>
+            {!showWithdraw ? (
+              <>
+                <p className="wallet-deposit-desc">
+                  Withdrawals are processed within 24 hours. Your available balance is {formatUsdc(balance)}.
+                </p>
+                <button
+                  className="gla-race-btn"
+                  style={{ marginTop: "0.75rem" }}
+                  onClick={() => setShowWithdraw(true)}
+                >
+                  Request Withdrawal
+                </button>
+              </>
+            ) : (
+              <form onSubmit={handleWithdraw} style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "0.5rem" }}>
+                <div>
+                  <label className="wallet-deposit-title">Destination Wallet (Solana)</label>
+                  <input
+                    className="league-join-input"
+                    style={{ width: "100%", marginTop: "0.35rem" }}
+                    placeholder="Solana wallet address"
+                    value={withdrawAddress}
+                    onChange={(e) => setWithdrawAddress(e.target.value)}
+                    minLength={32}
+                    maxLength={44}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="wallet-deposit-title">Amount (USDC)</label>
+                  <input
+                    className="league-join-input"
+                    style={{ width: "100%", marginTop: "0.35rem" }}
+                    type="number"
+                    placeholder={`Max ${balance.toFixed(2)}`}
+                    min="1"
+                    max={balance}
+                    step="0.01"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    required
+                  />
+                </div>
+                {withdrawErr && <p style={{ color: "#E10600", fontSize: "0.85rem" }}>{withdrawErr}</p>}
+                <div className="wallet-action-row">
+                  <button type="submit" className="gla-race-btn" disabled={withdrawing}>
+                    {withdrawing ? "Processing..." : "Confirm Withdrawal"}
+                  </button>
+                  <button
+                    type="button"
+                    className="gla-race-btn league-secondary-btn"
+                    onClick={() => { setShowWithdraw(false); setWithdrawErr(""); }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+            {withdrawMsg && <p style={{ color: "rgba(0,210,170,0.9)", fontSize: "0.85rem", marginTop: "0.75rem" }}>{withdrawMsg}</p>}
+          </div>
+        )}
 
         {withdrawalHolds.length > 0 && (
           <div className="profile-identity-card" style={{ marginTop: "1.5rem" }}>

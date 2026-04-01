@@ -330,7 +330,12 @@ export default function LeaguePage() {
               {nextRacePredStatus === "active" ? (
                 <>
                   <strong>Your picks for {targetRace.name} are active.</strong>
-                  <span>They&apos;ll score once the race is settled. You can update them any time before the deadline.</span>
+                  <span>They&apos;ll score once the race is settled.</span>
+                </>
+              ) : nextRacePredStatus === "draft" ? (
+                <>
+                  <strong>Picks saved — not entered yet.</strong>
+                  <span>Join this league to activate your prediction for {targetRace.name}.</span>
                 </>
               ) : (
                 <>
@@ -346,6 +351,8 @@ export default function LeaguePage() {
             >
               {nextRacePredStatus === "none"
                 ? `Predict ${targetRace.name} →`
+                : nextRacePredStatus === "draft"
+                ? `Finish Picks →`
                 : `Edit ${targetRace.name} →`}
             </Link>
           </div>

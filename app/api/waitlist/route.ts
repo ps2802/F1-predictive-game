@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
 const WaitlistBody = z.object({
   email: z.string().email("Valid email required.").toLowerCase().trim(),
 });
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 5 signups per IP per hour
+  const ip = getClientIp(req.headers);
+  if (await isRateLimited(`waitlist:${ip}`, 5, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Too many requests. Please wait before trying again." }, { status: 429 });
+  }
   const parsed = WaitlistBody.safeParse(await req.json().catch(() => null));
   if (!parsed.success)
     return NextResponse.json(

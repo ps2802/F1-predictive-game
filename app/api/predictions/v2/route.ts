@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
 
   const { data: existingPrediction, error: existingPredictionErr } = await supabase
     .from("predictions")
-    .select("id, edit_count")
+    .select("id, edit_count, status")
     .eq("user_id", user.id)
     .eq("race_id", raceId)
     .maybeSingle();
@@ -175,10 +175,12 @@ export async function POST(request: NextRequest) {
   }
 
   if (changedQuestionIds.size === 0) {
+    // No changes — preserve existing status (don't downgrade active to draft)
+    const existingStatus = existingPrediction?.id ? "active" : "draft";
     return NextResponse.json({
       success: true,
       predictionId: existingPrediction?.id ?? null,
-      status: "active",
+      status: existingStatus,
       chargedEditFee: false,
       editFeeUsdc: 0,
     });
@@ -219,6 +221,13 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // New predictions are draft until the user joins a league (pays entry).
+  // Existing active predictions stay active. Paid-edit-window updates also stay active.
+  const isUpdatingExistingActive =
+    existingPrediction?.id != null && existingPrediction.status === "active";
+  const newPredictionStatus: "active" | "draft" =
+    isUpdatingExistingActive || shouldChargeEditFee ? "active" : "draft";
+
   const { data: submissionResult, error: submissionErr } = await supabase.rpc(
     "record_prediction_submission",
     {
@@ -226,7 +235,7 @@ export async function POST(request: NextRequest) {
       p_race_id: raceId,
       p_answers_json: mergedAnswers,
       p_answer_rows: validation.answerRows,
-      p_status: "active",
+      p_status: newPredictionStatus,
       p_increment_edit_count: shouldChargeEditFee,
       p_edit_fee_usdc: shouldChargeEditFee ? PREDICTION_EDIT_FEE_USDC : 0,
       p_edit_description: shouldChargeEditFee
@@ -249,7 +258,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     success: true,
     predictionId: resultRow.prediction_id,
-    status: "active",
+    status: newPredictionStatus,
     chargedEditFee: shouldChargeEditFee,
     editFeeUsdc: shouldChargeEditFee ? PREDICTION_EDIT_FEE_USDC : 0,
   });

@@ -68,6 +68,13 @@ export async function GET(request: NextRequest) {
     if (snapshotErr) {
       snapshotErrors.push({ raceId, error: snapshotErr.message });
     }
+
+    // Void draft predictions — they were never paid/entered so should not score
+    await admin
+      .from("predictions")
+      .update({ status: "locked" })
+      .eq("race_id", raceId)
+      .eq("status", "draft");
   }
 
   if (snapshotErrors.length > 0) {

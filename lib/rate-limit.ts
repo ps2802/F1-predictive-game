@@ -5,7 +5,10 @@
  * 20-100 user closed beta to catch obvious abuse (brute force, spam).
  * Does not persist across cold starts or across multiple instances.
  *
- * For production scale, replace with @upstash/ratelimit + Redis.
+ * PRODUCTION WARNING: Replace with @upstash/ratelimit + Redis before
+ * scaling beyond a single-instance deployment. On Vercel with multiple
+ * concurrent function instances, each instance has its own bucket store —
+ * an attacker can exceed the limit by distributing requests across instances.
  */
 
 interface Bucket {

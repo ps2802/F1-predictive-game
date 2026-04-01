@@ -24,3 +24,10 @@ export function calculateStakeSplit(stakeAmountUsdc: number): {
 export function toPayoutModel(choice: PayoutChoice): "skill_weighted" | "manual" {
   return choice === "fair" ? "skill_weighted" : "manual";
 }
+
+export const DROP_WORST_N_RACES = 2;
+export const LOYALTY_STREAK_1_MIN = 10;
+export const LOYALTY_STREAK_1_MULTIPLIER = 1.05;
+export const LOYALTY_STREAK_2_MIN = 20;
+export const LOYALTY_STREAK_2_MULTIPLIER = 1.10;
+export const MINIMUM_LEAGUE_SIZE_FOR_PAYOUT = 5;

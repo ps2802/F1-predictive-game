@@ -236,14 +236,19 @@ function AuthForm() {
         await handlePrivyAuthComplete(getAccessToken, redirect, router);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Sign-in failed.";
-        setError(msg.includes("fetch") ? "Network error — please try again." : "Sign-in failed. Please try again.");
+        setError(msg.includes("fetch") ? "Network error — please try again." : msg);
         setLoading(false);
       }
     },
     [getAccessToken, redirect, router]
   );
 
-  const onError = useCallback(() => {
+  const onError = useCallback((error: string) => {
+    // User dismissed the modal — not an error
+    if (error === "exited_auth_flow") {
+      setLoading(false);
+      return;
+    }
     setError("Sign-in failed. Please try again.");
     setLoading(false);
   }, []);

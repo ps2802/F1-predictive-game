@@ -70,6 +70,8 @@ export default function PredictPage() {
   const [sectionIncomplete, setSectionIncomplete] = useState(false);
   const [raceTiming, setRaceTiming] = useState<RaceTiming | null>(null);
   const [chargedEditFee, setChargedEditFee] = useState(false);
+  const [copyingExpert, setCopyingExpert] = useState(false);
+  const [expertCopied, setExpertCopied] = useState(false);
 
   const currentCategory = STEPS[step];
   const currentQuestions = questions.filter(
@@ -303,6 +305,23 @@ export default function PredictPage() {
     }
   }
 
+  async function handleCopyExpert() {
+    setCopyingExpert(true);
+    try {
+      const res = await fetch(`/api/races/${raceId}/top-picks`);
+      const data = await res.json();
+      if (data.picks && Object.keys(data.picks).length > 0) {
+        setAnswers((prev) => ({ ...prev, ...data.picks }));
+        setExpertCopied(true);
+        setTimeout(() => setExpertCopied(false), 3000);
+      }
+    } catch {
+      // ignore — non-critical
+    } finally {
+      setCopyingExpert(false);
+    }
+  }
+
   if (loading || racesLoading) {
     return (
       <div className="gla-root">
@@ -334,7 +353,7 @@ export default function PredictPage() {
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <div className="predict-success-icon">✓</div>
           <h1 className="gla-page-title" style={{ marginTop: "1.5rem" }}>
-            {allQuestionsComplete ? "Predictions Saved" : "Progress Saved"}
+            {allQuestionsComplete ? "Predictions Locked In" : "Progress Saved"}
           </h1>
           <p className="gla-page-sub">
             {race.name} · Round {race.round}
@@ -348,45 +367,36 @@ export default function PredictPage() {
               marginInline: "auto",
               lineHeight: 1.5,
             }}>
-              You can come back before each lock window to finish the rest of your weekend picks.
+              Come back before each lock window to finish the rest of your picks.
             </p>
           )}
           {chargedEditFee && (
             <p style={{ color: "rgba(255,255,255,0.72)", marginTop: "0.75rem" }}>
-              A ${PREDICTION_EDIT_FEE_USDC} USDC live edit fee was charged for this update.
+              A ${PREDICTION_EDIT_FEE_USDC} USDC edit fee was charged for this update.
             </p>
           )}
-          <div
-            style={{
-              display: "flex",
-              gap: "1rem",
-              justifyContent: "center",
-              marginTop: "2rem",
-              flexWrap: "wrap",
-            }}
-          >
-            <Link href={`/leagues?raceId=${raceId}`} className="gla-race-btn">
-              View Leagues
-            </Link>
-            <Link
-              href={`/leagues/create?raceId=${raceId}`}
-              className="gla-race-btn"
-              style={{
-                background: "transparent",
-                border: "1px solid rgba(255,255,255,0.2)",
-              }}
-            >
-              Create League
-            </Link>
-            <Link
-              href="/leaderboard"
-              className="gla-race-btn"
-              style={{
-                background: "transparent",
-                border: "1px solid rgba(255,255,255,0.2)",
-              }}
-            >
+
+          {/* Primary CTA: league join */}
+          {allQuestionsComplete && (
+            <div style={{ marginTop: "2rem", padding: "1.25rem", background: "rgba(0,210,170,0.07)", border: "1px solid rgba(0,210,170,0.2)", borderRadius: "12px", maxWidth: "400px", marginInline: "auto" }}>
+              <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(0,210,170,0.7)", marginBottom: "0.5rem" }}>
+                Next Step
+              </p>
+              <p style={{ fontSize: "0.95rem", color: "#fff", marginBottom: "1rem" }}>
+                Join a league to compete for the prize pool
+              </p>
+              <Link href={`/leagues?raceId=${raceId}`} className="gla-race-btn" style={{ display: "block", textAlign: "center" }}>
+                Choose a League &rarr;
+              </Link>
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "1.5rem", flexWrap: "wrap" }}>
+            <Link href="/leaderboard" className="gla-race-btn" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}>
               Global Leaderboard
+            </Link>
+            <Link href="/dashboard" className="gla-race-btn" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}>
+              All Races
             </Link>
           </div>
         </div>
@@ -448,6 +458,20 @@ export default function PredictPage() {
           </button>
         ))}
       </div>
+
+      {/* Expert copy CTA — only shown before review step */}
+      {currentCategory !== "review" && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.5rem", paddingInline: "1.5rem" }}>
+          <button
+            className="predict-copy-expert-btn"
+            onClick={handleCopyExpert}
+            disabled={copyingExpert}
+            title="Copy the top player's picks as a starting point, then modify"
+          >
+            {copyingExpert ? "Loading..." : expertCopied ? "✓ Copied!" : "Copy Expert Picks"}
+          </button>
+        </div>
+      )}
 
       {/* Questions */}
       <div className="predict-body">

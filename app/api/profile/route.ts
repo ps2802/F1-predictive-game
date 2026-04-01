@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
-export async function GET() {
+export async function GET(_request: NextRequest) {
   const supabase = await createSupabaseServerClient();
   if (!supabase)
     return NextResponse.json({ error: "Supabase env vars missing." }, { status: 500 });
@@ -44,7 +45,13 @@ export async function GET() {
   });
 }
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
+  // Rate limit: 20 profile updates per IP per hour
+  const ip = getClientIp(request.headers);
+  if (await isRateLimited(`profile-patch:${ip}`, 20, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   const supabase = await createSupabaseServerClient();
   if (!supabase)
     return NextResponse.json({ error: "Supabase env vars missing." }, { status: 500 });
@@ -71,6 +78,16 @@ export async function PATCH(request: Request) {
       { error: "Username must be 2–30 characters." },
       { status: 400 }
     );
+
+  // Only allow https:// avatar URLs — blocks javascript: and data: URI XSS vectors
+  if (avatar_url !== undefined) {
+    if (avatar_url.length > 2048 || !/^https:\/\//i.test(avatar_url)) {
+      return NextResponse.json(
+        { error: "avatar_url must be a valid https URL." },
+        { status: 400 }
+      );
+    }
+  }
 
   const updates: Record<string, string> = {};
   if (trimmedUsername !== undefined) updates.username = trimmedUsername;

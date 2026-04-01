@@ -11,7 +11,10 @@ type LeaderboardEntry = {
   username: string | null;
   avatar_url: string | null;
   total_score: number;
+  raw_total?: number;
+  loyalty_multiplier?: number;
   races_played: number;
+  races_dropped?: number;
 };
 
 export default function LeaderboardPage() {
@@ -32,15 +35,12 @@ export default function LeaderboardPage() {
       if (!user) { router.push("/login"); return; }
       setCurrentUserId(user.id);
 
-      const { data, error: fetchErr } = await supabase
-        .from("leaderboard")
-        .select("*")
-        .limit(100);
-
-      if (fetchErr) {
+      const res = await fetch("/api/leaderboard", { cache: "no-store" });
+      if (!res.ok) {
         setError("Failed to load leaderboard. Please refresh.");
       } else {
-        setEntries(data ?? []);
+        const data = await res.json();
+        setEntries(data.entries ?? []);
       }
       setLoading(false);
     }
@@ -117,6 +117,11 @@ export default function LeaderboardPage() {
                   {entry.user_id === currentUserId && (
                     <span className="lb-you-badge"> you</span>
                   )}
+                  {entry.loyalty_multiplier && entry.loyalty_multiplier > 1 && (
+                    <span className="lb-loyalty-badge" title={`${entry.loyalty_multiplier}× loyalty bonus`}>
+                      🔥 {entry.loyalty_multiplier}×
+                    </span>
+                  )}
                 </span>
                 <span className="lb-races">{entry.races_played}</span>
                 <span className="lb-score">
@@ -130,4 +135,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-

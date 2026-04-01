@@ -23,7 +23,8 @@ export default function DashboardPage() {
   const { races, meta, loading: racesLoading, error: racesError } = useRaceCatalog();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [lockedRaceIds, setLockedRaceIds] = useState<Set<string>>(new Set());
-  const [predictedRaceIds, setPredictedRaceIds] = useState<Set<string>>(new Set());
+  const [predictedRaceIds, setPredictedRaceIds] = useState<Map<string, "active" | "draft">>(new Map());
+  const [scoredRaceIds, setScoredRaceIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [loadWarning, setLoadWarning] = useState("");
 
@@ -60,13 +61,14 @@ export default function DashboardPage() {
           return;
         }
 
-        const [profileResult, predictionsResult] = await Promise.all([
+        const [profileResult, predictionsResult, scoresResult] = await Promise.all([
           supabase
             .from("profiles")
             .select("username, balance_usdc, is_admin")
             .eq("id", user.id)
             .single(),
           supabase.from("predictions").select("race_id, status").eq("user_id", user.id),
+          supabase.from("race_scores").select("race_id").eq("user_id", user.id),
         ]);
 
         const warningParts: string[] = [];
@@ -92,15 +94,30 @@ export default function DashboardPage() {
           );
           warningParts.push("saved predictions");
           if (!cancelled) {
-            setPredictedRaceIds(new Set());
+            setPredictedRaceIds(new Map());
           }
         } else {
-          const predicted = new Set<string>();
+          const predicted = new Map<string, "active" | "draft">();
           for (const prediction of (predictionsResult.data ?? []) as Prediction[]) {
-            predicted.add(prediction.race_id);
+            predicted.set(prediction.race_id, prediction.status);
           }
           if (!cancelled) {
             setPredictedRaceIds(predicted);
+          }
+        }
+
+        if (scoresResult.error) {
+          console.error(
+            "[Gridlock] Dashboard scores load failed:",
+            scoresResult.error.message
+          );
+        } else {
+          const scored = new Set<string>();
+          for (const row of (scoresResult.data ?? [])) {
+            scored.add(row.race_id);
+          }
+          if (!cancelled) {
+            setScoredRaceIds(scored);
           }
         }
 
@@ -211,19 +228,30 @@ export default function DashboardPage() {
                   {isClosed ? "Locked" : "Open"}
                 </span>
                 {isClosed ? (
-                  <span className="gla-race-btn is-disabled">Locked</span>
+                  scoredRaceIds.has(race.id) ? (
+                    <Link className="gla-race-btn is-edit" href={`/scores/${race.id}`}>View Score</Link>
+                  ) : (
+                    <span className="gla-race-btn is-disabled">Locked</span>
+                  )
                 ) : predictedRaceIds.has(race.id) ? (
-                  <Link
-                    className="gla-race-btn is-edit"
-                    href={`/predict/${race.id}`}
-                    title="Saved prediction"
-                  >
-                    Edit
-                  </Link>
+                  predictedRaceIds.get(race.id) === "draft" ? (
+                    <Link className="gla-race-btn" href={`/leagues?raceId=${race.id}`}>Enter Now</Link>
+                  ) : (
+                    <Link
+                      className="gla-race-btn is-edit"
+                      href={`/predict/${race.id}`}
+                      title="Saved prediction"
+                    >
+                      Edit
+                    </Link>
+                  )
                 ) : (
                   <Link className="gla-race-btn" href={`/predict/${race.id}`}>
                     Predict
                   </Link>
+                )}
+                {!isClosed && predictedRaceIds.get(race.id) === "draft" && (
+                  <p className="gla-race-draft-warning">Picks saved — not entered yet</p>
                 )}
               </article>
             );

@@ -39,7 +39,7 @@ function versionToAnswers(answersJson: Record<string, string[]>): PredictionAnsw
 export async function runSettlement(
   raceId: string,
   admin: SupabaseClient
-): Promise<{ scores_computed: number }> {
+): Promise<{ scores_computed: number; flagged_users: string[] }> {
   // 1. Load questions
   const { data: questions } = await admin
     .from("prediction_questions")
@@ -86,7 +86,7 @@ export async function runSettlement(
     .eq("race_id", raceId)
     .eq("status", "active");
 
-  if (!predictions?.length) return { scores_computed: 0 };
+  if (!predictions?.length) return { scores_computed: 0, flagged_users: [] };
 
   const predictionIds = predictions.map((p) => p.id);
 
@@ -189,5 +189,45 @@ export async function runSettlement(
     if (leagueScoresErr) throw new Error(leagueScoresErr.message);
   }
 
-  return { scores_computed: scores.length };
+  // Fraud check — flag users with identical picks for admin review.
+  // Payouts are NOT automatically blocked; the admin sees flagged users in the settle response.
+  const predictionAnswers = predictions
+    .filter((p) => latestByPrediction.has(p.id))
+    .map((p) => ({ user_id: p.user_id, answers_json: latestByPrediction.get(p.id)!.answers_json }));
+  const flaggedSet = detectIdenticalPicks(predictionAnswers);
+  const flagged_users = Array.from(flaggedSet);
+
+  return { scores_computed: scores.length, flagged_users };
+}
+
+/**
+ * Detect users with identical answers to another user in the same settlement.
+ * Returns a Set of user_ids that have exact duplicates — their payouts should be frozen.
+ * Exported for use in admin tooling and future automated flagging.
+ */
+export function detectIdenticalPicks(
+  predictions: Array<{ user_id: string; answers_json: Record<string, string[]> }>
+): Set<string> {
+  const flagged = new Set<string>();
+  const seen = new Map<string, string>(); // fingerprint → first user_id
+
+  for (const pred of predictions) {
+    const fingerprint = JSON.stringify(
+      Object.fromEntries(
+        Object.entries(pred.answers_json)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([k, v]) => [k, [...v].sort()])
+      )
+    );
+
+    const existing = seen.get(fingerprint);
+    if (existing) {
+      flagged.add(pred.user_id);
+      flagged.add(existing);
+    } else {
+      seen.set(fingerprint, pred.user_id);
+    }
+  }
+
+  return flagged;
 }

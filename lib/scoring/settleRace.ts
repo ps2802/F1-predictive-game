@@ -17,6 +17,8 @@
  * Chaos Bonus: +5 if ≥10 questions score any points in the race
  */
 
+import { DROP_WORST_N_RACES } from "@/lib/gameRules";
+
 export const SCORE_CAPS = {
   qualifying: 150,
   race: 300,
@@ -601,4 +603,18 @@ export function settleRace(input: SettlementInput): SettlementOutput {
     scores,
     settledAt: new Date().toISOString(),
   };
+}
+
+/**
+ * Drop the N worst race scores for a user when computing their season total.
+ * Used on the global leaderboard — not applied to individual race scores.
+ */
+export function applyDropWorstN(
+  raceScores: number[],
+  dropN: number = DROP_WORST_N_RACES
+): number {
+  if (raceScores.length <= dropN) return 0;
+  const sorted = [...raceScores].sort((a, b) => a - b); // ascending
+  const kept = sorted.slice(dropN); // drop the N smallest
+  return kept.reduce((sum, s) => sum + s, 0);
 }

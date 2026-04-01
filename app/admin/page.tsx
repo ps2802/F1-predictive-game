@@ -33,7 +33,19 @@ type DbRace = {
   question_count: number;
 };
 
-type Section = "races" | "results";
+type Section = "races" | "results" | "revenue" | "wallets";
+
+type FeeData = {
+  breakdown: { leagueRake: number; editFees: number; total: number };
+  recentFees: Array<{ id: string; amount: number; description: string | null; created_at: string }>;
+};
+
+type WalletEntry = {
+  userId: string;
+  username: string;
+  address: string;
+  watched: boolean;
+};
 
 const emptyForm = {
   id: "",
@@ -60,6 +72,15 @@ export default function AdminPage() {
   const [seedingRace, setSeedingRace] = useState<string | null>(null);
   const [lockingRace, setLockingRace] = useState<string | null>(null);
   const [raceActionMsg, setRaceActionMsg] = useState("");
+
+  // ── Platform Revenue state ────────────────────────────
+  const [feeData, setFeeData] = useState<FeeData | null>(null);
+
+  // ── Wallets state ────────────────────────────────────
+  const [wallets, setWallets] = useState<WalletEntry[]>([]);
+  const [walletsLoading, setWalletsLoading] = useState(false);
+  const [enrollingAll, setEnrollingAll] = useState(false);
+  const [walletMsg, setWalletMsg] = useState("");
 
   // ── Results / Scoring state ───────────────────────────
   const [selectedRace, setSelectedRace] = useState("");
@@ -95,9 +116,47 @@ export default function AdminPage() {
       if (!profile?.is_admin) { router.push("/dashboard"); return; }
       setIsAdmin(true);
       await loadDbRaces();
+      fetch("/api/admin/fees")
+        .then((r) => r.json())
+        .then((d) => setFeeData(d))
+        .catch(() => null);
       setLoading(false);
     });
   }, [loadDbRaces, router]);
+
+  async function loadWallets() {
+    setWalletsLoading(true);
+    const res = await fetch("/api/admin/wallets");
+    const data = await res.json();
+    if (res.ok) setWallets(data.wallets ?? []);
+    setWalletsLoading(false);
+  }
+
+  async function handleEnrollAll() {
+    setEnrollingAll(true);
+    setWalletMsg("");
+    const res = await fetch("/api/admin/wallets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+    const data = await res.json();
+    if (res.ok) {
+      setWalletMsg(`✓ Enrolled ${data.enrolled} address${data.enrolled !== 1 ? "es" : ""} with Helius.`);
+      await loadWallets();
+    } else {
+      setWalletMsg(`Error: ${data.error}`);
+    }
+    setEnrollingAll(false);
+  }
+
+  async function handleEnrollOne(address: string) {
+    setWalletMsg("");
+    const res = await fetch("/api/admin/wallets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ address }) });
+    const data = await res.json();
+    if (res.ok) {
+      setWalletMsg(`✓ Enrolled ${address.slice(0, 8)}…`);
+      await loadWallets();
+    } else {
+      setWalletMsg(`Error: ${data.error}`);
+    }
+  }
 
   function handleFormChange(field: keyof typeof emptyForm, value: string) {
     setCreateForm((prev) => ({ ...prev, [field]: value }));
@@ -330,11 +389,11 @@ export default function AdminPage() {
         <p className="gla-page-title">Admin Panel</p>
 
         {/* Section tabs */}
-        <div style={{ display: "flex", gap: "0.5rem", margin: "1.5rem 0 2rem" }}>
-          {(["races", "results"] as Section[]).map((s) => (
+        <div style={{ display: "flex", gap: "0.5rem", margin: "1.5rem 0 2rem", flexWrap: "wrap" }}>
+          {(["races", "results", "revenue", "wallets"] as Section[]).map((s) => (
             <button
               key={s}
-              onClick={() => setSection(s)}
+              onClick={() => { setSection(s); if (s === "wallets") loadWallets(); }}
               style={{
                 padding: "0.4rem 1rem",
                 borderRadius: "6px",
@@ -346,7 +405,7 @@ export default function AdminPage() {
                 fontWeight: section === s ? 700 : 400,
               }}
             >
-              {s === "races" ? "Race Management" : "Results & Scoring"}
+              {s === "races" ? "Race Management" : s === "results" ? "Results & Scoring" : s === "revenue" ? "Platform Revenue" : "Wallets"}
             </button>
           ))}
         </div>
@@ -570,6 +629,133 @@ export default function AdminPage() {
               )}
             </div>
           </div>
+        )}
+
+        {/* ── PLATFORM REVENUE ── */}
+        {section === "revenue" && (
+          <section className="admin-section">
+            <h2 className="admin-section-title">Platform Revenue</h2>
+            {feeData ? (
+              <>
+                <div className="admin-stats-row">
+                  <div className="admin-stat-card">
+                    <span className="admin-stat-value">${feeData.breakdown.total.toFixed(2)}</span>
+                    <span className="admin-stat-label">Total Collected</span>
+                  </div>
+                  <div className="admin-stat-card">
+                    <span className="admin-stat-value">${feeData.breakdown.leagueRake.toFixed(2)}</span>
+                    <span className="admin-stat-label">League Rake (10%)</span>
+                  </div>
+                  <div className="admin-stat-card">
+                    <span className="admin-stat-value">${feeData.breakdown.editFees.toFixed(2)}</span>
+                    <span className="admin-stat-label">Edit Fees</span>
+                  </div>
+                </div>
+
+                {feeData.recentFees.length > 0 && (
+                  <div className="admin-fee-list">
+                    <h3 className="admin-subsection-title">Recent Events</h3>
+                    {feeData.recentFees.slice(0, 10).map((fee) => (
+                      <div key={fee.id} className="admin-fee-row">
+                        <span className="admin-fee-desc">{fee.description ?? "Fee"}</span>
+                        <span className="admin-fee-amount">+${Number(fee.amount).toFixed(2)}</span>
+                        <span className="admin-fee-date">
+                          {new Date(fee.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="admin-fee-note">
+                  Withdrawals are manual — transfer from your platform Solana wallet after confirming balance.
+                </p>
+              </>
+            ) : (
+              <p className="admin-loading">Loading revenue data...</p>
+            )}
+          </section>
+        )}
+
+        {/* ── WALLETS ── */}
+        {section === "wallets" && (
+          <section className="admin-section">
+            <h2 className="admin-section-title">User Wallets</h2>
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", marginBottom: "1.25rem" }}>
+              Wallets automatically enroll when users log in via Privy. Use "Enroll All" to backfill existing accounts.
+            </p>
+
+            {walletMsg && (
+              <p style={{ fontSize: "0.9rem", color: walletMsg.startsWith("✓") ? "#4caf50" : "var(--gl-red)", marginBottom: "1rem" }}>
+                {walletMsg}
+              </p>
+            )}
+
+            <button
+              className="gla-race-btn"
+              onClick={handleEnrollAll}
+              disabled={enrollingAll}
+              style={{ marginBottom: "1.5rem" }}
+            >
+              {enrollingAll ? "Enrolling…" : "Enroll All with Helius"}
+            </button>
+
+            {walletsLoading ? (
+              <div className="gl-spinner" />
+            ) : wallets.length === 0 ? (
+              <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.85rem" }}>No user wallets found.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                {wallets.map((w) => (
+                  <div
+                    key={w.userId}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr auto auto",
+                      gap: "1rem",
+                      alignItems: "center",
+                      padding: "0.6rem 1rem",
+                      background: "rgba(255,255,255,0.03)",
+                      borderRadius: "6px",
+                      border: "1px solid rgba(255,255,255,0.07)",
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontSize: "0.9rem", color: "#fff" }}>{w.username}</span>
+                      <span style={{ marginLeft: "0.75rem", fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", fontFamily: "monospace" }}>
+                        {w.address.slice(0, 8)}…{w.address.slice(-6)}
+                      </span>
+                    </div>
+                    <span style={{
+                      fontSize: "0.75rem",
+                      padding: "0.2rem 0.5rem",
+                      borderRadius: "4px",
+                      background: w.watched ? "rgba(76,175,80,0.15)" : "rgba(255,165,0,0.12)",
+                      color: w.watched ? "#4caf50" : "#ffa500",
+                    }}>
+                      {w.watched ? "Watching" : "Not enrolled"}
+                    </span>
+                    {!w.watched && (
+                      <button
+                        onClick={() => handleEnrollOne(w.address)}
+                        style={{
+                          fontSize: "0.75rem",
+                          padding: "0.25rem 0.6rem",
+                          borderRadius: "4px",
+                          border: "1px solid rgba(255,255,255,0.15)",
+                          background: "transparent",
+                          color: "#fff",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Enroll
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         )}
 
         {/* ── RESULTS & SCORING ── */}

@@ -4,6 +4,7 @@ import {
   formatMissingPredictionVersionsError,
   selectLatestPredictionVersionRows,
 } from "@/lib/predictions";
+import { detectIdenticalPicks } from "@/lib/scoring/runSettlement";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
@@ -369,7 +370,8 @@ export async function POST(request: Request) {
         );
 
         if (refundErr) {
-          throw refundErr;
+          distributionResults.push({ leagueId: league.id, status: "error", error: refundErr.message });
+          continue;
         }
 
         if (refundStatus === "already_settled") {
@@ -442,7 +444,8 @@ export async function POST(request: Request) {
       );
 
       if (settlementErr) {
-        throw settlementErr;
+        distributionResults.push({ leagueId: league.id, status: "error", error: settlementErr.message });
+        continue;
       }
 
       if (settlementStatus === "already_settled") {
@@ -464,9 +467,21 @@ export async function POST(request: Request) {
     }
   }
 
+  // Fraud check — flag users with identical picks for admin review.
+  // Their payouts are NOT automatically blocked; this is informational only.
+  const predictionAnswers = predictions
+    .filter((p) => latestByPrediction.has(p.id))
+    .map((p) => ({ user_id: p.user_id, answers_json: latestByPrediction.get(p.id)!.answers_json }));
+  const flaggedSet = detectIdenticalPicks(predictionAnswers);
+  const flagged_users = Array.from(flaggedSet);
+
   return NextResponse.json({
     success: true,
     scores_computed: scores.length,
     distributions: distributionResults,
+    ...(flagged_users.length > 0 && {
+      flagged_users,
+      fraud_warning: `${flagged_users.length} user(s) submitted identical picks — review before releasing payouts.`,
+    }),
   });
 }
