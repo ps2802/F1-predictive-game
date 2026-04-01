@@ -478,28 +478,46 @@ export default function LeaguePage() {
         {/* Context-aware prediction CTA */}
         {targetRace && (
           <div className="league-predict-cta">
-            <div className="league-predict-cta-text">
-              {nextRacePredStatus === "active" ? (
-                <>
-                  <strong>Your picks for {targetRace.name} are active.</strong>
-                  <span>They&apos;ll score once the race is settled. You can update them any time before the deadline.</span>
-                </>
-              ) : (
-                <>
-                  <strong>No prediction yet for {targetRace.name}.</strong>
-                  <span>The same prediction sheet powers the global board and this league once the race settles.</span>
-                </>
-              )}
-            </div>
-            <Link
-              href={`/predict/${targetRace.id}`}
-              className="gla-race-btn"
-              style={{ whiteSpace: "nowrap", flexShrink: 0 }}
-            >
-              {nextRacePredStatus === "none"
-                ? `Predict ${targetRace.name} →`
-                : `Edit ${targetRace.name} →`}
-            </Link>
+            {targetRace.status === "closed" ? (
+              <>
+                <div className="league-predict-cta-text">
+                  <strong>Race settled.</strong>
+                  <span>View your score breakdown to see where you picked correctly.</span>
+                </div>
+                <Link
+                  href={`/scores/${targetRace.id}`}
+                  className="gla-race-btn"
+                  style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+                >
+                  View Score Breakdown →
+                </Link>
+              </>
+            ) : (
+              <>
+                <div className="league-predict-cta-text">
+                  {nextRacePredStatus === "active" ? (
+                    <>
+                      <strong>Your picks for {targetRace.name} are active.</strong>
+                      <span>They&apos;ll score once the race is settled. You can update them any time before the deadline.</span>
+                    </>
+                  ) : (
+                    <>
+                      <strong>No prediction yet for {targetRace.name}.</strong>
+                      <span>The same prediction sheet powers the global board and this league once the race settles.</span>
+                    </>
+                  )}
+                </div>
+                <Link
+                  href={`/predict/${targetRace.id}`}
+                  className="gla-race-btn"
+                  style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+                >
+                  {nextRacePredStatus === "none"
+                    ? `Predict ${targetRace.name} →`
+                    : `Edit ${targetRace.name} →`}
+                </Link>
+              </>
+            )}
           </div>
         )}
 
