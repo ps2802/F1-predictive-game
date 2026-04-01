@@ -2,6 +2,10 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.1.0.1] - 2026-04-01
+
+### Fixed
+- League detail page now shows "View Score Breakdown" button for settled races, allowing users to see per-race score breakdown within the league context (which predictions were correct/incorrect)
 ## [0.1.0.0] - 2026-03-31
 
 ### Added
