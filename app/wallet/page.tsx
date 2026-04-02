@@ -207,8 +207,8 @@ export default function WalletPage() {
       setWithdrawAmount("");
       setWithdrawAddress("");
       setShowWithdraw(false);
-      // Reload wallet data
-      window.location.reload();
+      // Reload wallet data without full page reload
+      router.refresh();
     }
     setWithdrawing(false);
   }
@@ -232,47 +232,13 @@ export default function WalletPage() {
           <h1 className="gla-page-title">Wallet unavailable</h1>
           <p className="gla-page-sub" style={{ marginTop: "0.75rem" }}>{error}</p>
           <div className="wallet-action-row" style={{ justifyContent: "center", marginTop: "2rem" }}>
-            <button className="gla-race-btn" onClick={() => window.location.reload()}>
+            <button className="gla-race-btn" onClick={() => { setError(""); setLoading(true); router.refresh(); }}>
               Retry
             </button>
             <Link href="/dashboard" className="gla-race-btn league-secondary-btn">
               Back to Dashboard
             </Link>
           </div>
-        </div>
-
-        {/* Transaction history */}
-        <div style={{ marginTop: "2rem" }}>
-          <p className="gla-page-title" style={{ fontSize: "1rem", marginBottom: "1rem" }}>Recent Activity</p>
-          {transactions.length === 0 ? (
-            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.9rem" }}>No transactions yet.</p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              {transactions.map((tx) => {
-                const isCredit = tx.type === "payout" || tx.type === "deposit" || tx.type === "refund";
-                const sign = isCredit ? "+" : "-";
-                const color = isCredit ? "rgba(0,210,170,1)" : "rgba(255,255,255,0.6)";
-                return (
-                  <div key={tx.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem 1rem", background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
-                    <div>
-                      <p style={{ margin: 0, fontWeight: 600, fontSize: "0.9rem" }}>
-                        {tx.type === "payout" ? "🏆 " : ""}{formatTransactionLabel(tx.type)}
-                      </p>
-                      {tx.description && (
-                        <p style={{ margin: 0, color: "rgba(255,255,255,0.45)", fontSize: "0.8rem", marginTop: "0.2rem" }}>{tx.description}</p>
-                      )}
-                      <p style={{ margin: 0, color: "rgba(255,255,255,0.3)", fontSize: "0.75rem", marginTop: "0.2rem" }}>
-                        {new Date(tx.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <span style={{ color, fontWeight: 700, fontSize: "1rem", fontVariantNumeric: "tabular-nums" }}>
-                      {sign}₮{Math.abs(tx.amount).toFixed(2)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
       </div>
     );
@@ -309,12 +275,12 @@ export default function WalletPage() {
 
         <div className="wallet-card" style={{ marginTop: "1.5rem", alignItems: "stretch" }} data-clarity-mask="true">
           <div style={{ flex: 1 }}>
-            <span className="wallet-balance-label">Deposit Rail Status</span>
+            <span className="wallet-balance-label">Deposit Status</span>
             <span className="wallet-balance" style={{ fontSize: "1.6rem", marginTop: "0.45rem" }}>
-              Manual credit flow enabled
+              Ready to receive
             </span>
             <span style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.85rem", display: "block", marginTop: "0.6rem" }}>
-              The backend ledger is live. Deposits are credited through the admin normalization flow and land in your internal USDC balance.
+              Send USDC to your linked wallet address below. Your balance will update once the transaction is confirmed.
             </span>
           </div>
           <div style={{ minWidth: "280px" }}>

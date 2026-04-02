@@ -64,6 +64,7 @@ export default function ScoreBreakdownPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [fetchFailed, setFetchFailed] = useState(false);
+  const [navProfile, setNavProfile] = useState<{ username: string | null; is_admin: boolean } | null>(null);
 
   async function load() {
     setError("");
@@ -74,6 +75,13 @@ export default function ScoreBreakdownPage() {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/"); return; }
+
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("username, is_admin")
+      .eq("id", user.id)
+      .single();
+    setNavProfile(profileData);
 
     const res = await fetch(`/api/scores/${raceId}`);
     if (res.ok) {
@@ -110,7 +118,7 @@ export default function ScoreBreakdownPage() {
     return (
       <div className="gla-root">
         <div className="gl-stripe" aria-hidden="true" />
-        <AppNav />
+        <AppNav profile={navProfile} />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <h1 className="gla-page-title">Couldn&apos;t load race scores.</h1>
           <p className="gla-page-sub" style={{ marginTop: "0.5rem" }}>An error occurred while loading this race. Please try again.</p>
@@ -183,12 +191,12 @@ export default function ScoreBreakdownPage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
-      <AppNav />
+      <AppNav profile={navProfile} />
 
       {/* Header */}
       <div style={{ padding: "1.5rem 1.5rem 0" }}>
-        <Link href="/profile" style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.875rem", textDecoration: "none" }}>
-          ← Profile
+        <Link href="/dashboard" style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.875rem", textDecoration: "none" }}>
+          ← Dashboard
         </Link>
       </div>
 
@@ -276,7 +284,7 @@ export default function ScoreBreakdownPage() {
         )}
 
         {/* Category summary */}
-        <div className="scores-category-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem", marginBottom: "2rem" }}>
+        <div className="scores-category-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: "0.75rem", marginBottom: "2rem" }}>
           {categories.map((cat) => {
             const raw = categorySum(questions, cat);
             const correct = questions.filter((q) => q.category === cat && q.is_correct).length;
@@ -373,10 +381,11 @@ export default function ScoreBreakdownPage() {
                             </div>
                           )}
 
-                          {q.raw_score > 0 && (
+                          {q.raw_score > 0 && (q.difficulty_multiplier !== 1 || q.confidence_multiplier !== 1) && (
                             <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", marginTop: "0.55rem" }}>
-                              diff {formatMultiplier(q.difficulty_multiplier)}
-                              {q.confidence_multiplier !== 1 && ` · conf ${formatMultiplier(q.confidence_multiplier)}`}
+                              {q.difficulty_multiplier !== 1 && `diff ${formatMultiplier(q.difficulty_multiplier)}`}
+                              {q.difficulty_multiplier !== 1 && q.confidence_multiplier !== 1 && " · "}
+                              {q.confidence_multiplier !== 1 && `conf ${formatMultiplier(q.confidence_multiplier)}`}
                             </div>
                           )}
                         </div>

@@ -117,7 +117,7 @@ function NextRaceCountdownCard() {
     <div className="home-countdown-box gl-login-countdown-box">
       <p className="home-countdown-label">
         <span className="home-countdown-dot" aria-hidden="true" />
-        NEXT RACE - QUALIFYING LOCKS IN
+        NEXT RACE - PREDICTIONS LOCK IN
       </p>
       <p className="home-countdown-race">{nextRace.grand_prix_name}</p>
       <p className="home-countdown-date">{dateLabel} · Round {nextRace.round}</p>
@@ -557,8 +557,33 @@ function AuthForm() {
         </h1>
 
         <p className="gl-login-sub">
-          Pick the podium. Win USDC. Your rivals are already in.
+          Call 1st, 2nd, 3rd before qualifying locks. Nail the exact position — 3 pts. Right driver, wrong spot — 1 pt. Top scorer wins the USDC prize pool.
         </p>
+
+        {/* How it works — 3 steps */}
+        <div className="gl-login-how">
+          <div className="gl-login-how-step">
+            <span className="gl-login-how-icon" aria-hidden="true">🏁</span>
+            <div>
+              <span className="gl-login-how-label">PREDICT</span>
+              <span className="gl-login-how-desc">Pick podium before qualifying locks</span>
+            </div>
+          </div>
+          <div className="gl-login-how-step">
+            <span className="gl-login-how-icon" aria-hidden="true">⚡</span>
+            <div>
+              <span className="gl-login-how-label">SCORE</span>
+              <span className="gl-login-how-desc">3 pts exact · 1 pt right driver wrong slot</span>
+            </div>
+          </div>
+          <div className="gl-login-how-step">
+            <span className="gl-login-how-icon" aria-hidden="true">🏆</span>
+            <div>
+              <span className="gl-login-how-label">WIN</span>
+              <span className="gl-login-how-desc">Top scorers split the USDC prize pool</span>
+            </div>
+          </div>
+        </div>
 
         <NextRaceCountdownCard />
 
@@ -588,6 +613,10 @@ function AuthForm() {
         </button>
 
         {error && <p className="gl-login-error">{error}</p>}
+
+        <p className="gl-login-returning">
+          Already have an account? Same button — we&apos;ll recognize you.
+        </p>
 
         <p className="gl-login-urgency">
           Every race you sit out is a prize you&apos;ll never collect.

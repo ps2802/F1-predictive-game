@@ -146,6 +146,10 @@ export default function LeaguePage() {
           .maybeSingle();
       }
 
+      if (!membershipResult.data) {
+        setActiveTab("predictions");
+      }
+
       if (membershipResult.data) {
         const { data: transactionsData } = await supabase
           .from("transactions")
@@ -341,6 +345,16 @@ export default function LeaguePage() {
             )}
           </div>
         </div>
+
+        {/* Join CTA banner for non-members */}
+        {!membership && !loading && (
+          <div className="league-join-cta-banner">
+            <p>You&apos;re not in this league yet.</p>
+            <button className="gla-race-btn" onClick={() => setActiveTab("predictions")}>
+              Join &amp; Stake →
+            </button>
+          </div>
+        )}
 
         {/* Stats row */}
         <div className="league-stats-row">

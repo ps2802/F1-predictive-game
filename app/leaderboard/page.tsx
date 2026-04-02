@@ -106,8 +106,8 @@ export default function LeaderboardPage() {
 
           {entries.length === 0 ? (
             <div className="lb-empty">
-              <p className="lb-empty-headline">No predictions locked in yet.</p>
-              <p className="lb-empty-sub">Be first on the board — predict the podium before qualifying locks.</p>
+              <p className="lb-empty-headline">No scores posted yet for this season.</p>
+              <p className="lb-empty-sub">Make your predictions before qualifying to appear here once results are settled.</p>
               <Link href="/dashboard" className="gla-race-btn" style={{ display: "inline-block", marginTop: "1.25rem" }}>
                 Make Your Predictions
               </Link>
@@ -138,6 +138,14 @@ export default function LeaderboardPage() {
                 </span>
               </div>
             ))
+          )}
+          {currentUserId && !entries.some(e => e.user_id === currentUserId) && (
+            <div className="lb-row is-you lb-pinned-you">
+              <span className="lb-rank">—</span>
+              <span className="lb-name">You <span className="lb-you-badge">not yet ranked</span></span>
+              <span className="lb-races">—</span>
+              <span className="lb-score">—</span>
+            </div>
           )}
         </div>
       </div>

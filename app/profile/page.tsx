@@ -150,8 +150,8 @@ export default function ProfilePage() {
           </div>
           <div className="profile-stat-divider" />
           <div className="profile-stat-block">
-            <span className="profile-stat-num">₮{Number(profile?.balance_usdc ?? 0).toFixed(2)}</span>
-            <span className="profile-stat-lbl">Test USDC · Beta</span>
+            <span className="profile-stat-num">${Number(profile?.balance_usdc ?? 0).toFixed(2)}</span>
+            <span className="profile-stat-lbl">USDC Balance [Beta]</span>
           </div>
         </div>
 

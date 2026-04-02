@@ -2417,6 +2417,55 @@ h1, h2, h3 { margin-top: 0; }
   letter-spacing: 0.02em;
 }
 
+/* How-it-works strip */
+.gl-login-how {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1.5rem 0 1.75rem;
+  padding: 1.1rem 1.25rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  max-width: 380px;
+}
+.gl-login-how-step {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+.gl-login-how-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 1.6rem;
+  text-align: center;
+}
+.gl-login-how-label {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(0,210,170,0.85);
+  margin-bottom: 0.15rem;
+}
+.gl-login-how-desc {
+  display: block;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.4;
+}
+
+/* Returning user note */
+.gl-login-returning {
+  margin-top: 0.75rem;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.02em;
+  max-width: 340px;
+}
+
 /* Loss aversion micro-copy */
 .gl-login-urgency {
   margin-top: 1rem;
@@ -3962,3 +4011,163 @@ h1, h2, h3 { margin-top: 0; }
   .league-stats-row { grid-template-columns: 1fr 1fr 1fr; }
   .wizard-steps::before { display: none; }
 }
+
+/* ─── Mobile nav ─── */
+.gla-nav-hamburger { display: none; }
+@media (max-width: 768px) {
+  .gla-nav { padding: 0 1rem; }
+  .gla-nav-right--desktop { display: none !important; }
+  .gla-nav-hamburger {
+    display: flex; flex-direction: column; gap: 5px;
+    cursor: pointer; background: none; border: none;
+    padding: 8px; margin-left: auto;
+  }
+  .gla-nav-hamburger span {
+    display: block; width: 22px; height: 2px;
+    background: rgba(255,255,255,0.7); border-radius: 1px; transition: transform 0.2s;
+  }
+  .gla-nav-mobile-menu {
+    position: fixed; top: 63px; left: 0; right: 0;
+    background: rgba(0,0,0,0.97); backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 1rem 1.5rem 1.5rem; display: flex; flex-direction: column; gap: 0;
+    z-index: 88;
+  }
+  .gla-nav-mobile-link {
+    display: block; padding: 0.875rem 0;
+    font-size: 0.8rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.6); border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer; background: none; border-left: none; border-right: none; border-top: none;
+    font-family: inherit; text-align: left; width: 100%; transition: color 0.15s;
+  }
+  .gla-nav-mobile-link:last-child { border-bottom: none; }
+  .gla-nav-mobile-link:hover, .gla-nav-mobile-link.is-active { color: #E10600; }
+  .gla-content { padding: 1.5rem 1rem 3rem; }
+}
+
+/* ─── Landing page ─── */
+.gl-landing-root {
+  min-height: 100svh; background: #000; color: #fff;
+  display: grid; grid-template-columns: 1fr 1fr;
+  font-family: var(--font-titillium, "Titillium Web", "Arial Narrow", Arial, sans-serif);
+}
+.gl-landing-left {
+  position: relative; overflow: hidden;
+  padding: 3rem 3.5rem; display: flex; flex-direction: column; justify-content: center;
+  min-height: 100svh;
+}
+.gl-landing-right {
+  background: rgba(255,255,255,0.02); border-left: 1px solid rgba(255,255,255,0.06);
+  padding: 3rem 3rem; display: flex; flex-direction: column; justify-content: center;
+  overflow-y: auto;
+}
+.gl-landing-badge {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: rgba(225,6,0,0.1); border: 1px solid rgba(225,6,0,0.25);
+  border-radius: 999px; padding: 0.35rem 0.9rem;
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(225,6,0,0.9); margin-bottom: 1.5rem;
+}
+.gl-landing-badge-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #E10600; animation: pulse-dot 1.5s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+}
+.gl-landing-headline {
+  font-size: clamp(2.8rem, 5vw, 4.5rem); font-weight: 900; line-height: 0.95;
+  letter-spacing: -0.03em; text-transform: uppercase; margin: 0 0 0.2rem;
+  color: #E10600;
+}
+.gl-landing-headline-2 {
+  font-size: clamp(2.8rem, 5vw, 4.5rem); font-weight: 900; line-height: 0.95;
+  letter-spacing: -0.03em; text-transform: uppercase; margin: 0 0 1.5rem; color: #fff;
+}
+.gl-landing-sub {
+  font-size: 1rem; line-height: 1.6; color: rgba(255,255,255,0.65); margin: 0 0 2rem;
+  max-width: 400px;
+}
+.gl-landing-stats {
+  display: flex; gap: 2rem; margin-bottom: 2.5rem; flex-wrap: wrap;
+}
+.gl-landing-stat-val {
+  display: block; font-size: 1.6rem; font-weight: 900; color: rgba(0,210,170,1);
+  line-height: 1; letter-spacing: -0.02em;
+}
+.gl-landing-stat-lbl {
+  display: block; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: rgba(255,255,255,0.35); margin-top: 0.3rem;
+}
+.gl-landing-cta {
+  display: inline-block; width: 100%; max-width: 360px; padding: 1.1rem 2rem;
+  background: #E10600; color: #fff; font-size: 0.85rem; font-weight: 800;
+  letter-spacing: 0.12em; text-transform: uppercase; border: none; border-radius: 6px;
+  cursor: pointer; font-family: inherit; transition: background 0.15s, transform 0.1s;
+  text-align: center;
+}
+.gl-landing-cta:hover:not(:disabled) { background: #c00400; transform: translateY(-1px); }
+.gl-landing-cta:disabled { opacity: 0.6; cursor: not-allowed; }
+.gl-landing-cta-note {
+  margin-top: 0.75rem; font-size: 0.72rem; color: rgba(255,255,255,0.35);
+}
+.gl-landing-how-title {
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.35); margin: 0 0 1.5rem;
+}
+.gl-landing-steps { display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 2rem; }
+.gl-landing-step { display: flex; gap: 1rem; align-items: flex-start; }
+.gl-landing-step-icon {
+  font-size: 1.4rem; line-height: 1; flex-shrink: 0; width: 2.5rem; text-align: center;
+}
+.gl-landing-step-label {
+  font-size: 0.85rem; font-weight: 700; color: #fff; display: block; margin-bottom: 0.2rem;
+}
+.gl-landing-step-desc { font-size: 0.8rem; color: rgba(255,255,255,0.5); line-height: 1.5; }
+.gl-landing-divider {
+  height: 1px; background: rgba(255,255,255,0.06); margin: 1.5rem 0;
+}
+.gl-landing-drivers-title {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(255,255,255,0.3); margin: 0 0 0.75rem;
+}
+.gl-landing-drivers {
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+}
+.gl-landing-driver {
+  font-size: 0.68rem; color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07); border-radius: 4px; padding: 0.25rem 0.5rem;
+}
+@media (max-width: 768px) {
+  .gl-landing-root { grid-template-columns: 1fr; }
+  .gl-landing-right { display: none; }
+  .gl-landing-left { padding: 2rem 1.5rem 2.5rem; min-height: 100svh; }
+  .gl-landing-headline, .gl-landing-headline-2 { font-size: clamp(2.2rem, 8vw, 3.5rem); }
+  .gl-landing-cta { max-width: 100%; }
+}
+
+/* ─── Leaderboard pinned row ─── */
+.lb-pinned-you { border-top: 1px solid rgba(0,210,170,0.2); margin-top: 0.5rem; padding-top: 0.5rem; }
+
+/* ─── League join notice ─── */
+.league-join-notice { font-size: 0.78rem; color: rgba(255,255,255,0.45); margin: 0 0 0.75rem; }
+.league-join-link { color: rgba(0,210,170,0.8); text-decoration: underline; }
+
+/* ─── League join CTA banner ─── */
+.league-join-cta-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  background: rgba(225,6,0,0.07); border: 1px solid rgba(225,6,0,0.2);
+  border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+}
+.league-join-cta-banner p { margin: 0; font-size: 0.85rem; color: rgba(255,255,255,0.7); }
+
+/* ─── Dashboard leagues empty state ─── */
+.dash-leagues-empty {
+  display: flex; align-items: center; gap: 1.5rem; padding: 1rem 1.25rem;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px; flex-wrap: wrap;
+}
+.dash-leagues-empty p { margin: 0; font-size: 0.85rem; color: rgba(255,255,255,0.5); flex: 1; }
+
+/* ─── Fix nav active link visibility ─── */
+.gla-nav-link.is-active { color: rgba(255,255,255,0.9); }

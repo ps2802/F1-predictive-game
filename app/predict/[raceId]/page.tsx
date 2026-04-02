@@ -8,6 +8,7 @@ import { buildFallbackRaceTiming, findRaceById } from "@/lib/races";
 import { track } from "@/lib/analytics";
 import { PREDICTION_EDIT_FEE_USDC } from "@/lib/gameRules";
 import { formatCountdown, resolvePredictionWindow } from "@/lib/predictionWindows";
+import { AppNav } from "@/app/components/AppNav";
 
 type Option = {
   id: string;
@@ -346,6 +347,10 @@ export default function PredictPage() {
       return;
     }
 
+    if (anyLiveEditWindow && isAuthenticated && !window.confirm(`This will charge $${PREDICTION_EDIT_FEE_USDC} USDC from your balance to update your picks. Continue?`)) {
+      return;
+    }
+
     setSaving(true);
     setError("");
 
@@ -422,6 +427,8 @@ export default function PredictPage() {
   if (loading) {
     return (
       <div className="gla-root">
+        <div className="gl-stripe" aria-hidden="true" />
+        <AppNav />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <div className="gl-spinner" />
           <p style={{ color: "rgba(255,255,255,0.5)", marginTop: "1rem" }}>Loading...</p>
@@ -434,6 +441,7 @@ export default function PredictPage() {
     return (
       <div className="gla-root">
         <div className="gl-stripe" aria-hidden="true" />
+        <AppNav />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <div className="predict-success-icon">✓</div>
           <h1 className="gla-page-title" style={{ marginTop: "1.5rem" }}>
@@ -491,6 +499,7 @@ export default function PredictPage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
+      <AppNav />
 
       {/* Header */}
       <div className="predict-header">

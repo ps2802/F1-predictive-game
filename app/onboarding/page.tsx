@@ -83,7 +83,7 @@ function OnboardingForm() {
               earn points. The sharpest strategist on the leaderboard wins the prize pool.
             </p>
             <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.45)", marginTop: "0.75rem", marginBottom: 0 }}>
-              ₮100 Test USDC credited. Explore leagues, make your first prediction, and get
+              $100 Test USDC credited. Explore leagues, make your first prediction, and get
               ready for 2026 lights out.
             </p>
           </div>

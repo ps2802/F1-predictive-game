@@ -217,6 +217,9 @@ export default function LeaguesPageClient({
               data-clarity-mask="true"
               maxLength={10}
             />
+            <p className="league-join-notice">
+              You need USDC in your <Link href="/wallet" className="league-join-link">wallet</Link> before joining.
+            </p>
             <input
               className="league-join-input"
               type="number"
@@ -252,9 +255,10 @@ export default function LeaguesPageClient({
               <button
                 type="button"
                 className="gla-race-btn league-secondary-btn"
+                aria-label="Dismiss join confirmation"
                 onClick={() => setJoinedLeagueId(null)}
               >
-                Stay Here
+                Dismiss
               </button>
             </div>
           )}
@@ -274,7 +278,13 @@ export default function LeaguesPageClient({
         <section className="league-section">
           <h2 className="league-section-title">Public Leagues</h2>
           {publicLeagues.length === 0 ? (
-            <p className="league-empty">No public leagues yet. Create one!</p>
+            <div className="lb-empty">
+              <p className="lb-empty-headline">No public leagues yet.</p>
+              <p className="lb-empty-sub">Be the first to create one and invite players.</p>
+              <Link href="/leagues/create" className="gla-race-btn" style={{ display: "inline-block", marginTop: "1.25rem" }}>
+                Create a League
+              </Link>
+            </div>
           ) : (
             <div className="league-grid">
               {publicLeagues.map((league) => (

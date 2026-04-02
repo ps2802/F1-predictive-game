@@ -236,9 +236,9 @@ export default function DashboardPage() {
             </span>
           </div>
           {profile?.balance_usdc !== undefined && (
-            <Link href="/wallet" className="dash-stat-card dash-stat-card--balance" title="Test USDC · Not real money">
-              <span className="dash-stat-label">Balance [BETA]</span>
-              <span className="dash-stat-value">₮{Number(profile.balance_usdc).toFixed(2)}</span>
+            <Link href="/wallet" className="dash-stat-card dash-stat-card--balance" title="USDC balance">
+              <span className="dash-stat-label">USDC [BETA]</span>
+              <span className="dash-stat-value">${Number(profile.balance_usdc).toFixed(2)} USDC</span>
             </Link>
           )}
         </div>
@@ -281,6 +281,17 @@ export default function DashboardPage() {
         )}
 
         {/* My leagues strip */}
+        {myLeagues.length === 0 && !loading && (
+          <div className="dash-leagues-section">
+            <div className="dash-section-header">
+              <span className="dash-section-title">My Leagues</span>
+            </div>
+            <div className="dash-leagues-empty">
+              <p>Join or create a league to compete for the USDC prize pool.</p>
+              <Link href="/leagues" className="gla-race-btn" style={{ fontSize: "0.75rem", padding: "0.5rem 1rem" }}>Browse Leagues →</Link>
+            </div>
+          </div>
+        )}
         {myLeagues.length > 0 && (
           <div className="dash-leagues-section">
             <div className="dash-section-header">

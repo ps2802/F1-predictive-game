@@ -25,7 +25,7 @@ export default function CreateLeaguePageClient({
   const router = useRouter();
   const { races, loading: racesLoading } = useRaceCatalog();
   const [step, setStep] = useState(1);
-  const [raceId] = useState(initialRaceId ?? "");
+  const [raceId, setRaceId] = useState(initialRaceId ?? "");
   const [name, setName] = useState("");
   const [type, setType] = useState<"public" | "private">("private");
   const [minimumStake] = useState(MINIMUM_LEAGUE_STAKE_USDC);
@@ -120,7 +120,8 @@ export default function CreateLeaguePageClient({
   const canProceedStep3 =
     Number(creatorStake) >= minimumStake &&
     !racesLoading &&
-    races.length > 0;
+    races.length > 0 &&
+    Boolean(effectiveRaceId);
 
   const selectedRaceName =
     selectableRaces.find((r) => r.id === effectiveRaceId)?.name ??
@@ -324,6 +325,22 @@ export default function CreateLeaguePageClient({
                   onChange={(e) => setMaxUsers(e.target.value)}
                 />
               </label>
+
+              {!racesLoading && selectableRaces.length > 0 && (
+                <label className="auth-label" style={{ marginTop: "1.5rem" }}>
+                  Race
+                  <select
+                    className="auth-input"
+                    value={effectiveRaceId}
+                    onChange={(e) => setRaceId(e.target.value)}
+                    style={{ width: "100%" }}
+                  >
+                    {selectableRaces.map((r) => (
+                      <option key={r.id} value={r.id}>{r.name} · Round {r.round}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
 
               {!racesLoading && races.length === 0 && (
                 <p className="predict-error">No race schedule is available right now.</p>
