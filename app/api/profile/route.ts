@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
@@ -9,7 +9,7 @@ import {
 } from "@/lib/profileHistory";
 import type { PredictionVersionRow } from "@/lib/predictions";
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   const supabase = await createSupabaseServerClient();
   if (!supabase)
     return NextResponse.json({ error: "Supabase env vars missing." }, { status: 500 });

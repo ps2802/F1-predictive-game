@@ -112,9 +112,28 @@ describe("distributePool", () => {
     { userId: "b", score: 200 },
     { userId: "c", score: 100 },
   ]);
+  const rankedFiveUsers = rankUsers([
+    { userId: "a", score: 300 },
+    { userId: "b", score: 200 },
+    { userId: "c", score: 100 },
+    { userId: "d", score: 50 },
+    { userId: "e", score: 25 },
+  ]);
+
+  it("refunds all entrants when the league is below the minimum payout size", () => {
+    const result = distributePool("league-1", 1000, rankedThreeUsers);
+
+    expect(result.payouts).toEqual([
+      { userId: "a", rank: 0, amount: 333.333333, held: false, is_refund: true },
+      { userId: "b", rank: 0, amount: 333.333333, held: false, is_refund: true },
+      { userId: "c", rank: 0, amount: 333.333333, held: false, is_refund: true },
+    ]);
+    expect(result.withheldAmount).toBe(0);
+    expect(result.undistributed).toBe(0);
+  });
 
   it("defaults to manual 50/30/20 payouts", () => {
-    const result = distributePool("league-1", 1000, rankedThreeUsers);
+    const result = distributePool("league-1", 1000, rankedFiveUsers);
 
     expect(DEFAULT_PAYOUT_MODEL).toBe("manual");
     expect(DEFAULT_PAYOUT_TIERS).toEqual([
@@ -136,7 +155,7 @@ describe("distributePool", () => {
     const result = distributePool(
       "league-1",
       1000,
-      rankedThreeUsers,
+      rankedFiveUsers,
       { tiers: [{ place: 1, percent: 60 }, { place: 2, percent: 20 }] },
       "manual"
     );
@@ -165,6 +184,8 @@ describe("distributePool", () => {
         submittedAt: "2026-03-27T12:00:00.000Z",
       },
       { userId: "c", score: 100 },
+      { userId: "d", score: 90 },
+      { userId: "e", score: 80 },
     ]);
 
     const result = distributePool("league-1", 1000, ranked, undefined, "manual");
@@ -193,6 +214,8 @@ describe("distributePool", () => {
         submittedAt: "2026-03-27T12:00:00.000Z",
       },
       { userId: "c", score: 100 },
+      { userId: "d", score: 90 },
+      { userId: "e", score: 80 },
     ]);
 
     const result = distributePool("league-1", 0.000001, ranked, undefined, "manual");
@@ -211,6 +234,8 @@ describe("distributePool", () => {
       { userId: "late", score: 300, payoutEligible: false },
       { userId: "winner", score: 200 },
       { userId: "runner-up", score: 100 },
+      { userId: "third", score: 90 },
+      { userId: "bubble", score: 80 },
     ]);
 
     const result = distributePool("league-1", 1000, ranked, undefined, "manual");
@@ -218,8 +243,9 @@ describe("distributePool", () => {
     expect(result.payouts).toEqual([
       { userId: "winner", rank: 1, amount: 500, held: false },
       { userId: "runner-up", rank: 2, amount: 300, held: false },
+      { userId: "third", rank: 3, amount: 200, held: false },
     ]);
-    expect(result.undistributed).toBe(200);
+    expect(result.undistributed).toBe(0);
   });
 
   it("holds but does not reallocate frozen payouts", () => {
@@ -227,6 +253,8 @@ describe("distributePool", () => {
       { userId: "held", score: 300, payoutFrozen: true },
       { userId: "winner", score: 200 },
       { userId: "runner-up", score: 100 },
+      { userId: "third", score: 90 },
+      { userId: "bubble", score: 80 },
     ]);
 
     const result = distributePool("league-1", 1000, ranked, undefined, "manual");
@@ -268,6 +296,7 @@ describe("distributePool", () => {
       { userId: "b", score: 30 },
       { userId: "c", score: 20 },
       { userId: "d", score: 0 },
+      { userId: "e", score: 0 },
     ]);
 
     const result = distributePool("league-1", 1000, ranked, null, "skill_weighted");
@@ -286,6 +315,8 @@ describe("distributePool", () => {
       { userId: "a", score: 1 },
       { userId: "b", score: 1 },
       { userId: "c", score: 1 },
+      { userId: "d", score: 0 },
+      { userId: "e", score: 0 },
     ]);
 
     const result = distributePool("league-1", 0.000002, ranked, null, "skill_weighted");
