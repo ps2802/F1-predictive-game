@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       { status: 503 }
     );
 
-  const { error: schemaErr } = await admin.from("races").select("id, is_locked").limit(1);
+  const { error: schemaErr } = await admin.from("races").select("id, race_locked").limit(1);
   if (schemaErr) {
     return NextResponse.json(
       {
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
   // Lock the race
   const { error: lockErr } = await admin
     .from("races")
-    .update({ race_locked: true, is_locked: true })
+    .update({ race_locked: true })
     .eq("id", raceId);
 
   if (lockErr) {

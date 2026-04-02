@@ -35,7 +35,7 @@ export async function GET() {
 
   const { data, error } = await admin
     .from("races")
-    .select("id, season, round, grand_prix_name, circuit, race_starts_at, qualifying_starts_at, race_locked, is_locked, prediction_questions(count)")
+    .select("id, season, round, grand_prix_name, circuit, race_starts_at, qualifying_starts_at, race_locked, prediction_questions(count)")
     .order("round");
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
@@ -49,7 +49,6 @@ export async function GET() {
     race_starts_at: r.race_starts_at,
     qualifying_starts_at: r.qualifying_starts_at,
     race_locked: r.race_locked,
-    is_locked: r.is_locked,
     question_count: (r.prediction_questions as unknown as { count: number }[])?.[0]?.count ?? 0,
   }));
 
@@ -87,7 +86,6 @@ export async function POST(request: Request) {
     qualifying_starts_at: qualifying_starts_at ?? null,
     season: 2026,
     race_locked: false,
-    is_locked: false,
   });
 
   if (insertError)

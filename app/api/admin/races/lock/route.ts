@@ -36,7 +36,7 @@ export async function PATCH(request: Request) {
 
   const { error } = await admin
     .from("races")
-    .update({ race_locked: locked, is_locked: locked })
+    .update({ race_locked: locked })
     .eq("id", raceId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
