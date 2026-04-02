@@ -99,6 +99,11 @@ export default function LeaguesPageClient({
     setJoining(true);
     setJoinError("");
     setJoinSuccess("");
+    track("league_join_attempted", {
+      invite_code_present: Boolean(joinCode.trim()),
+      race_id: initialRaceId ?? undefined,
+      stake_amount_usdc: Number(joinStake),
+    });
 
     const res = await fetch("/api/leagues/join", {
       method: "POST",
@@ -111,9 +116,22 @@ export default function LeaguesPageClient({
     const data = await res.json();
 
     if (!res.ok) {
+      track("league_join_failed", {
+        error_category: res.status,
+        race_id: initialRaceId ?? undefined,
+        stake_amount_usdc: Number(joinStake),
+      });
       setJoinError(data.error ?? "Failed to join league.");
     } else {
-      track("league_joined", { league_id: data.leagueId });
+      track(
+        "league_joined",
+        {
+          league_id: data.leagueId,
+          race_id: initialRaceId ?? undefined,
+          stake_amount_usdc: Number(data.stakeAmountUsdc ?? joinStake),
+        },
+        { send_to_posthog: false, send_to_clarity: true }
+      );
       setJoinedLeagueId(data.leagueId);
       setJoinSuccess(
         `Joined with $${Number(data.stakeAmountUsdc ?? joinStake).toFixed(2)} USDC.`
@@ -196,6 +214,7 @@ export default function LeaguesPageClient({
               placeholder="Enter invite code (e.g. ABCD1234)"
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              data-clarity-mask="true"
               maxLength={10}
             />
             <input

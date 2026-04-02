@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { resetAnalytics } from "@/lib/analytics";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export interface AppNavProfile {
@@ -55,6 +56,7 @@ function PrivySignOutButton(): React.JSX.Element {
       await supabase.auth.signOut();
     }
     await logout();
+    resetAnalytics();
     router.push("/login");
   }
 
@@ -73,6 +75,7 @@ function SimpleSignOutButton(): React.JSX.Element {
     if (supabase) {
       await supabase.auth.signOut();
     }
+    resetAnalytics();
     router.push("/login");
   }
 

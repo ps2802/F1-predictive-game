@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppNav } from "@/app/components/AppNav";
+import { track } from "@/lib/analytics";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRaceCatalog } from "@/lib/raceCatalog";
 
@@ -148,6 +149,14 @@ export default function DashboardPage() {
   }, [router]);
 
   useEffect(() => {
+    if (!loading && !racesLoading) {
+      track("dashboard_viewed", {
+        race_count: races.length,
+      });
+    }
+  }, [loading, races.length, racesLoading]);
+
+  useEffect(() => {
     const now = new Date();
     const locked = new Set<string>();
 
@@ -235,18 +244,44 @@ export default function DashboardPage() {
                   )
                 ) : predictedRaceIds.has(race.id) ? (
                   predictedRaceIds.get(race.id) === "draft" ? (
-                    <Link className="gla-race-btn" href={`/leagues?raceId=${race.id}`}>Enter Now</Link>
+                    <Link
+                      className="gla-race-btn"
+                      href={`/leagues?raceId=${race.id}`}
+                      onClick={() =>
+                        track("race_card_clicked", {
+                          action: "enter_now",
+                          race_id: race.id,
+                        })
+                      }
+                    >
+                      Enter Now
+                    </Link>
                   ) : (
                     <Link
                       className="gla-race-btn is-edit"
                       href={`/predict/${race.id}`}
+                      onClick={() =>
+                        track("race_card_clicked", {
+                          action: "edit_prediction",
+                          race_id: race.id,
+                        })
+                      }
                       title="Saved prediction"
                     >
                       Edit
                     </Link>
                   )
                 ) : (
-                  <Link className="gla-race-btn" href={`/predict/${race.id}`}>
+                  <Link
+                    className="gla-race-btn"
+                    href={`/predict/${race.id}`}
+                    onClick={() =>
+                      track("race_card_clicked", {
+                        action: "predict",
+                        race_id: race.id,
+                      })
+                    }
+                  >
                     Predict
                   </Link>
                 )}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { trackServer } from "@/lib/analytics.server";
 import { runSettlement } from "@/lib/scoring/runSettlement";
 
 /**
@@ -55,6 +56,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const { scores_computed } = await runSettlement(job.race_id, admin);
+
+    await trackServer("race_scored", {
+      race_id: job.race_id,
+      scores_computed,
+    });
 
     await admin
       .from("settlement_jobs")

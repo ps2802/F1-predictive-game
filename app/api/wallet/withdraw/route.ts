@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
+import { trackServer } from "@/lib/analytics.server";
 
 const WithdrawBody = z.object({
   amount_usdc: z.number().positive().max(100_000),
@@ -80,6 +81,15 @@ export async function POST(request: NextRequest) {
 
   // Return masked address — the full address is stored in payout_holds, not needed by the client
   const maskedAddress = `${destination_address.slice(0, 8)}...${destination_address.slice(-4)}`;
+
+  await trackServer(
+    "withdrawal_requested",
+    {
+      amount_usdc,
+      destination_address_present: true,
+    },
+    user.id
+  );
 
   return NextResponse.json({
     success: true,

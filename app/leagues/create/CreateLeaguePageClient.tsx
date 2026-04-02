@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
+import { track } from "@/lib/analytics";
 import { useRaceCatalog } from "@/lib/raceCatalog";
 
 const DEFAULT_TIERS = [
@@ -35,6 +36,12 @@ export default function CreateLeaguePageClient({
   const totalPercent = payoutTiers.reduce((sum, tier) => sum + tier.percent, 0);
   const selectableRaces = races.filter((race) => race.status === "upcoming");
   const effectiveRaceId = raceId || selectableRaces[0]?.id || races[0]?.id || "";
+
+  useEffect(() => {
+    track("league_create_started", {
+      initial_race_id: initialRaceId ?? undefined,
+    });
+  }, [initialRaceId]);
 
   function updateTier(index: number, percent: number) {
     setPayoutTiers((prev) =>
@@ -82,6 +89,16 @@ export default function CreateLeaguePageClient({
       setLoading(false);
       return;
     }
+
+    track(
+      "league_created",
+      {
+        league_id: data.league?.id,
+        payout_model: payoutModel,
+        race_id: effectiveRaceId,
+      },
+      { send_to_posthog: false, send_to_clarity: true }
+    );
 
     router.push(`/leagues/${data.league.id}`);
   }

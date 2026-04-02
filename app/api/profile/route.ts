@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
+import {
+  buildProfileRaceHistory,
+  type ProfilePrediction,
+  type ProfileRaceScore,
+} from "@/lib/profileHistory";
+import type { PredictionVersionRow } from "@/lib/predictions";
 
 export async function GET(_request: NextRequest) {
   const supabase = await createSupabaseServerClient();
@@ -17,7 +23,7 @@ export async function GET(_request: NextRequest) {
   const [
     { data: profile },
     { data: scores },
-    { count: predictionsCount },
+    { data: predictions },
   ] = await Promise.all([
     supabase
       .from("profiles")
@@ -31,17 +37,45 @@ export async function GET(_request: NextRequest) {
       .order("calculated_at", { ascending: false }),
     supabase
       .from("predictions")
-      .select("id", { count: "exact", head: true })
+      .select("id, race_id")
       .eq("user_id", user.id),
   ]);
 
-  const totalScore = (scores ?? []).reduce((sum, s) => sum + (s.total_score ?? 0), 0);
+  const predictionIds = (predictions ?? []).map((prediction) => prediction.id);
+  let predictionVersions: PredictionVersionRow[] = [];
+
+  if (predictionIds.length > 0) {
+    const { data: versions } = await supabase
+      .from("prediction_versions")
+      .select("id, prediction_id, version_number, answers_json, created_at")
+      .in("prediction_id", predictionIds)
+      .order("version_number", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    predictionVersions = (versions ?? []).map((version) => ({
+      id: version.id,
+      prediction_id: version.prediction_id,
+      version_number: version.version_number,
+      answers_json: (version.answers_json ?? {}) as Record<string, string[]>,
+      created_at: version.created_at,
+    }));
+  }
+
+  const raceScores = (scores ?? []) as ProfileRaceScore[];
+  const userPredictions = (predictions ?? []) as ProfilePrediction[];
+  const totalScore = raceScores.reduce((sum, score) => sum + (score.total_score ?? 0), 0);
+  const raceHistory = buildProfileRaceHistory({
+    scores: raceScores,
+    predictions: userPredictions,
+    predictionVersions,
+  });
 
   return NextResponse.json({
     profile: { ...profile, email: user.email },
     totalScore,
-    raceScores: scores ?? [],
-    predictionsCount: predictionsCount ?? 0,
+    raceScores,
+    raceHistory,
+    predictionsCount: userPredictions.length,
   });
 }
 

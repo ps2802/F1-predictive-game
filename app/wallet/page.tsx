@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppNav } from "@/app/components/AppNav";
+import { track } from "@/lib/analytics";
 
 type ProfileData = {
   balance_usdc: number;
@@ -161,11 +162,24 @@ export default function WalletPage() {
     };
   }, [router]);
 
+  useEffect(() => {
+    if (!loading && !error) {
+      track("wallet_viewed", {
+        deposit_count: deposits.length,
+        transaction_count: transactions.length,
+        withdrawal_hold_count: withdrawalHolds.length,
+      });
+    }
+  }, [deposits.length, error, loading, transactions.length, withdrawalHolds.length]);
+
   async function handleWithdraw(e: React.FormEvent) {
     e.preventDefault();
     setWithdrawing(true);
     setWithdrawErr("");
     setWithdrawMsg("");
+    track("withdrawal_started", {
+      amount_usdc: Number(withdrawAmount),
+    });
     const res = await fetch("/api/wallet/withdraw", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -176,8 +190,19 @@ export default function WalletPage() {
     });
     const data = await res.json();
     if (!res.ok) {
+      track("withdrawal_failed", {
+        amount_usdc: Number(withdrawAmount),
+        error_category: res.status,
+      });
       setWithdrawErr(data.error ?? "Withdrawal failed.");
     } else {
+      track(
+        "withdrawal_requested",
+        {
+          amount_usdc: Number(withdrawAmount),
+        },
+        { send_to_posthog: false, send_to_clarity: true }
+      );
       setWithdrawMsg(`Withdrawal of $${Number(withdrawAmount).toFixed(2)} queued. Admin review within 24 hours.`);
       setWithdrawAmount("");
       setWithdrawAddress("");
@@ -215,6 +240,40 @@ export default function WalletPage() {
             </Link>
           </div>
         </div>
+
+        {/* Transaction history */}
+        <div style={{ marginTop: "2rem" }}>
+          <p className="gla-page-title" style={{ fontSize: "1rem", marginBottom: "1rem" }}>Recent Activity</p>
+          {transactions.length === 0 ? (
+            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.9rem" }}>No transactions yet.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {transactions.map((tx) => {
+                const isCredit = tx.type === "payout" || tx.type === "deposit" || tx.type === "refund";
+                const sign = isCredit ? "+" : "-";
+                const color = isCredit ? "rgba(0,210,170,1)" : "rgba(255,255,255,0.6)";
+                return (
+                  <div key={tx.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem 1rem", background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
+                    <div>
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: "0.9rem" }}>
+                        {tx.type === "payout" ? "🏆 " : ""}{formatTransactionLabel(tx.type)}
+                      </p>
+                      {tx.description && (
+                        <p style={{ margin: 0, color: "rgba(255,255,255,0.45)", fontSize: "0.8rem", marginTop: "0.2rem" }}>{tx.description}</p>
+                      )}
+                      <p style={{ margin: 0, color: "rgba(255,255,255,0.3)", fontSize: "0.75rem", marginTop: "0.2rem" }}>
+                        {new Date(tx.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span style={{ color, fontWeight: 700, fontSize: "1rem", fontVariantNumeric: "tabular-nums" }}>
+                      {sign}₮{Math.abs(tx.amount).toFixed(2)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -231,7 +290,7 @@ export default function WalletPage() {
         <p className="gla-page-title" style={{ marginTop: "1.5rem" }}>Wallet</p>
         <p className="gla-page-sub">Live ledger view for deposits, entries, payouts, and release holds</p>
 
-        <div className="profile-stats-strip" style={{ marginTop: "1.5rem" }}>
+        <div className="profile-stats-strip" style={{ marginTop: "1.5rem" }} data-clarity-mask="true">
           <div className="profile-stat-block">
             <span className="profile-stat-num">{formatUsdc(balance)}</span>
             <span className="profile-stat-lbl">Available {ledgerCurrency}</span>
@@ -248,7 +307,7 @@ export default function WalletPage() {
           </div>
         </div>
 
-        <div className="wallet-card" style={{ marginTop: "1.5rem", alignItems: "stretch" }}>
+        <div className="wallet-card" style={{ marginTop: "1.5rem", alignItems: "stretch" }} data-clarity-mask="true">
           <div style={{ flex: 1 }}>
             <span className="wallet-balance-label">Deposit Rail Status</span>
             <span className="wallet-balance" style={{ fontSize: "1.6rem", marginTop: "0.45rem" }}>
@@ -268,7 +327,7 @@ export default function WalletPage() {
           </div>
         </div>
 
-        <div className="wallet-deposit-card">
+        <div className="wallet-deposit-card" data-clarity-mask="true">
           <p className="wallet-deposit-title">Deposit USDC</p>
           {profile?.wallet_address ? (
             <>
@@ -306,7 +365,7 @@ export default function WalletPage() {
 
         {/* Withdrawal */}
         {balance > 0 && (
-          <div className="wallet-deposit-card" style={{ marginTop: "1.5rem" }}>
+          <div className="wallet-deposit-card" style={{ marginTop: "1.5rem" }} data-clarity-mask="true">
             <p className="wallet-deposit-title">Withdraw USDC</p>
             {!showWithdraw ? (
               <>
@@ -331,6 +390,7 @@ export default function WalletPage() {
                     placeholder="Solana wallet address"
                     value={withdrawAddress}
                     onChange={(e) => setWithdrawAddress(e.target.value)}
+                    data-clarity-mask="true"
                     minLength={32}
                     maxLength={44}
                     required
@@ -371,7 +431,7 @@ export default function WalletPage() {
         )}
 
         {withdrawalHolds.length > 0 && (
-          <div className="profile-identity-card" style={{ marginTop: "1.5rem" }}>
+          <div className="profile-identity-card" style={{ marginTop: "1.5rem" }} data-clarity-mask="true">
             <h3 className="profile-card-title">Pending Release Holds</h3>
             <div className="lb-table" style={{ marginTop: "1rem" }}>
               <div className="lb-header" style={{ gridTemplateColumns: "160px 1fr 180px" }}>
@@ -393,7 +453,7 @@ export default function WalletPage() {
         )}
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.5rem", marginTop: "1.5rem" }}>
-          <div className="profile-identity-card" style={{ marginTop: 0 }}>
+          <div className="profile-identity-card" style={{ marginTop: 0 }} data-clarity-mask="true">
             <h3 className="profile-card-title">Recent Ledger Activity</h3>
             {transactions.length === 0 ? (
               <p className="league-empty" style={{ marginTop: "1rem" }}>
@@ -422,7 +482,7 @@ export default function WalletPage() {
             )}
           </div>
 
-          <div className="profile-identity-card" style={{ marginTop: 0 }}>
+          <div className="profile-identity-card" style={{ marginTop: 0 }} data-clarity-mask="true">
             <h3 className="profile-card-title">Recent Deposits</h3>
             {deposits.length === 0 ? (
               <p className="league-empty" style={{ marginTop: "1rem" }}>

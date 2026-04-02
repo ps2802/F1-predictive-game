@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import {
   DEFAULT_PAYOUT_MODEL,
@@ -8,6 +9,11 @@ import {
   type PayoutModel,
 } from "@/lib/scoring/distributePrizes";
 import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
+import {
+  createLeagueWithoutRpc,
+  shouldFallbackLeagueCreate,
+} from "@/lib/leagueMutations";
+import { trackServer } from "@/lib/analytics.server";
 
 const PayoutTier = z.object({
   place: z.number().int().min(1).max(10),
@@ -36,18 +42,30 @@ const CreateLeagueBody = z.object({
     .optional(),
 });
 
-export async function GET(request: NextRequest) {
+function hasMissingLeagueRaceColumn(message: string | undefined) {
+  if (!message) {
+    return false;
+  }
+
+  return (
+    /Could not find the 'race_id' column of 'leagues'/i.test(message) ||
+    /column\s+leagues\.race_id\s+does not exist/i.test(message) ||
+    /column\s+"race_id"\s+of relation\s+"leagues"\s+does not exist/i.test(message)
+  );
+}
+
+export async function GET(request: Request) {
   const supabase = await createSupabaseServerClient();
   if (!supabase)
     return NextResponse.json({ error: "Supabase env vars missing." }, { status: 500 });
+  const client = supabase;
 
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await client.auth.getUser();
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const raceId = new URL(request.url).searchParams.get("raceId");
+  const currentUser = user;
 
   // Guard: user.id must be a UUID — prevents filter string injection in .or() below
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -55,65 +73,79 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: memberships, error: membershipsError } = await supabase
+  const raceId = new URL(request.url).searchParams.get("raceId");
+
+  // Get leagues user has joined
+  const { data: memberships } = await supabase
     .from("league_members")
     .select("league_id")
     .eq("user_id", user.id);
 
-  if (membershipsError) {
-    return NextResponse.json({ error: membershipsError.message }, { status: 400 });
+  const joinedIds = new Set((memberships ?? []).map((m) => m.league_id));
+  const joinedLeagueIds = [...joinedIds];
+
+  async function fetchLeagueRows(mode: "discoverable" | "joined") {
+    let query = client
+      .from("leagues")
+      .select("*, member_count")
+      .eq("is_active", true);
+
+    if (mode === "discoverable") {
+      query = query.or(`type.eq.public,creator_id.eq.${currentUser.id}`);
+    } else if (joinedLeagueIds.length > 0) {
+      query = query.in("id", joinedLeagueIds);
+    } else {
+      return { data: [], error: null as null | { message: string } };
+    }
+
+    if (raceId) {
+      query = query.eq("race_id", raceId);
+    }
+
+    let result = await query.order("created_at", { ascending: false });
+    if (result.error && raceId && hasMissingLeagueRaceColumn(result.error.message)) {
+      let fallbackQuery = client
+        .from("leagues")
+        .select("*, member_count")
+        .eq("is_active", true);
+
+      if (mode === "discoverable") {
+        fallbackQuery = fallbackQuery.or(`type.eq.public,creator_id.eq.${currentUser.id}`);
+      } else {
+        fallbackQuery = fallbackQuery.in("id", joinedLeagueIds);
+      }
+
+      result = await fallbackQuery.order("created_at", { ascending: false });
+    }
+
+    return result;
   }
 
-  const joinedIds = [...new Set((memberships ?? []).map((membership) => membership.league_id))];
-
-  // Public leagues should always be visible. Private leagues should also appear
-  // if the user created them or has already joined them via invite.
-  let baseQuery = supabase
-    .from("leagues")
-    .select("*, member_count")
-    .or(`type.eq.public,creator_id.eq.${user.id}`)
-    .eq("is_active", true);
-
-  if (raceId) {
-    baseQuery = baseQuery.eq("race_id", raceId);
-  }
-
-  const [{ data: baseLeagues, error: baseLeaguesError }, joinedLeaguesResult] = await Promise.all([
-    baseQuery.order("created_at", { ascending: false }),
-    joinedIds.length === 0
-      ? Promise.resolve({ data: [], error: null })
-      : (() => {
-          let joinedQuery = supabase
-            .from("leagues")
-            .select("*, member_count")
-            .in("id", joinedIds)
-            .eq("is_active", true);
-
-          if (raceId) {
-            joinedQuery = joinedQuery.eq("race_id", raceId);
-          }
-
-          return joinedQuery.order("created_at", { ascending: false });
-        })(),
+  const [discoverableResult, joinedResult] = await Promise.all([
+    fetchLeagueRows("discoverable"),
+    fetchLeagueRows("joined"),
   ]);
 
-  if (baseLeaguesError) {
-    return NextResponse.json({ error: baseLeaguesError.message }, { status: 400 });
+  const firstError = discoverableResult.error ?? joinedResult.error;
+  if (firstError) {
+    return NextResponse.json({ error: firstError.message }, { status: 400 });
   }
 
-  if (joinedLeaguesResult.error) {
-    return NextResponse.json({ error: joinedLeaguesResult.error.message }, { status: 400 });
+  const mergedLeagues = new Map<string, Record<string, unknown>>();
+  for (const league of [...(discoverableResult.data ?? []), ...(joinedResult.data ?? [])]) {
+    mergedLeagues.set(league.id as string, league);
   }
 
-  const leaguesById = new Map<string, Record<string, unknown>>();
-  for (const league of [...(baseLeagues ?? []), ...(joinedLeaguesResult.data ?? [])]) {
-    leaguesById.set(String(league.id), league as Record<string, unknown>);
-  }
+  const leagues = [...mergedLeagues.values()].sort((a, b) => {
+    const aCreatedAt = new Date(String(a.created_at ?? 0)).getTime();
+    const bCreatedAt = new Date(String(b.created_at ?? 0)).getTime();
+    return bCreatedAt - aCreatedAt;
+  });
 
   return NextResponse.json({
-    leagues: Array.from(leaguesById.values()).map((league) => ({
-      ...league,
-      is_member: joinedIds.includes(String(league.id)),
+    leagues: leagues.map((l) => ({
+      ...l,
+      is_member: joinedIds.has(String(l.id)),
     })),
   });
 }
@@ -189,9 +221,69 @@ export async function POST(request: NextRequest) {
   });
 
   if (createErr) {
-    const status =
-      createErr.message.includes("Insufficient balance") ? 402 : 400;
-    return NextResponse.json({ error: createErr.message }, { status });
+    if (!shouldFallbackLeagueCreate(createErr.message)) {
+      const status =
+        createErr.message.includes("Insufficient balance") ? 402 : 400;
+      return NextResponse.json({ error: createErr.message }, { status });
+    }
+
+    const admin = createSupabaseAdminClient();
+    if (!admin) {
+      return NextResponse.json(
+        { error: "Supabase admin client not configured." },
+        { status: 500 }
+      );
+    }
+
+    try {
+      const fallback = await createLeagueWithoutRpc(admin, {
+        creatorId: user.id,
+        raceId: race_id,
+        name,
+        type,
+        minimumStakeUsdc: minimum_stake_usdc,
+        creatorStakeUsdc: creator_stake_usdc,
+        maxUsers: max_users,
+        payoutModel: (payout_model ?? DEFAULT_PAYOUT_MODEL) as PayoutModel,
+        payoutConfig: normalizedPayoutConfig,
+      });
+
+      const { data: league, error } = await supabase
+        .from("leagues")
+        .select("*")
+        .eq("id", fallback.leagueId)
+        .single();
+
+      if (error || !league) {
+        return NextResponse.json(
+          { error: error?.message ?? "League created but could not be loaded." },
+          { status: 500 }
+        );
+      }
+
+      await trackServer(
+        "league_created",
+        {
+          creator_stake_usdc,
+          league_id: String(league.id),
+          league_type: type,
+          payout_model,
+          race_id: race_id,
+        },
+        user.id
+      );
+
+      return NextResponse.json({ league }, { status: 201 });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to create league.";
+      const status =
+        message.includes("Insufficient balance")
+          ? 402
+          : message.includes("Race not found")
+            ? 400
+            : 400;
+      return NextResponse.json({ error: message }, { status });
+    }
   }
 
   const createdRow = Array.isArray(created) ? created[0] : created;
@@ -208,6 +300,18 @@ export async function POST(request: NextRequest) {
   if (error || !league) {
     return NextResponse.json({ error: error?.message ?? "League created but could not be loaded." }, { status: 500 });
   }
+
+  await trackServer(
+    "league_created",
+    {
+      creator_stake_usdc,
+      league_id: String(league.id),
+      league_type: type,
+      payout_model,
+      race_id: race_id,
+    },
+    user.id
+  );
 
   return NextResponse.json({ league }, { status: 201 });
 }

@@ -1,22 +1,39 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { PrivyProvider } from "@privy-io/react-auth";
-import posthog from "posthog-js";
+import {
+  captureInitialAcquisitionContext,
+  getPageGroup,
+  getRaceIdFromPath,
+  initClarityClient,
+  initPostHogClient,
+  setClarityTag,
+} from "@/lib/analytics";
 
-function PostHogInit() {
+function AnalyticsRuntime() {
+  const pathname = usePathname();
+
   useEffect(() => {
-    const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-    const host = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
-    if (!key) return;
-    posthog.init(key, {
-      api_host: host,
-      capture_pageview: true,
-      capture_pageleave: true,
-      autocapture: false, // manual events only — keeps data clean for beta
-      persistence: "localStorage",
-    });
+    captureInitialAcquisitionContext();
+    initPostHogClient();
+    initClarityClient();
   }, []);
+
+  useEffect(() => {
+    if (!pathname) {
+      return;
+    }
+
+    setClarityTag("page_group", getPageGroup(pathname));
+
+    const raceId = getRaceIdFromPath(pathname);
+    if (raceId) {
+      setClarityTag("race_id", raceId);
+    }
+  }, [pathname]);
+
   return null;
 }
 
@@ -63,7 +80,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      <PostHogInit />
+      <AnalyticsRuntime />
       {children}
     </PrivyProvider>
   );

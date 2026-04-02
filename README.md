@@ -26,6 +26,9 @@ cp .env.example .env.local
 # - CRON_SECRET
 # - NEXT_PUBLIC_POSTHOG_KEY
 # - NEXT_PUBLIC_POSTHOG_HOST
+# - POSTHOG_API_KEY
+# - NEXT_PUBLIC_CLARITY_PROJECT_ID
+# - NEXT_PUBLIC_ANALYTICS_ENABLED=true   # production only
 ```
 
 ### 3. Apply migrations (in exact file order)
@@ -181,7 +184,6 @@ npm run test:watch # watch mode
 - League creation/join and settlement are transactional in SQL, but there is still no external reconciliation layer against a real custodian or chain indexer.
 
 ### Deferred to post-launch
-- Analytics (PostHog)
 - Email verification flow UI
 - Public league discovery / search
 - Admin: view all predictions per race

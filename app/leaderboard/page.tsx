@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { AppNav } from "@/app/components/AppNav";
+import { track } from "@/lib/analytics";
 
 type LeaderboardEntry = {
   user_id: string;
@@ -35,7 +36,7 @@ export default function LeaderboardPage() {
       if (!user) { router.push("/login"); return; }
       setCurrentUserId(user.id);
 
-      const res = await fetch("/api/leaderboard", { cache: "no-store" });
+      const res = await fetch("/api/leaderboard");
       if (!res.ok) {
         setError("Failed to load leaderboard. Please refresh.");
       } else {
@@ -46,6 +47,14 @@ export default function LeaderboardPage() {
     }
     load();
   }, [router]);
+
+  useEffect(() => {
+    if (!loading && !error) {
+      track("leaderboard_viewed", {
+        entry_count: entries.length,
+      });
+    }
+  }, [entries.length, error, loading]);
 
   if (loading) {
     return (

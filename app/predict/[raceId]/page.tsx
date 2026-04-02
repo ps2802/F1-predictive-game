@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { buildFallbackRaceTiming, findRaceById } from "@/lib/races";
 import { track } from "@/lib/analytics";
 import { PREDICTION_EDIT_FEE_USDC } from "@/lib/gameRules";
 import { formatCountdown, resolvePredictionWindow } from "@/lib/predictionWindows";
-import { findRaceById, useRaceCatalog } from "@/lib/raceCatalog";
 
 type Option = {
   id: string;
@@ -55,8 +55,7 @@ export default function PredictPage() {
   const params = useParams();
   const router = useRouter();
   const raceId = params?.raceId as string;
-  const { races, loading: racesLoading } = useRaceCatalog();
-  const race = findRaceById(races, raceId);
+  const race = findRaceById(raceId);
 
   const [step, setStep] = useState(0);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -72,6 +71,8 @@ export default function PredictPage() {
   const [chargedEditFee, setChargedEditFee] = useState(false);
   const [copyingExpert, setCopyingExpert] = useState(false);
   const [expertCopied, setExpertCopied] = useState(false);
+  const [myScore, setMyScore] = useState<number | null | "loading">("loading");
+  const hasTrackedPredictionStart = useRef(false);
 
   const currentCategory = STEPS[step];
   const currentQuestions = questions.filter(
@@ -90,7 +91,46 @@ export default function PredictPage() {
   });
   const anyLiveEditWindow = qualifyingWindow.paidEdit || raceWindow.paidEdit;
 
+  function getTimingCardValue(windowState: typeof qualifyingWindow) {
+    if (windowState.paidEdit) {
+      return formatCountdown(windowState.paidEditClosesAt);
+    }
+    if (windowState.lockAt) {
+      return formatCountdown(windowState.lockAt);
+    }
+    if (windowState.locked) {
+      return "Locked";
+    }
+    return "Schedule Soon";
+  }
+
+  function getTimingCardLabel(
+    windowState: typeof qualifyingWindow,
+    sessionLabel: "Qualifying" | "GP"
+  ) {
+    if (windowState.paidEdit) {
+      return `${sessionLabel} Live Edit`;
+    }
+    if (windowState.locked) {
+      return `${sessionLabel} Closed`;
+    }
+    if (!windowState.lockAt) {
+      return `${sessionLabel} Schedule`;
+    }
+    return `${sessionLabel} Locks In`;
+  }
+
   const loadData = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    setSaved(false);
+    setChargedEditFee(false);
+    setSectionIncomplete(false);
+    setQuestions([]);
+    setAnswers({});
+    setIsEditing(false);
+    setRaceTiming(buildFallbackRaceTiming(raceId));
+
     const supabase = createSupabaseBrowserClient();
     if (!supabase) { setLoading(false); return; }
 
@@ -137,6 +177,19 @@ export default function PredictPage() {
       try { setAnswers(JSON.parse(stored)); } catch { /* ignore */ }
     }
 
+    // Load race score if authenticated (for locked race results CTA)
+    if (user) {
+      const { data: scoreRow } = await supabase
+        .from("race_scores")
+        .select("total_score")
+        .eq("race_id", raceId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setMyScore(scoreRow?.total_score ?? null);
+    } else {
+      setMyScore(null);
+    }
+
     // Load server-side answers if authenticated
     if (user) {
       const { data: pred } = await supabase
@@ -168,6 +221,16 @@ export default function PredictPage() {
   }, [raceId]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    if (!loading && !hasTrackedPredictionStart.current) {
+      hasTrackedPredictionStart.current = true;
+      track("prediction_started", {
+        is_editing: isEditing,
+        race_id: raceId,
+      });
+    }
+  }, [isEditing, loading, raceId]);
 
   // Persist answers to localStorage as user picks
   useEffect(() => {
@@ -294,11 +357,31 @@ export default function PredictPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to save");
-      track("prediction_submitted", { race_id: raceId });
+      const eventName =
+        data.status === "draft"
+          ? "prediction_saved_draft"
+          : isEditing
+            ? "prediction_edit_submitted"
+            : "prediction_submitted";
+
+      track(
+        eventName,
+        {
+          charged_edit_fee: Boolean(data.chargedEditFee),
+          race_id: raceId,
+          status: data.status,
+        },
+        { send_to_posthog: false, send_to_clarity: true }
+      );
       localStorage.removeItem(`picks_${raceId}`);
       setChargedEditFee(Boolean(data.chargedEditFee));
       setSaved(true);
     } catch (e) {
+      const message = e instanceof Error ? e.message : "Something went wrong";
+      track("prediction_submit_failed", {
+        error_category: message,
+        race_id: raceId,
+      });
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setSaving(false);
@@ -322,16 +405,6 @@ export default function PredictPage() {
     }
   }
 
-  if (loading || racesLoading) {
-    return (
-      <div className="gla-root">
-        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
-          <div className="gl-spinner" />
-          <p style={{ color: "rgba(255,255,255,0.5)", marginTop: "1rem" }}>Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (!race) {
     return (
@@ -341,6 +414,17 @@ export default function PredictPage() {
           <Link href="/dashboard" className="gla-race-btn" style={{ marginTop: "1rem", display: "inline-block" }}>
             Back to Dashboard
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="gla-root">
+        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
+          <div className="gl-spinner" />
+          <p style={{ color: "rgba(255,255,255,0.5)", marginTop: "1rem" }}>Loading...</p>
         </div>
       </div>
     );
@@ -419,17 +503,21 @@ export default function PredictPage() {
         </div>
       </div>
 
-      <div className="league-economics" style={{ marginBottom: "1.5rem" }}>
-        <div className="league-econ-card">
-          <span className="league-econ-value">{formatCountdown(qualifyingWindow.lockAt)}</span>
-          <span className="league-econ-label">
-            Qualifying {qualifyingWindow.paidEdit ? "Live Edit" : qualifyingWindow.locked ? "Closed" : "Locks In"}
+      <div className="predict-timing-grid">
+        <div className="predict-timing-card">
+          <span className="predict-timing-value">
+            {getTimingCardValue(qualifyingWindow)}
+          </span>
+          <span className="predict-timing-label">
+            {getTimingCardLabel(qualifyingWindow, "Qualifying")}
           </span>
         </div>
-        <div className="league-econ-card">
-          <span className="league-econ-value">{formatCountdown(raceWindow.lockAt)}</span>
-          <span className="league-econ-label">
-            GP {raceWindow.paidEdit ? "Live Edit" : raceWindow.locked ? "Closed" : "Locks In"}
+        <div className="predict-timing-card">
+          <span className="predict-timing-value">
+            {getTimingCardValue(raceWindow)}
+          </span>
+          <span className="predict-timing-label">
+            {getTimingCardLabel(raceWindow, "GP")}
           </span>
         </div>
       </div>
@@ -448,6 +536,13 @@ export default function PredictPage() {
             className={`predict-step-tab${step === i ? " is-active" : ""}${stepComplete(s) ? " is-done" : ""}`}
             onClick={() => {
               setSectionIncomplete(false);
+              if (i > step && currentCategory !== "review") {
+                track("prediction_step_completed", {
+                  completed: stepComplete(currentCategory),
+                  race_id: raceId,
+                  step_name: currentCategory,
+                });
+              }
               setStep(i);
             }}
           >
@@ -475,7 +570,24 @@ export default function PredictPage() {
 
       {/* Questions */}
       <div className="predict-body">
-        {currentCategory === "review" ? (
+        {currentCategory === "review" && raceTiming?.race_locked ? (
+          <div className="predict-results-cta">
+            {!isAuthenticated ? (
+              <p className="predict-results-locked-msg">Log in to see your score for this race.</p>
+            ) : myScore === "loading" ? (
+              <div className="gl-spinner" />
+            ) : typeof myScore === "number" ? (
+              <>
+                <p className="predict-results-score">You scored <strong>{myScore.toFixed(1)} pts</strong></p>
+                <Link href={`/scores/${raceId}`} className="gla-race-btn" style={{ display: "inline-block", marginTop: "1rem" }}>
+                  View full breakdown →
+                </Link>
+              </>
+            ) : (
+              <p className="predict-results-locked-msg">Results are being calculated — check back soon.</p>
+            )}
+          </div>
+        ) : currentCategory === "review" ? (
           renderReview()
         ) : currentQuestions.length === 0 ? (
           <div className="predict-empty">
@@ -581,6 +693,17 @@ export default function PredictPage() {
               className="predict-nav-btn primary"
               onClick={() => {
                 setSectionIncomplete(!stepComplete(currentCategory as string));
+                track("prediction_step_completed", {
+                  completed: stepComplete(currentCategory),
+                  race_id: raceId,
+                  step_name: currentCategory,
+                });
+                if (isEditing) {
+                  track("prediction_edit_started", {
+                    race_id: raceId,
+                    step_name: STEPS[step + 1],
+                  });
+                }
                 setStep(step + 1);
               }}
             >

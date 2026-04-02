@@ -2,10 +2,10 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { usePrivy, useLogin, type User } from "@privy-io/react-auth";
+import { usePrivy, useLogin } from "@privy-io/react-auth";
 import { handlePrivyAuthComplete } from "@/lib/auth";
 import { track } from "@/lib/analytics";
-import { useRaceCatalog } from "@/lib/raceCatalog";
+import { buildFallbackNextRace } from "@/lib/races";
 
 type NextRace = {
   id: string;
@@ -13,6 +13,10 @@ type NextRace = {
   grand_prix_name: string;
   qualifying_starts_at: string | null;
   race_starts_at: string | null;
+};
+
+type SeasonSummary = {
+  totalRounds?: number;
 };
 
 type TimeLeft = {
@@ -49,7 +53,7 @@ function NextRaceCountdownCard() {
       try {
         const res = await fetch("/api/races/next", { cache: "no-store" });
         const data = (await res.json()) as { race?: NextRace | null };
-        const race = data.race ?? null;
+        const race = data.race ?? buildFallbackNextRace();
         if (cancelled || !race) {
           return;
         }
@@ -65,10 +69,21 @@ function NextRaceCountdownCard() {
           setTimeLeft(calcTimeLeft(targetIso));
         }, 1000);
       } catch {
-        if (!cancelled) {
-          setNextRace(null);
-          setTimeLeft(null);
+        const race = buildFallbackNextRace();
+        if (cancelled || !race) {
+          return;
         }
+
+        setNextRace(race);
+        const targetIso = race.qualifying_starts_at ?? race.race_starts_at;
+        if (!targetIso) {
+          return;
+        }
+
+        setTimeLeft(calcTimeLeft(targetIso));
+        intervalId = setInterval(() => {
+          setTimeLeft(calcTimeLeft(targetIso));
+        }, 1000);
       }
     }
 
@@ -131,83 +146,6 @@ function NextRaceCountdownCard() {
   );
 }
 
-function AuthUnavailableMessage() {
-  const { meta } = useRaceCatalog();
-
-  return (
-    <div className="gl-login-root">
-      <div className="gl-login-panel">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/gridlock logo - transparent.png"
-          alt="Gridlock"
-          className="gl-login-logo"
-          draggable={false}
-        />
-
-        <p className="gl-login-eyebrow">
-          <span className="gl-login-dot" />
-          2026 SEASON · WIN REAL MONEY · NOW LIVE
-        </p>
-
-        <h1 className="gl-login-h1">
-          Predict the podium.<br />
-          <em>Win real money.</em>
-        </h1>
-
-        <p className="gl-login-sub">
-          Pick the podium. Win USDC. Your rivals are already in.
-        </p>
-
-        <NextRaceCountdownCard />
-
-        <div className="gl-login-stats">
-          <div className="gl-login-stat">
-            <span className="gl-login-stat-n">{meta.totalRounds || "—"}</span>
-            <span className="gl-login-stat-l">Rounds</span>
-          </div>
-          <div className="gl-login-stat-div" />
-          <div className="gl-login-stat">
-            <span className="gl-login-stat-n">{meta.driverCount ?? "—"}</span>
-            <span className="gl-login-stat-l">Drivers</span>
-          </div>
-          <div className="gl-login-stat-div" />
-          <div className="gl-login-stat">
-            <span className="gl-login-stat-n">$</span>
-            <span className="gl-login-stat-l">USDC Prizes</span>
-          </div>
-        </div>
-
-        <div
-          style={{
-            marginTop: "1.5rem",
-            padding: "1rem 1.1rem",
-            border: "1px solid rgba(225,6,0,0.22)",
-            background: "rgba(225,6,0,0.08)",
-            color: "rgba(255,255,255,0.82)",
-            fontSize: "0.85rem",
-            lineHeight: 1.5,
-            maxWidth: "28rem",
-          }}
-        >
-          Login is temporarily unavailable in this preview because Privy is not configured for this environment.
-        </div>
-      </div>
-
-      <div className="gl-login-visual" aria-hidden="true">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/gridlock f1 driver .png"
-          alt=""
-          className="gl-login-driver"
-          draggable={false}
-        />
-        <div className="gl-login-img-overlay" />
-      </div>
-    </div>
-  );
-}
-
 /**
  * /login — unified auth entry point for Gridlock.
  *
@@ -222,20 +160,53 @@ function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams?.get("redirect") ?? null;
-  const { meta } = useRaceCatalog();
 
   const { getAccessToken, authenticated } = usePrivy();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [totalRounds, setTotalRounds] = useState<number | null>(null);
+
+  useEffect(() => {
+    track("login_viewed");
+
+    let cancelled = false;
+
+    async function loadSeasonSummary() {
+      try {
+        const res = await fetch("/api/races/summary?season=2026", {
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          return;
+        }
+
+        const data = (await res.json()) as SeasonSummary;
+        if (!cancelled && typeof data.totalRounds === "number") {
+          setTotalRounds(data.totalRounds);
+        }
+      } catch {
+        // Leave the stat unresolved if the live summary request fails.
+      }
+    }
+
+    void loadSeasonSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const onComplete = useCallback(
-    async (result: { user: User }) => {
+    async () => {
       setError(null);
       try {
-        track("auth_completed", { privy_user_id: result.user.id });
         await handlePrivyAuthComplete(getAccessToken, redirect, router);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Sign-in failed.";
+        track("auth_failed", {
+          error_category: msg.includes("fetch") ? "network" : "sync",
+        });
         setError(msg.includes("fetch") ? "Network error — please try again." : msg);
         setLoading(false);
       }
@@ -249,6 +220,7 @@ function AuthForm() {
       setLoading(false);
       return;
     }
+    track("auth_failed", { error_category: "privy_modal" });
     setError("Sign-in failed. Please try again.");
     setLoading(false);
   }, []);
@@ -258,12 +230,19 @@ function AuthForm() {
   const handleEnter = () => {
     setLoading(true);
     setError(null);
+    track("auth_started", {
+      already_authenticated: authenticated,
+      redirect_to: redirect ?? undefined,
+    });
     // If already authenticated with Privy (existing session), skip the modal
     // and go straight to the Supabase sync — calling login() when already
     // authenticated causes Privy to throw "user is already logged in".
     if (authenticated) {
       handlePrivyAuthComplete(getAccessToken, redirect, router).catch((err) => {
         const msg = err instanceof Error ? err.message : "Sign-in failed.";
+        track("auth_failed", {
+          error_category: msg.includes("fetch") ? "network" : "sync",
+        });
         setError(msg.includes("fetch") ? "Network error — please try again." : "Sign-in failed. Please try again.");
         setLoading(false);
       });
@@ -585,12 +564,12 @@ function AuthForm() {
 
         <div className="gl-login-stats">
           <div className="gl-login-stat">
-            <span className="gl-login-stat-n">{meta.totalRounds || "—"}</span>
+            <span className="gl-login-stat-n">{totalRounds ?? "--"}</span>
             <span className="gl-login-stat-l">Rounds</span>
           </div>
           <div className="gl-login-stat-div" />
           <div className="gl-login-stat">
-            <span className="gl-login-stat-n">{meta.driverCount ?? "—"}</span>
+            <span className="gl-login-stat-n">22</span>
             <span className="gl-login-stat-l">Drivers</span>
           </div>
           <div className="gl-login-stat-div" />
@@ -631,11 +610,9 @@ function AuthForm() {
 }
 
 export default function LoginPage() {
-  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
-
   return (
     <Suspense>
-      {appId ? <AuthForm /> : <AuthUnavailableMessage />}
+      <AuthForm />
     </Suspense>
   );
 }

@@ -160,7 +160,7 @@ export default function Image() {
               textTransform: "uppercase",
             }}
           >
-            24 ROUNDS
+            2026 SEASON
           </span>
           <div
             style={{ width: 24, height: 1, background: "rgba(255,255,255,0.1)" }}

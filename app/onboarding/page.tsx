@@ -16,12 +16,14 @@ function OnboardingForm() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   useEffect(() => {
+    track("onboarding_viewed", { redirect_to: redirect });
+
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) router.push("/login");
     });
-  }, [router]);
+  }, [redirect, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,13 +41,17 @@ function OnboardingForm() {
       setError(data.error ?? "Failed to save username.");
       setSaving(false);
     } else {
-      track("onboarding_completed", { username });
+      track("onboarding_completed", {
+        redirect_to: redirect,
+        username_length: username.trim().length,
+      });
       setOnboardingComplete(true);
       setTimeout(() => router.push(redirect), 3000);
     }
   }
 
   function handleSkip() {
+    track("onboarding_skipped", { redirect_to: redirect });
     router.push(redirect);
   }
 

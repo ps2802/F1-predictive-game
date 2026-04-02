@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { trackServer } from "@/lib/analytics.server";
 
 /**
  * GET /api/cron/lock-races
@@ -90,6 +91,14 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+
+  await Promise.all(
+    ids.map((raceId) =>
+      trackServer("race_locked", {
+        race_id: raceId,
+      })
+    )
+  );
 
   return NextResponse.json({
     locked: ids,
