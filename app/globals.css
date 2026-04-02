@@ -2143,7 +2143,7 @@ h1, h2, h3 { margin-top: 0; }
   display: grid;
   grid-template-columns: 1fr 1fr;
   background: #000;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 /* ── Right: visual / image panel ── */
@@ -2200,7 +2200,7 @@ h1, h2, h3 { margin-top: 0; }
   justify-content: center;
   padding: 3.5rem 4rem 3rem;
   background: #000;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Panel ::before now unused — top bar moved to root */
