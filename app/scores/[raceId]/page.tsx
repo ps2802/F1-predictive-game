@@ -6,29 +6,19 @@ import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { AppNav } from "@/app/components/AppNav";
 import { findRaceById, useRaceCatalog } from "@/lib/raceCatalog";
-
-type ScoredQuestion = {
-  question_id: string;
-  question_type: string;
-  category: "qualifying" | "race" | "chaos";
-  base_points: number;
-  difficulty_multiplier: number;
-  confidence_multiplier: number;
-  raw_score: number;
-  is_correct: boolean;
-  label?: string;
-};
-
-type BreakdownJson =
-  | { questions: ScoredQuestion[]; chaos_bonus: number }
-  | ScoredQuestion[]; // legacy shape before Task 5
+import {
+  parseBreakdown,
+  type PredictionComparison,
+  type ScoreBreakdown,
+  type ScoreBreakdownQuestion,
+} from "@/lib/pastRaces";
 
 type RaceScore = {
   total_score: number;
   base_score: number;
   difficulty_score: number;
   edit_penalty: number;
-  breakdown_json: BreakdownJson | null;
+  breakdown_json: ScoreBreakdown | ScoreBreakdownQuestion[] | null;
   calculated_at: string;
 };
 
@@ -44,13 +34,14 @@ const CATEGORY_COLORS: Record<string, string> = {
   chaos: "#a855f7",
 };
 
-function parseBreakdown(raw: BreakdownJson | null): { questions: ScoredQuestion[]; chaos_bonus: number } {
-  if (!raw) return { questions: [], chaos_bonus: 0 };
-  if (Array.isArray(raw)) return { questions: raw, chaos_bonus: 0 };
-  return { questions: raw.questions ?? [], chaos_bonus: raw.chaos_bonus ?? 0 };
-}
+const STATUS_META = {
+  correct: { icon: "✓", label: "Correct", color: "#00D2AA" },
+  partial: { icon: "△", label: "Partial", color: "#FFB84D" },
+  wrong: { icon: "✗", label: "Wrong", color: "#E10600" },
+  unanswered: { icon: "—", label: "No Pick", color: "rgba(255,255,255,0.45)" },
+} as const;
 
-function categorySum(questions: ScoredQuestion[], category: string) {
+function categorySum(questions: ScoreBreakdownQuestion[], category: string) {
   return questions
     .filter((q) => q.category === category)
     .reduce((sum, q) => sum + q.raw_score, 0);
@@ -69,6 +60,7 @@ export default function ScoreBreakdownPage() {
 
   const [score, setScore] = useState<RaceScore | null>(null);
   const [rank, setRank] = useState<number | null>(null);
+  const [comparisons, setComparisons] = useState<PredictionComparison[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [fetchFailed, setFetchFailed] = useState(false);
@@ -87,6 +79,7 @@ export default function ScoreBreakdownPage() {
     if (res.ok) {
       const data = await res.json();
       setScore(data.score);
+      setComparisons(data.comparisons ?? []);
       if (data.rank != null) setRank(data.rank as number);
     } else {
       const data = await res.json().catch(() => ({}));
@@ -169,6 +162,9 @@ export default function ScoreBreakdownPage() {
 
   const { questions, chaos_bonus } = parseBreakdown(score.breakdown_json);
   const categories = ["qualifying", "race", "chaos"] as const;
+  const comparisonByQuestionId = new Map(
+    comparisons.map((comparison) => [comparison.question_id, comparison])
+  );
 
   const editPenaltyApplied = score.edit_penalty < 0.999;
 
@@ -324,50 +320,79 @@ export default function ScoreBreakdownPage() {
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 {catQuestions.map((q) => (
-                  <div
-                    key={q.question_id}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1.5rem 1fr auto",
-                      alignItems: "center",
-                      gap: "0.75rem",
-                      background: q.is_correct
-                        ? "rgba(255,255,255,0.05)"
-                        : "rgba(255,255,255,0.02)",
-                      border: `1px solid ${q.is_correct ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)"}`,
-                      borderRadius: "8px",
-                      padding: "0.75rem 1rem",
-                    }}
-                  >
-                    {/* correct/wrong indicator */}
-                    <span style={{ fontSize: "0.9rem", textAlign: "center" }}>
-                      {q.is_correct ? "✓" : "✗"}
-                    </span>
+                  (() => {
+                    const comparison = comparisonByQuestionId.get(q.question_id);
+                    const status = STATUS_META[comparison?.status ?? (q.is_correct ? "correct" : "wrong")];
 
-                    {/* question info */}
-                    <div>
-                      <div style={{ fontSize: "0.875rem", fontWeight: 600, color: q.is_correct ? "#fff" : "rgba(255,255,255,0.4)" }}>
-                        {q.label ?? q.question_type.replace(/_/g, " ")}
-                      </div>
-                      {q.is_correct && (
-                        <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", marginTop: "0.15rem" }}>
-                          diff {formatMultiplier(q.difficulty_multiplier)}
-                          {q.confidence_multiplier !== 1 && ` · conf ${formatMultiplier(q.confidence_multiplier)}`}
+                    return (
+                      <div
+                        key={q.question_id}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1.5rem minmax(0, 1fr) auto",
+                          alignItems: "start",
+                          gap: "0.75rem",
+                          background: "rgba(255,255,255,0.03)",
+                          border: `1px solid ${q.raw_score > 0 ? `${CATEGORY_COLORS[cat]}33` : "rgba(255,255,255,0.06)"}`,
+                          borderRadius: "8px",
+                          padding: "0.85rem 1rem",
+                        }}
+                      >
+                        <span style={{ fontSize: "0.9rem", textAlign: "center", color: status.color }}>
+                          {status.icon}
+                        </span>
+
+                        <div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                            <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "#fff" }}>
+                              {q.label ?? q.question_type.replace(/_/g, " ")}
+                            </div>
+                            <div style={{ fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em", color: status.color }}>
+                              {status.label}
+                            </div>
+                          </div>
+
+                          {comparison && (
+                            <div style={{ display: "grid", gap: "0.45rem", marginTop: "0.55rem" }}>
+                              <div>
+                                <div style={{ fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.35)" }}>
+                                  Your pick
+                                </div>
+                                <div style={{ fontSize: "0.8rem", color: "#fff", marginTop: "0.15rem" }}>
+                                  {comparison.user_pick ?? "No pick submitted"}
+                                </div>
+                              </div>
+                              <div>
+                                <div style={{ fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.35)" }}>
+                                  Actual result
+                                </div>
+                                <div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.8)", marginTop: "0.15rem" }}>
+                                  {comparison.actual_result ?? "Result unavailable"}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {q.raw_score > 0 && (
+                            <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", marginTop: "0.55rem" }}>
+                              diff {formatMultiplier(q.difficulty_multiplier)}
+                              {q.confidence_multiplier !== 1 && ` · conf ${formatMultiplier(q.confidence_multiplier)}`}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
 
-                    {/* score */}
-                    <div style={{
-                      fontSize: "1rem",
-                      fontWeight: 800,
-                      color: q.is_correct ? "#fff" : "rgba(255,255,255,0.2)",
-                      textAlign: "right",
-                      minWidth: "3.5rem",
-                    }}>
-                      {q.is_correct ? `+${q.raw_score.toFixed(1)}` : "—"}
-                    </div>
-                  </div>
+                        <div style={{
+                          fontSize: "1rem",
+                          fontWeight: 800,
+                          color: q.raw_score > 0 ? "#fff" : "rgba(255,255,255,0.2)",
+                          textAlign: "right",
+                          minWidth: "3.5rem",
+                        }}>
+                          {q.raw_score > 0 ? `+${q.raw_score.toFixed(1)}` : "0"}
+                        </div>
+                      </div>
+                    );
+                  })()
                 ))}
               </div>
             </div>

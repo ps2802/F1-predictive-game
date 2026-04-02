@@ -206,7 +206,12 @@ export default function ProfilePage() {
 
         {/* Race scores history */}
         <div style={{ marginTop: "2rem" }}>
-          <h3 className="league-section-title">Race History</h3>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            <h3 className="league-section-title" style={{ margin: 0 }}>Race History</h3>
+            <Link href="/past-races" className="gla-race-btn" style={{ fontSize: "0.75rem", padding: "0.5rem 1rem" }}>
+              View All →
+            </Link>
+          </div>
           {raceHistory.length === 0 ? (
             <div className="lb-empty">
               <p className="lb-empty-headline">No predictions yet.</p>
