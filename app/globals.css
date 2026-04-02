@@ -3425,3 +3425,540 @@ h1, h2, h3 { margin-top: 0; }
   color: rgba(255, 255, 255, 0.35);
   font-size: 0.85rem;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DASHBOARD — stats row, next race, leagues strip
+═══════════════════════════════════════════════════════════════ */
+
+.dash-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.06);
+  margin-bottom: 2rem;
+}
+
+.dash-stat-card {
+  background: #080808;
+  padding: 1.1rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: background .18s;
+  text-decoration: none;
+  color: inherit;
+}
+.dash-stat-card:hover { background: #0d0d0d; }
+
+.dash-stat-label {
+  font-size: .56rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.32);
+}
+
+.dash-stat-value {
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: -.03em;
+  line-height: 1;
+  color: #fff;
+}
+
+.dash-stat-value--race {
+  font-size: 1rem;
+  letter-spacing: -.01em;
+  line-height: 1.2;
+}
+
+.dash-stat-card--balance {
+  border-left: 2px solid rgba(0, 210, 170, 0.4);
+}
+.dash-stat-card--balance .dash-stat-value {
+  color: rgba(0, 210, 170, 0.9);
+}
+
+/* Next race featured banner */
+.dash-next-race {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: linear-gradient(135deg, #0d0000 0%, #100000 50%, #080808 100%);
+  border: 1px solid rgba(225,6,0,.22);
+  border-left: 3px solid #E10600;
+  padding: 1.4rem 1.75rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.dash-next-race-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.dash-next-race-label {
+  font-size: .56rem;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: #E10600;
+}
+
+.dash-next-race-name {
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: -.02em;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.dash-next-race-info {
+  font-size: .75rem;
+  color: rgba(255,255,255,.38);
+  letter-spacing: .05em;
+  margin: 0;
+}
+
+/* Section header */
+.dash-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.dash-section-title {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.45);
+}
+
+.dash-section-link {
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #E10600;
+  text-decoration: none;
+  transition: color .15s;
+}
+.dash-section-link:hover { color: #ff2010; }
+
+/* My leagues strip */
+.dash-leagues-section {
+  margin-bottom: 2.5rem;
+}
+
+.dash-leagues-strip {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.25rem;
+  scrollbar-width: none;
+}
+.dash-leagues-strip::-webkit-scrollbar { display: none; }
+
+.dash-league-chip {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: #0d0d0d;
+  border: 1px solid rgba(255,255,255,.08);
+  padding: 0.85rem 1.1rem;
+  min-width: 160px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color .18s, background .18s;
+}
+.dash-league-chip:hover {
+  background: #111;
+  border-color: rgba(255,255,255,.18);
+}
+
+.dash-league-chip--create {
+  border-style: dashed;
+  border-color: rgba(225,6,0,.25);
+  align-items: center;
+  justify-content: center;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: rgba(225,6,0,.7);
+  min-width: 140px;
+}
+.dash-league-chip--create:hover {
+  border-color: #E10600;
+  color: #E10600;
+  background: rgba(225,6,0,.04);
+}
+
+.dash-league-chip-type {
+  font-size: .52rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.32);
+}
+
+.dash-league-chip-name {
+  font-size: .88rem;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.dash-league-chip-pool {
+  font-size: .6rem;
+  color: rgba(0, 210, 170, 0.7);
+  font-weight: 600;
+  letter-spacing: .06em;
+}
+
+/* Highlight the next race card */
+.gla-race-card.is-next {
+  border-left: 2px solid #E10600;
+  background: #0a0101;
+}
+.gla-race-card.is-next::before { opacity: 1; }
+
+/* ═══════════════════════════════════════════════════════════════
+   CREATE LEAGUE WIZARD
+═══════════════════════════════════════════════════════════════ */
+
+.wizard-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 1.75rem 0 2rem;
+  position: relative;
+}
+.wizard-steps::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  height: 1px;
+  background: rgba(255,255,255,.08);
+  z-index: 0;
+}
+
+.wizard-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.wizard-step-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.14);
+  background: #080808;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .65rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.28);
+  transition: all .2s;
+}
+
+.wizard-step.is-active .wizard-step-dot {
+  border-color: #E10600;
+  background: #E10600;
+  color: #fff;
+}
+
+.wizard-step.is-done .wizard-step-dot {
+  border-color: rgba(74,222,128,.5);
+  background: rgba(74,222,128,.12);
+  color: #4ade80;
+}
+
+.wizard-step-label {
+  font-size: .52rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.22);
+  transition: color .2s;
+}
+.wizard-step.is-active .wizard-step-label { color: rgba(255,255,255,.6); }
+.wizard-step.is-done .wizard-step-label { color: rgba(74,222,128,.6); }
+
+.wizard-panel {
+  margin-top: 0.5rem;
+}
+
+/* Type selection cards */
+.league-type-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.league-type-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  background: #0a0a0a;
+  border: 1px solid rgba(255,255,255,.1);
+  padding: 1.1rem 1.2rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .18s, background .18s;
+  font-family: inherit;
+  color: #fff;
+}
+.league-type-card:hover {
+  border-color: rgba(255,255,255,.22);
+  background: #0f0f0f;
+}
+.league-type-card.is-selected {
+  border-color: #E10600;
+  background: rgba(225,6,0,.06);
+}
+
+.league-type-card-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.league-type-card-title {
+  font-size: .82rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  display: block;
+}
+
+.league-type-card-desc {
+  font-size: .72rem;
+  color: rgba(255,255,255,.4);
+  line-height: 1.45;
+  display: block;
+}
+
+/* Entry fee preset pills */
+.entry-fee-presets {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+
+.entry-fee-pill {
+  background: #0a0a0a;
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.7);
+  font-family: inherit;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.entry-fee-pill:hover {
+  border-color: rgba(255,255,255,.3);
+  color: #fff;
+}
+.entry-fee-pill.is-selected {
+  border-color: #E10600;
+  background: rgba(225,6,0,.1);
+  color: #fff;
+}
+.entry-fee-pill:disabled {
+  opacity: .3;
+  cursor: not-allowed;
+}
+
+/* Wizard navigation row */
+.wizard-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+/* Review card */
+.wizard-review-card {
+  background: #0a0a0a;
+  border: 1px solid rgba(255,255,255,.1);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.wizard-review-name {
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: -.02em;
+  text-transform: uppercase;
+  margin: 0 0 0.25rem;
+}
+
+.wizard-review-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding-top: 0.75rem;
+}
+
+.wizard-review-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.wizard-review-label {
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.32);
+}
+
+.wizard-review-val {
+  font-size: .88rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -.01em;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LEAGUE DETAIL — tabs + stats row
+═══════════════════════════════════════════════════════════════ */
+
+.league-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.06);
+  margin: 1.25rem 0 1.5rem;
+}
+
+.league-stats-card {
+  background: #080808;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.league-stats-label {
+  font-size: .55rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.3);
+}
+
+.league-stats-value {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -.03em;
+  line-height: 1;
+  color: #fff;
+}
+
+/* Tab navigation */
+.league-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  margin-bottom: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.league-tabs::-webkit-scrollbar { display: none; }
+
+.league-tab {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: rgba(255,255,255,.35);
+  font-family: inherit;
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+  margin-bottom: -1px;
+}
+.league-tab:hover { color: rgba(255,255,255,.65); }
+.league-tab.is-active {
+  color: #fff;
+  border-bottom-color: #E10600;
+}
+
+/* League races list */
+.league-races-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+.league-race-item {
+  background: #080808;
+  padding: 1.1rem 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.league-race-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.league-race-item-name {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+  .dash-stats-row { grid-template-columns: 1fr 1fr; }
+  .dash-next-race { flex-direction: column; align-items: flex-start; }
+  .league-type-cards { grid-template-columns: 1fr; }
+  .league-stats-row { grid-template-columns: 1fr 1fr 1fr; }
+  .wizard-steps::before { display: none; }
+}

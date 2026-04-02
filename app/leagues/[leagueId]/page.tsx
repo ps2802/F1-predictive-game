@@ -43,6 +43,8 @@ type Membership = {
   stake_amount_usdc: number;
 };
 
+type ActiveTab = "leaderboard" | "predictions" | "races";
+
 const DEFAULT_PAYOUT_TIERS = [
   { place: 1, percent: 50 },
   { place: 2, percent: 30 },
@@ -90,6 +92,7 @@ export default function LeaguePage() {
   const [countdown, setCountdown] = useState("TBD");
   const [nextRacePredStatus, setNextRacePredStatus] = useState<"active" | "draft" | "none">("none");
   const [navProfile, setNavProfile] = useState<NavProfile | null>(null);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("leaderboard");
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -176,7 +179,6 @@ export default function LeaguePage() {
         setMembers([]);
       }
 
-      // Load prediction status for the next open race so the CTA is contextual
       if (leagueData.race_id && user) {
         const { data: pred } = await supabase
           .from("predictions")
@@ -294,6 +296,9 @@ export default function LeaguePage() {
   const isSkillWeighted = league.payout_model === "skill_weighted";
   const countdownDisplay = countdown === "TBD" ? "Schedule Soon" : countdown;
   const stakeWindowClosed = countdown === "Locked";
+  const racesLeft = races.filter(
+    (r) => r.status === "upcoming" && new Date(r.date) > new Date()
+  ).length;
 
   return (
     <div className="gla-root">
@@ -306,244 +311,292 @@ export default function LeaguePage() {
         {/* League header */}
         <div className="league-detail-header">
           <div>
-            <span className={`league-card-type ${league.type}`}>{league.type}</span>
-            <h1 className="gla-page-title" style={{ marginTop: "0.5rem" }}>{league.name}</h1>
-            <p className="gla-page-sub">
-              {league.member_count}/{league.max_users} members
-              {` · $${league.entry_fee_usdc} USDC minimum`}
-            </p>
-            {targetRace && (
-              <p className="gla-page-sub" style={{ marginTop: "0.35rem" }}>
-                Race contest for {targetRace.name}
-              </p>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.4rem" }}>
+              <span className={`league-card-type ${league.type}`}>{league.type}</span>
+              {targetRace && <span className="league-card-type" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>2026</span>}
+            </div>
+            <h1 className="gla-page-title">{league.name}</h1>
+          </div>
+
+          <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start", flexWrap: "wrap" }}>
+            {league.type === "private" && membership && (
+              <button
+                className="gla-race-btn"
+                style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.12)" }}
+                onClick={() => {
+                  const link = `${window.location.origin}/join/${league.invite_code}`;
+                  navigator.clipboard.writeText(link).then(() => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  });
+                }}
+              >
+                {copied ? "Copied!" : "Share →"}
+              </button>
+            )}
+            {targetRace && membership && (
+              <Link href={`/predict/${targetRace.id}`} className="gla-race-btn">
+                {nextRacePredStatus === "none" ? "Make Picks →" : nextRacePredStatus === "draft" ? "Finish Picks →" : "Edit Picks →"}
+              </Link>
             )}
           </div>
-
-          {league.type === "private" && (
-            <div className="league-invite-box">
-              <span className="league-invite-label">Invite Code</span>
-              <code className="league-invite-code">{league.invite_code}</code>
-              <button className="league-copy-btn" onClick={copyInvite}>
-                {copied ? "Copied!" : "Copy Link"}
-              </button>
-            </div>
-          )}
         </div>
 
-        {(pool > 0 || league.entry_fee_usdc > 0) && (
-          <section className="league-overview-grid">
-            <div className="league-economics">
-              {pool > 0 && (
-                <div className="league-econ-card">
-                  <span className="league-econ-label">Prize Pool</span>
-                  <span className="league-econ-value">${pool.toFixed(2)}</span>
-                  <span className="league-econ-meta">
-                    Live total from all paid entries
-                  </span>
-                </div>
-              )}
-              <div className="league-econ-card">
-                <span className="league-econ-label">Next Lock</span>
-                <span className="league-econ-value">{countdownDisplay}</span>
-                <span className="league-econ-meta">
-                  {countdown === "TBD"
-                    ? "Timing will appear once the race schedule is available."
-                    : "Prediction deadline for this league race."}
-                </span>
-              </div>
-              <div className="league-econ-card">
-                <span className="league-econ-label">Minimum Stake</span>
-                <span className="league-econ-value">${Number(league.entry_fee_usdc).toFixed(0)}</span>
-                <span className="league-econ-meta">
-                  Minimum entry amount per player
-                </span>
-              </div>
-              {pool > 0 && !isSkillWeighted && (
-                <div className="league-econ-card">
-                  <span className="league-econ-label">Current 1st Prize</span>
-                  <span className="league-econ-value">
-                    ${(pool * (payoutTiers[0]?.percent ?? 50) / 100).toFixed(2)}
-                  </span>
-                  <span className="league-econ-meta">
-                    Based on the current payout split
-                  </span>
-                </div>
-              )}
-            </div>
+        {/* Stats row */}
+        <div className="league-stats-row">
+          <div className="league-stats-card">
+            <span className="league-stats-label">Prize Pool</span>
+            <span className="league-stats-value">${pool > 0 ? pool.toFixed(2) : "0"}</span>
+          </div>
+          <div className="league-stats-card">
+            <span className="league-stats-label">Participants</span>
+            <span className="league-stats-value">{league.member_count}</span>
+          </div>
+          <div className="league-stats-card">
+            <span className="league-stats-label">Races Left</span>
+            <span className="league-stats-value">{racesLeft}</span>
+          </div>
+        </div>
 
-            <div className="league-payout-section">
-              <div className="league-payout-header">
-                <h3 className="league-section-title">Payout Distribution</h3>
-                <span className="league-payout-mode">
-                  {isSkillWeighted ? "Score Weighted" : "Fixed Tiers"}
-                </span>
-              </div>
-              {isSkillWeighted ? (
-                <div className="league-payout-copy">
-                  <p>
-                    Payouts scale with performance. Higher-scoring players take a larger share
-                    of the pool instead of splitting it into fixed places.
-                  </p>
-                  <p className="league-payout-note">
-                    Best for larger public leagues where ties and close finishes are common.
-                  </p>
-                </div>
-              ) : (
-                <div className="league-payout-tiers">
-                  {payoutTiers.map((tier) => (
-                    <div key={tier.place} className="league-payout-tier">
-                      <span className="league-payout-place">
-                        {tier.place === 1 ? "1st" : tier.place === 2 ? "2nd" : tier.place === 3 ? "3rd" : `${tier.place}th`}
-                      </span>
-                      <div className="league-payout-bar-bg">
-                        <div className="league-payout-bar" style={{ width: `${tier.percent}%` }} />
-                      </div>
-                      <span className="league-payout-pct">{tier.percent}%</span>
-                      {pool > 0 && (
-                        <span className="league-payout-amt">${(pool * tier.percent / 100).toFixed(2)}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
+        {/* Private league invite */}
+        {league.type === "private" && membership && (
+          <div className="league-invite-box" style={{ marginBottom: "1.5rem" }}>
+            <span className="league-invite-label">Invite Code</span>
+            <code className="league-invite-code">{league.invite_code}</code>
+            <button className="league-copy-btn" onClick={copyInvite}>
+              {copied ? "Copied!" : "Copy Link"}
+            </button>
+          </div>
         )}
 
-        {!membership ? (
-          <div className="league-join-box" style={{ marginTop: "1.5rem" }}>
-            <h3 className="league-join-title">Join This League</h3>
-            <div className="league-join-form">
-              <input
-                className="league-join-input"
-                type="number"
-                min={Number(league.entry_fee_usdc)}
-                step="1"
-                value={joinStake}
-                onChange={(e) => setJoinStake(e.target.value)}
-                placeholder="Stake in USDC"
-              />
-              <button
-                type="button"
-                className="gla-race-btn"
-                disabled={joining || Number(joinStake) < Number(league.entry_fee_usdc)}
-                onClick={handleJoinLeague}
-              >
-                {joining ? "Joining..." : "Join League"}
-              </button>
+        {/* Tabs */}
+        <div className="league-tabs">
+          {(["leaderboard", "predictions", "races"] as ActiveTab[]).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              className={`league-tab${activeTab === tab ? " is-active" : ""}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab === "leaderboard" ? "Leaderboard" : tab === "predictions" ? "Predictions" : "Races"}
+            </button>
+          ))}
+        </div>
+
+        {/* Leaderboard tab */}
+        {activeTab === "leaderboard" && (
+          <div>
+            <div className="lb-table" style={{ marginTop: "1.5rem" }}>
+              <div className="lb-header">
+                <span>Rank</span>
+                <span>Driver</span>
+                <span>Used</span>
+                <span>Points</span>
+              </div>
+
+              {members.length === 0 ? (
+                <div className="lb-empty">
+                  No scores yet — be the first to make predictions!
+                </div>
+              ) : (
+                members.map((m, i) => (
+                  <div
+                    key={m.user_id}
+                    className={`lb-row${m.user_id === currentUserId ? " is-you" : ""}${i < 3 ? ` is-top-${i + 1}` : ""}`}
+                  >
+                    <span className="lb-rank">
+                      {i === 0 ? "1st" : i === 1 ? "2nd" : i === 2 ? "3rd" : `${i + 1}th`}
+                    </span>
+                    <span className="lb-name">
+                      {m.username ?? "Anonymous"}
+                      {m.user_id === currentUserId && (
+                        <span className="lb-you-badge"> you</span>
+                      )}
+                    </span>
+                    <span className="lb-races">{m.races_played}</span>
+                    <span className="lb-score">{Number(m.total_score).toFixed(1)}</span>
+                  </div>
+                ))
+              )}
             </div>
-            {joinError && <p className="league-join-error">{joinError}</p>}
           </div>
-        ) : (
-          <div className="league-join-box" style={{ marginTop: "1.5rem" }}>
-            <h3 className="league-join-title">Your Entry</h3>
-            <p className="league-entry-summary">
-              You&apos;re currently entered with ${Number(membership.stake_amount_usdc).toFixed(2)} USDC.
-            </p>
-            {!stakeWindowClosed ? (
-              <>
+        )}
+
+        {/* Predictions tab */}
+        {activeTab === "predictions" && (
+          <div style={{ marginTop: "1.5rem" }}>
+            {/* Membership / join section */}
+            {!membership ? (
+              <div className="league-join-box">
+                <h3 className="league-join-title">Join This League</h3>
                 <div className="league-join-form">
                   <input
                     className="league-join-input"
                     type="number"
-                    min="1"
+                    min={Number(league.entry_fee_usdc)}
                     step="1"
                     value={joinStake}
                     onChange={(e) => setJoinStake(e.target.value)}
-                    placeholder="Add more USDC"
+                    placeholder="Stake in USDC"
                   />
                   <button
                     type="button"
                     className="gla-race-btn"
-                    disabled={addingStake || Number(joinStake) <= 0}
-                    onClick={handleIncreaseStake}
+                    disabled={joining || Number(joinStake) < Number(league.entry_fee_usdc)}
+                    onClick={handleJoinLeague}
                   >
-                    {addingStake ? "Adding..." : "Add to Prize Pool"}
+                    {joining ? "Joining..." : "Join League"}
                   </button>
                 </div>
-                <p className="league-entry-note">
-                  Increase your stake any time before the race lock to grow the prize pool.
-                </p>
-              </>
+                {joinError && <p className="league-join-error">{joinError}</p>}
+              </div>
             ) : (
-              <p className="league-entry-note">
-                Stake increases are closed because this league has reached its lock window.
+              <div className="league-join-box" style={{ marginBottom: "1.5rem" }}>
+                <h3 className="league-join-title">Your Entry</h3>
+                <p className="league-entry-summary">
+                  You&apos;re entered with ${Number(membership.stake_amount_usdc).toFixed(2)} USDC.
+                </p>
+                {!stakeWindowClosed ? (
+                  <>
+                    <div className="league-join-form">
+                      <input
+                        className="league-join-input"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={joinStake}
+                        onChange={(e) => setJoinStake(e.target.value)}
+                        placeholder="Add more USDC"
+                      />
+                      <button
+                        type="button"
+                        className="gla-race-btn"
+                        disabled={addingStake || Number(joinStake) <= 0}
+                        onClick={handleIncreaseStake}
+                      >
+                        {addingStake ? "Adding..." : "Add to Prize Pool"}
+                      </button>
+                    </div>
+                    <p className="league-entry-note">
+                      Increase your stake any time before the race lock.
+                    </p>
+                  </>
+                ) : (
+                  <p className="league-entry-note">
+                    Stake window closed — this league has reached its lock window.
+                  </p>
+                )}
+                {joinError && <p className="league-join-error">{joinError}</p>}
+                {stakeSuccess && <p className="league-join-success">{stakeSuccess}</p>}
+              </div>
+            )}
+
+            {/* Prediction CTA */}
+            {targetRace && (
+              <div className="league-predict-cta">
+                <div className="league-predict-cta-text">
+                  {nextRacePredStatus === "active" ? (
+                    <>
+                      <strong>Your picks for {targetRace.name} are active.</strong>
+                      <span>They&apos;ll score once the race is settled.</span>
+                    </>
+                  ) : nextRacePredStatus === "draft" ? (
+                    <>
+                      <strong>Picks saved — not entered yet.</strong>
+                      <span>Join this league to activate your prediction for {targetRace.name}.</span>
+                    </>
+                  ) : (
+                    <>
+                      <strong>No prediction yet for {targetRace.name}.</strong>
+                      <span>Your prediction sheet powers the global board and this league once the race settles.</span>
+                    </>
+                  )}
+                </div>
+                <Link
+                  href={`/predict/${targetRace.id}`}
+                  className="gla-race-btn"
+                  style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+                >
+                  {nextRacePredStatus === "none"
+                    ? `Predict ${targetRace.name} →`
+                    : nextRacePredStatus === "draft"
+                    ? "Finish Picks →"
+                    : `Edit ${targetRace.name} →`}
+                </Link>
+              </div>
+            )}
+
+            {/* Payout overview */}
+            {(pool > 0 || league.entry_fee_usdc > 0) && (
+              <div className="league-payout-section" style={{ marginTop: "2rem" }}>
+                <div className="league-payout-header">
+                  <h3 className="league-section-title">Payout Distribution</h3>
+                  <span className="league-payout-mode">
+                    {isSkillWeighted ? "Score Weighted" : "Fixed Tiers"}
+                  </span>
+                </div>
+                {isSkillWeighted ? (
+                  <p className="league-payout-copy" style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.5)", marginTop: "0.5rem" }}>
+                    Payouts scale with performance. Higher-scoring players take a larger share of the pool.
+                  </p>
+                ) : (
+                  <div className="league-payout-tiers">
+                    {payoutTiers.map((tier) => (
+                      <div key={tier.place} className="league-payout-tier">
+                        <span className="league-payout-place">
+                          {tier.place === 1 ? "1st" : tier.place === 2 ? "2nd" : tier.place === 3 ? "3rd" : `${tier.place}th`}
+                        </span>
+                        <div className="league-payout-bar-bg">
+                          <div className="league-payout-bar" style={{ width: `${tier.percent}%` }} />
+                        </div>
+                        <span className="league-payout-pct">{tier.percent}%</span>
+                        {pool > 0 && (
+                          <span className="league-payout-amt">${(pool * tier.percent / 100).toFixed(2)}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Races tab */}
+        {activeTab === "races" && (
+          <div style={{ marginTop: "1.5rem" }}>
+            {targetRace ? (
+              <div className="league-races-list">
+                <div className="league-race-item">
+                  <div className="league-race-item-info">
+                    <span className="gla-race-round">Round {targetRace.round}</span>
+                    <strong className="league-race-item-name">{targetRace.name}</strong>
+                    <span className="gla-race-meta">
+                      {targetRace.country} ·{" "}
+                      {targetRace.date
+                        ? new Date(targetRace.date).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })
+                        : "Date TBD"}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.5rem" }}>
+                    <span className="gla-race-status is-upcoming">Upcoming</span>
+                    <span className="league-econ-value" style={{ fontSize: "1rem" }}>
+                      {countdownDisplay}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="league-empty">
+                This league covers the full 2026 season — {races.filter((r) => r.status === "upcoming").length} races remaining.
               </p>
             )}
-            {joinError && <p className="league-join-error">{joinError}</p>}
-            {stakeSuccess && <p className="league-join-success">{stakeSuccess}</p>}
           </div>
         )}
-
-        {/* Context-aware prediction CTA */}
-        {targetRace && (
-          <div className="league-predict-cta">
-            <div className="league-predict-cta-text">
-              {nextRacePredStatus === "active" ? (
-                <>
-                  <strong>Your picks for {targetRace.name} are active.</strong>
-                  <span>They&apos;ll score once the race is settled.</span>
-                </>
-              ) : nextRacePredStatus === "draft" ? (
-                <>
-                  <strong>Picks saved — not entered yet.</strong>
-                  <span>Join this league to activate your prediction for {targetRace.name}.</span>
-                </>
-              ) : (
-                <>
-                  <strong>No prediction yet for {targetRace.name}.</strong>
-                  <span>The same prediction sheet powers the global board and this league once the race settles.</span>
-                </>
-              )}
-            </div>
-            <Link
-              href={`/predict/${targetRace.id}`}
-              className="gla-race-btn"
-              style={{ whiteSpace: "nowrap", flexShrink: 0 }}
-            >
-              {nextRacePredStatus === "none"
-                ? `Predict ${targetRace.name} →`
-                : nextRacePredStatus === "draft"
-                ? `Finish Picks →`
-                : `Edit ${targetRace.name} →`}
-            </Link>
-          </div>
-        )}
-
-        {/* Leaderboard */}
-        <div className="lb-table" style={{ marginTop: "2rem" }}>
-          <div className="lb-header">
-            <span>Rank</span>
-            <span>Player</span>
-            <span>Races</span>
-            <span>Score</span>
-          </div>
-
-          {members.length === 0 ? (
-            <div className="lb-empty">
-              No scores yet — be the first to make predictions!
-            </div>
-          ) : (
-            members.map((m, i) => (
-              <div
-                key={m.user_id}
-                className={`lb-row${m.user_id === currentUserId ? " is-you" : ""}${i < 3 ? ` is-top-${i + 1}` : ""}`}
-              >
-                <span className="lb-rank">
-                  {i === 0 ? "1st" : i === 1 ? "2nd" : i === 2 ? "3rd" : `${i + 1}th`}
-                </span>
-                <span className="lb-name">
-                  {m.username ?? "Anonymous"}
-                  {m.user_id === currentUserId && (
-                    <span className="lb-you-badge"> you</span>
-                  )}
-                </span>
-                <span className="lb-races">{m.races_played}</span>
-                <span className="lb-score">{Number(m.total_score).toFixed(1)}</span>
-              </div>
-            ))
-          )}
-        </div>
       </div>
     </div>
   );
