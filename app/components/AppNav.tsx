@@ -57,7 +57,7 @@ function PrivySignOutButton(): React.JSX.Element {
     }
     await logout();
     resetAnalytics();
-    router.push("/login");
+    router.push("/");
   }
 
   return (
@@ -76,7 +76,7 @@ function SimpleSignOutButton(): React.JSX.Element {
       await supabase.auth.signOut();
     }
     resetAnalytics();
-    router.push("/login");
+    router.push("/");
   }
 
   return (

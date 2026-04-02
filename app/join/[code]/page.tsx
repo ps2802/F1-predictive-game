@@ -148,10 +148,10 @@ export default function JoinPage() {
                 Invite code {code}
               </p>
               <div className="wallet-action-row" style={{ marginTop: "1.5rem" }}>
-                <Link href={`/login?redirect=/join/${code}`} className="gla-race-btn">
+                <Link href={`/?redirect=/join/${code}`} className="gla-race-btn">
                   Continue to Login
                 </Link>
-                <Link href="/login" className="gla-race-btn league-secondary-btn">
+                <Link href="/" className="gla-race-btn league-secondary-btn">
                   Back to Login
                 </Link>
               </div>

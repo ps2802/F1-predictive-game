@@ -342,7 +342,7 @@ export default function PredictPage() {
 
   async function handleSubmit() {
     if (!isAuthenticated) {
-      router.push(`/login?redirect=/predict/${raceId}`);
+      router.push(`/?redirect=/predict/${raceId}`);
       return;
     }
 

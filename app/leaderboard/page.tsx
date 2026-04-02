@@ -33,7 +33,7 @@ export default function LeaderboardPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) { router.push("/login"); return; }
+      if (!user) { router.push("/"); return; }
       setCurrentUserId(user.id);
 
       const res = await fetch("/api/leaderboard");

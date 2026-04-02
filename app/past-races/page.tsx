@@ -16,7 +16,7 @@ async function getPastRaces(): Promise<PastRaceData[]> {
   if (!supabase) throw new Error("Supabase client not available");
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return redirect("/login");
+  if (!user) return redirect("/");
 
   const { data: scores } = await supabase
     .from("race_scores")

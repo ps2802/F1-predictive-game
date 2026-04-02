@@ -109,7 +109,7 @@ export default function AdminPage() {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { router.push("/login"); return; }
+      if (!user) { router.push("/"); return; }
       if (!isAdminEmail(user.email)) { router.push("/dashboard"); return; }
       const { data: profile } = await supabase
         .from("profiles")

@@ -21,7 +21,7 @@ function OnboardingForm() {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.push("/login");
+      if (!user) router.push("/");
     });
   }, [redirect, router]);
 

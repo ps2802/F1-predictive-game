@@ -1,7 +1,7 @@
 /**
- * /signup — redirects to the unified /login auth entry.
+ * /signup — redirects to the root auth entry.
  *
- * New and returning users both go through /login. Privy's modal handles the
+ * New and returning users both go through /. Privy's modal handles the
  * distinction between first-time signups and returning logins internally.
  * This page exists only to handle legacy links.
  */
@@ -16,13 +16,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   const redirectTarget = params?.redirect;
 
   if (!redirectTarget) {
-    redirect("/login?mode=signup");
+    redirect("/");
   }
 
-  const nextParams = new URLSearchParams({
-    mode: "signup",
-    redirect: redirectTarget,
-  });
-
-  redirect(`/login?${nextParams.toString()}`);
+  redirect(`/?redirect=${encodeURIComponent(redirectTarget)}`);
 }

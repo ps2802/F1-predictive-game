@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import LoginPage from "@/app/login/page";
+import LoginPage from "@/app/login/AuthForm";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function RootPage() {

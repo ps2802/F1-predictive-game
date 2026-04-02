@@ -73,7 +73,7 @@ export default function ScoreBreakdownPage() {
     if (!supabase) { setLoading(false); return; }
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { router.push("/login"); return; }
+    if (!user) { router.push("/"); return; }
 
     const res = await fetch(`/api/scores/${raceId}`);
     if (res.ok) {

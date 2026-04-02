@@ -79,7 +79,7 @@ export default function LeaguesPageClient({
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) {
-        router.push("/login");
+        router.push("/");
         return;
       }
 
