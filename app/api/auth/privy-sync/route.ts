@@ -231,9 +231,10 @@ export async function POST(request: NextRequest) {
     let hasUsername = false;
 
     if (resolvedUserId) {
-      const profilePayload: Record<string, string> = {
+      const profilePayload: Record<string, string | boolean> = {
         id: resolvedUserId,
         privy_user_id: privyUserId,
+        is_beta_account: true,
         ...(walletAddress ? { wallet_address: walletAddress } : {}),
       };
 

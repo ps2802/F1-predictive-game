@@ -1,5 +1,3 @@
-@import "tailwindcss";
-
 /* ─── Global reset & font ─── */
 * { box-sizing: border-box; }
 html, body {
@@ -210,21 +208,6 @@ h1, h2, h3 { margin-top: 0; }
   background: rgba(255,255,255,.06);
   color: rgba(255,255,255,.22);
   cursor: not-allowed;
-}
-.gla-race-draft-warning {
-  font-size: 0.68rem;
-  color: rgba(255, 180, 0, 0.75);
-  margin-top: 0.35rem;
-  letter-spacing: 0.03em;
-}
-.league-secondary-btn {
-  background: transparent;
-  border: 1px solid rgba(255,255,255,.18);
-  color: rgba(255,255,255,.86);
-}
-.league-secondary-btn:hover {
-  background: rgba(255,255,255,.06);
-  border-color: rgba(255,255,255,.3);
 }
 
 /* ── Auth card (login / signup) ── */
@@ -1552,36 +1535,6 @@ h1, h2, h3 { margin-top: 0; }
   color: var(--gl-red, #E10600); font-weight: 700; margin: 0 0 0.25rem; }
 .predict-race-name { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800;
   color: #fff; margin: 0; line-height: 1.1; }
-.predict-timing-grid {
-  max-width: 900px;
-  margin: 1.5rem auto 0;
-  padding: 0 clamp(1rem, 5vw, 2.5rem);
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-.predict-timing-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 1rem 1.1rem;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  background: rgba(255,255,255,0.04);
-}
-.predict-timing-value {
-  font-size: 1rem;
-  font-weight: 800;
-  color: #fff;
-  line-height: 1.1;
-}
-.predict-timing-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.45);
-}
 
 .predict-steps {
   display: flex; gap: 0; border-bottom: 1px solid rgba(255,255,255,0.08);
@@ -1667,14 +1620,6 @@ h1, h2, h3 { margin-top: 0; }
 .predict-nav-btn.secondary:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
 
 .predict-error { color: var(--gl-red, #E10600); font-size: 0.85rem; margin: 0; }
-.predict-edit-confirm {
-  background: rgba(225,6,0,0.08);
-  border: 1px solid rgba(225,6,0,0.3);
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.85);
-}
 .predict-anon-note { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin: 0; }
 
 .predict-success-icon {
@@ -1697,10 +1642,6 @@ h1, h2, h3 { margin-top: 0; }
   font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.08em; color: rgba(255,255,255,0.4);
 }
-.lb-header span:nth-child(3),
-.lb-header span:nth-child(4) {
-  justify-self: end;
-}
 .lb-row {
   display: grid; grid-template-columns: 60px 1fr 80px 100px;
   padding: 0.9rem 1.25rem; align-items: center;
@@ -1719,62 +1660,11 @@ h1, h2, h3 { margin-top: 0; }
   color: #fff; padding: 1px 5px; border-radius: 4px;
   margin-left: 6px; vertical-align: middle;
 }
-.lb-loyalty-badge {
-  font-size: 0.65rem;
-  color: rgba(255, 180, 0, 0.85);
-  margin-left: 0.4rem;
-  font-weight: 600;
-}
-.lb-races {
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.5);
-  justify-self: end;
-  text-align: right;
-}
+.lb-races { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
 .lb-score { font-size: 0.95rem; font-weight: 700; color: #fff; text-align: right; }
-.profile-history-header,
-.profile-history-row {
-  grid-template-columns: minmax(0, 1fr) 110px 120px;
-}
-.profile-history-header span:nth-child(2),
-.profile-history-header span:nth-child(3) {
-  justify-self: end;
-}
-.profile-history-result {
-  justify-self: end;
-}
-.profile-history-result.is-pending {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.78);
-  border: 1px solid rgba(255,255,255,0.16);
-  border-radius: 999px;
-  padding: 0.28rem 0.55rem;
-  line-height: 1;
-}
-.profile-history-date {
-  justify-self: end;
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.4);
-}
 .lb-empty {
-  padding: 3rem 2rem; text-align: center;
+  padding: 2rem; text-align: center;
   color: rgba(255,255,255,0.3); font-size: 0.9rem;
-}
-.lb-empty-headline {
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: -.01em;
-  color: rgba(255,255,255,0.75);
-  margin: 0 0 0.4rem;
-}
-.lb-empty-sub {
-  font-size: 0.83rem;
-  color: rgba(255,255,255,0.35);
-  margin: 0;
-  line-height: 1.55;
 }
 
 /* =============================================================
@@ -1800,18 +1690,6 @@ h1, h2, h3 { margin-top: 0; }
 .league-join-input:focus { border-color: var(--gl-red, #E10600); }
 .league-join-error { color: var(--gl-red, #E10600); font-size: 0.85rem; margin-top: 0.5rem; }
 .league-join-success { color: #4caf50; font-size: 0.85rem; margin-top: 0.5rem; }
-.league-entry-summary {
-  margin: 0 0 0.9rem;
-  color: rgba(255,255,255,0.88);
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-.league-entry-note {
-  margin: 0.75rem 0 0;
-  color: rgba(255,255,255,0.52);
-  font-size: 0.82rem;
-  line-height: 1.5;
-}
 
 .league-section { margin-bottom: 2.5rem; }
 .league-section-title {
@@ -1885,144 +1763,6 @@ h1, h2, h3 { margin-top: 0; }
   transition: background 0.12s;
 }
 .league-copy-btn:hover { background: #c40500; }
-.league-invite-hint {
-  font-size: 0.68rem;
-  color: rgba(255,255,255,0.3);
-  text-align: right;
-  line-height: 1.4;
-  max-width: 200px;
-}
-.league-overview-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.9fr);
-  gap: 1rem;
-  margin-top: 1.5rem;
-  align-items: stretch;
-}
-.league-economics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-}
-.league-econ-card,
-.league-payout-section {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 14px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
-}
-.league-econ-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 150px;
-  padding: 1.15rem 1.15rem 1rem;
-  gap: 0.65rem;
-}
-.league-econ-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.45);
-}
-.league-econ-value {
-  font-size: clamp(1.35rem, 2vw, 1.85rem);
-  font-weight: 800;
-  color: #fff;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-}
-.league-econ-meta {
-  font-size: 0.78rem;
-  line-height: 1.45;
-  color: rgba(255,255,255,0.52);
-}
-.league-payout-section {
-  padding: 1.15rem 1.15rem 1rem;
-}
-.league-payout-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.9rem;
-}
-.league-payout-header .league-section-title {
-  margin: 0;
-}
-.league-payout-mode {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.04);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.7);
-  white-space: nowrap;
-}
-.league-payout-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-.league-payout-copy p {
-  margin: 0;
-  color: rgba(255,255,255,0.78);
-  font-size: 0.92rem;
-  line-height: 1.55;
-}
-.league-payout-note {
-  color: rgba(255,255,255,0.48) !important;
-  font-size: 0.8rem !important;
-}
-.league-payout-tiers {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-.league-payout-tier {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 54px 72px;
-  gap: 0.75rem;
-  align-items: center;
-}
-.league-payout-place,
-.league-payout-pct,
-.league-payout-amt {
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-.league-payout-place {
-  color: #fff;
-}
-.league-payout-pct {
-  text-align: right;
-  color: rgba(255,255,255,0.65);
-}
-.league-payout-amt {
-  text-align: right;
-  color: #ffd24d;
-}
-.league-payout-bar-bg {
-  position: relative;
-  height: 10px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.08);
-}
-.league-payout-bar {
-  position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #E10600 0%, #ff7b29 100%);
-}
 
 /* =============================================================
    PROFILE
@@ -2064,34 +1804,12 @@ h1, h2, h3 { margin-top: 0; }
   background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
   display: flex; flex-direction: column; gap: 1rem;
 }
-.wallet-action-row {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-top: 0.5rem;
-}
-.wallet-action-row .gla-race-btn {
-  margin-top: 0;
-  flex: 1 1 220px;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
 .wallet-deposit-title { font-size: 1rem; font-weight: 700; color: #fff; margin: 0; }
 .wallet-deposit-desc { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin: 0; }
 .wallet-address-box {
   display: flex; align-items: center; gap: 0.75rem;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px; padding: 0.75rem 1rem; margin: 0.75rem 0; flex-wrap: wrap;
-}
-.wallet-address-text {
-  font-family: monospace; font-size: 0.8rem; color: rgba(255,255,255,0.85);
-  word-break: break-all; flex: 1;
-}
-.wallet-deposit-note {
-  font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 0.25rem;
+  background: rgba(255,255,255,0.06); padding: 0.75rem 1rem; border-radius: 8px;
+  flex-wrap: wrap;
 }
 .wallet-address {
   font-family: monospace; font-size: 0.8rem; color: #fff;
@@ -2100,28 +1818,6 @@ h1, h2, h3 { margin-top: 0; }
 .wallet-no-address { color: rgba(255,255,255,0.4); font-size: 0.9rem; }
 .wallet-notes { display: flex; flex-direction: column; gap: 0.4rem; }
 .wallet-notes p { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin: 0; }
-
-.predict-copy-expert-btn {
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: rgba(0, 210, 170, 0.8);
-  background: rgba(0, 210, 170, 0.08);
-  border: 1px solid rgba(0, 210, 170, 0.2);
-  border-radius: 6px;
-  padding: 0.4rem 0.85rem;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-.predict-copy-expert-btn:hover:not(:disabled) {
-  background: rgba(0, 210, 170, 0.15);
-  color: rgba(0, 210, 170, 1);
-}
-.predict-copy-expert-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 
 /* =============================================================
    MOBILE RESPONSIVE
@@ -2134,12 +1830,6 @@ h1, h2, h3 { margin-top: 0; }
   .dash-header { flex-direction: column; }
   .league-detail-header { flex-direction: column; }
   .league-invite-box { align-items: flex-start; }
-  .league-overview-grid { grid-template-columns: 1fr; }
-  .league-payout-header { flex-direction: column; align-items: flex-start; }
-  .league-payout-tier { grid-template-columns: 40px minmax(0, 1fr) 48px 64px; }
-  .predict-timing-grid { grid-template-columns: 1fr; }
-  .wallet-action-row { flex-direction: column; }
-  .wallet-action-row .gla-race-btn { width: 100%; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -2151,7 +1841,7 @@ h1, h2, h3 { margin-top: 0; }
   display: grid;
   grid-template-columns: 1fr 1fr;
   background: #000;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 /* ── Right: visual / image panel ── */
@@ -2208,7 +1898,7 @@ h1, h2, h3 { margin-top: 0; }
   justify-content: center;
   padding: 3.5rem 4rem 3rem;
   background: #000;
-  overflow: visible;
+  overflow: hidden;
 }
 
 /* Panel ::before now unused — top bar moved to root */
@@ -2306,11 +1996,6 @@ h1, h2, h3 { margin-top: 0; }
   letter-spacing: 0.02em;
   max-width: 380px;
   margin: 0 0 2rem;
-}
-
-.gl-login-countdown-box {
-  margin-bottom: 1.8rem;
-  max-width: 420px;
 }
 
 /* Stats row */
@@ -2425,55 +2110,6 @@ h1, h2, h3 { margin-top: 0; }
   letter-spacing: 0.02em;
 }
 
-/* How-it-works strip */
-.gl-login-how {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin: 1.5rem 0 1.75rem;
-  padding: 1.1rem 1.25rem;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 8px;
-  max-width: 380px;
-}
-.gl-login-how-step {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-}
-.gl-login-how-icon {
-  font-size: 1.1rem;
-  line-height: 1;
-  flex-shrink: 0;
-  width: 1.6rem;
-  text-align: center;
-}
-.gl-login-how-label {
-  display: block;
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(0,210,170,0.85);
-  margin-bottom: 0.15rem;
-}
-.gl-login-how-desc {
-  display: block;
-  font-size: 0.78rem;
-  color: rgba(255,255,255,0.55);
-  line-height: 1.4;
-}
-
-/* Returning user note */
-.gl-login-returning {
-  margin-top: 0.75rem;
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.35);
-  letter-spacing: 0.02em;
-  max-width: 340px;
-}
-
 /* Loss aversion micro-copy */
 .gl-login-urgency {
   margin-top: 1rem;
@@ -2552,1630 +2188,591 @@ h1, h2, h3 { margin-top: 0; }
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   PUBLIC HOMEPAGE — /app/page.tsx
-   Dark · F1 red #E10600 · teal accent rgba(0,210,170,1)
-═══════════════════════════════════════════════════════════════ */
+/* ========================================
+   LANDING PAGE
+   ======================================== */
 
-.home-root {
-  min-height: 100svh;
-  background: #000;
-  color: #fff;
-  font-family: var(--font-titillium, "Titillium Web", "Arial Narrow", Arial, sans-serif);
-  display: flex;
-  flex-direction: column;
-}
-
-/* Top speed stripe */
-.home-stripe {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: #E10600;
-  z-index: 100;
-}
-
-/* ── Nav ── */
-.home-nav {
-  position: sticky;
-  top: 3px;
-  z-index: 90;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 3rem;
-  height: 60px;
-  background: rgba(0,0,0,.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255,255,255,.06);
-}
-
-.home-nav-logo {
-  width: 130px;
-  height: auto;
-  display: block;
-}
-
-.home-nav-cta {
-  font-size: .7rem;
-  font-weight: 700;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.75);
-  padding: 0.45rem 1.1rem;
-  border: 1px solid rgba(255,255,255,.18);
-  border-radius: 3px;
-  transition: color .18s, border-color .18s;
-}
-.home-nav-cta:hover {
-  color: #fff;
-  border-color: rgba(255,255,255,.5);
-}
-
-/* ── Hero ── */
-.home-hero {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-height: calc(100svh - 63px);
-  overflow: hidden;
-}
-
-.home-hero-inner {
-  padding: 4rem 3rem 4rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0;
-}
-
-.home-hero-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: .68rem;
-  font-weight: 700;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.45);
-  margin-bottom: 1.2rem;
-}
-
-.home-hero-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #E10600;
-  display: inline-block;
-  animation: home-dot-pulse 1.8s ease-in-out infinite;
-}
-@keyframes home-dot-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: .55; transform: scale(.85); }
-}
-
-.home-hero-h1 {
-  font-size: clamp(2.4rem, 4.5vw, 4.2rem);
-  font-weight: 900;
-  letter-spacing: -.025em;
-  text-transform: uppercase;
-  line-height: 1.02;
-  margin: 0 0 1.4rem;
-}
-
-.home-hero-em {
-  font-style: normal;
-  color: rgba(0, 210, 170, 1);
-}
-
-.home-hero-sub {
-  font-size: .92rem;
-  color: rgba(255,255,255,.52);
-  line-height: 1.65;
-  max-width: 460px;
-  margin-bottom: 2rem;
-}
-
-/* ── Countdown widget ── */
-.home-countdown-box {
-  border: 1px solid rgba(255,255,255,.09);
-  border-left: 3px solid #E10600;
-  background: rgba(255,255,255,.03);
-  border-radius: 4px;
-  padding: 1.2rem 1.5rem;
-  margin-bottom: 2rem;
-  max-width: 440px;
-}
-
-.home-countdown-label {
-  font-size: .62rem;
-  font-weight: 700;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.38);
-  margin: 0 0 .4rem;
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.home-countdown-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #E10600;
-  display: inline-block;
-  animation: home-dot-pulse 1.8s ease-in-out infinite;
-}
-
-.home-countdown-race {
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: .02em;
-  text-transform: uppercase;
-  margin: 0 0 .2rem;
-  color: #fff;
-}
-
-.home-countdown-date {
-  font-size: .72rem;
-  color: rgba(255,255,255,.38);
-  margin: 0 0 1rem;
-  letter-spacing: .04em;
-}
-
-.home-countdown-timer {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.2rem;
-}
-
-.home-countdown-unit {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 3rem;
-}
-
-.home-countdown-n {
-  font-size: 1.8rem;
-  font-weight: 900;
-  letter-spacing: -.04em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
-  color: rgba(0, 210, 170, 1);
-}
-
-.home-countdown-u {
-  font-size: .58rem;
-  font-weight: 700;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.3);
-  margin-top: .2rem;
-}
-
-.home-countdown-sep {
-  font-size: 1.4rem;
-  font-weight: 900;
-  color: rgba(255,255,255,.2);
-  margin-bottom: .4rem;
-  line-height: 1;
-}
-
-/* ── CTA actions ── */
-.home-hero-actions {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2.5rem;
-}
-
-.home-cta-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 48px;
-  padding: 0 2.2rem;
-  background: #E10600;
-  color: #fff;
-  font-size: .75rem;
-  font-weight: 800;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  border-radius: 3px;
-  transition: background .18s, transform .15s;
-}
-.home-cta-primary:hover {
-  background: #c80500;
-  transform: translateY(-1px);
-}
-
-/* ── Stats strip ── */
-.home-hero-stats {
-  display: flex;
-  align-items: center;
-  gap: 0;
-}
-
-.home-stat {
-  display: flex;
-  flex-direction: column;
-  gap: .2rem;
-  padding: 0 1.4rem 0 0;
-}
-
-.home-stat-n {
-  font-size: 1.5rem;
-  font-weight: 900;
-  letter-spacing: -.03em;
-  line-height: 1;
-  color: #fff;
-}
-
-.home-stat-l {
-  font-size: .6rem;
-  font-weight: 700;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.35);
-}
-
-.home-stat-div {
-  width: 1px;
-  height: 30px;
-  background: rgba(255,255,255,.1);
-  margin: 0 1.4rem 0 0;
-}
-
-/* ── Hero visual panel ── */
-.home-hero-visual {
-  position: relative;
-  overflow: hidden;
-}
-
-.home-hero-driver {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-}
-
-.home-hero-img-overlay {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(to right, #000 0%, transparent 35%),
-    linear-gradient(to top, #000 0%, transparent 20%);
-}
-
-.home-hero-vstrip {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: #E10600;
-}
-
-/* ── How it works ── */
-.home-how {
-  background: rgba(255,255,255,.02);
-  border-top: 1px solid rgba(255,255,255,.06);
-  padding: 5rem 0;
-}
-
-.home-how-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 3rem;
-}
-
-.home-how-title {
-  font-size: clamp(1.2rem, 2vw, 1.6rem);
-  font-weight: 900;
-  letter-spacing: -.02em;
-  text-transform: uppercase;
-  margin: 0 0 3rem;
-}
-
-.home-how-steps {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-}
-
-.home-step {
-  border-top: 2px solid rgba(255,255,255,.08);
-  padding-top: 1.5rem;
-}
-
-.home-step-n {
-  font-size: .65rem;
-  font-weight: 800;
-  letter-spacing: .2em;
-  color: #E10600;
-  display: block;
-  margin-bottom: .75rem;
-}
-
-.home-step-h {
-  font-size: 1.05rem;
-  font-weight: 800;
-  letter-spacing: -.01em;
-  text-transform: uppercase;
-  margin: 0 0 .7rem;
-}
-
-.home-step-p {
-  font-size: .84rem;
-  color: rgba(255,255,255,.48);
-  line-height: 1.65;
-  margin: 0;
-}
-
-/* ── Footer ── */
-.home-footer {
-  border-top: 1px solid rgba(255,255,255,.06);
-  padding: 1.5rem 3rem;
-  font-size: .7rem;
-  color: rgba(255,255,255,.25);
-  letter-spacing: .04em;
-}
-
-.home-footer-link {
-  color: rgba(255,255,255,.4);
-  text-decoration: underline;
-}
-
-/* ── Mobile ── */
-@media (max-width: 768px) {
-  .home-nav {
-    padding: 0 1.5rem;
-  }
-
-  .home-hero {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
-    min-height: auto;
-  }
-
-  .home-hero-visual {
-    height: 52vw;
-    min-height: 220px;
-    order: -1;
-  }
-
-  .home-hero-img-overlay {
-    background:
-      linear-gradient(to bottom, rgba(0,0,0,.2) 0%, transparent 30%, transparent 60%, #000 100%),
-      linear-gradient(to right, rgba(0,0,0,.3) 0%, transparent 100%);
-  }
-
-  .home-hero-inner {
-    padding: 2rem 1.5rem 3rem;
-  }
-
-  .home-hero-h1 {
-    font-size: clamp(1.8rem, 6vw, 2.6rem);
-  }
-
-  .home-countdown-n {
-    font-size: 1.4rem;
-  }
-
-  .home-how {
-    padding: 3rem 0;
-  }
-
-  .home-how-inner {
-    padding: 0 1.5rem;
-  }
-
-  .home-how-steps {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .home-footer {
-    padding: 1.2rem 1.5rem;
-  }
-}
-
-/* =============================================================
-   F1P-22: MOBILE-FIRST RESPONSIVE PASS
-   Target: 375px (iPhone SE) and up. No horizontal scroll.
-   Touch targets ≥ 44px. Text ≥ 14px. Grids → single column.
-============================================================= */
-
-/* ── Driver dropdown (predict page) ── */
-.driver-dd { position: relative; width: 100%; }
-.driver-dd-trigger {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px;
-  color: #fff;
-  font-family: inherit;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: border-color 0.15s;
-  min-height: 44px;
-  text-align: left;
-}
-.driver-dd-trigger:hover:not(.is-disabled) { border-color: rgba(255,255,255,0.3); }
-.driver-dd-trigger.is-open { border-color: var(--gl-red, #E10600); }
-.driver-dd-trigger.is-disabled { opacity: 0.5; cursor: not-allowed; }
-.driver-dd-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.driver-dd-arrow { font-size: 0.65rem; color: rgba(255,255,255,0.4); flex-shrink: 0; margin-left: 0.5rem; }
-
-.driver-dd-panel {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0; right: 0;
-  background: #0d0d0d;
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 8px;
-  z-index: 50;
-  overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.7);
-}
-.driver-dd-search-wrap { padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
-.driver-dd-search {
-  width: 100%;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 6px;
-  color: #fff;
-  font-family: inherit;
-  font-size: 0.875rem;
-  padding: 0.5rem 0.75rem;
-  outline: none;
-}
-.driver-dd-search:focus { border-color: var(--gl-red, #E10600); }
-.driver-dd-list { max-height: 280px; overflow-y: auto; overscroll-behavior: contain; }
-.driver-dd-item {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  width: 100%;
-  padding: 0.65rem 0.85rem;
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.85);
-  font-family: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.1s;
-  min-height: 44px;
-}
-.driver-dd-item:hover:not(.is-disabled) { background: rgba(255,255,255,0.06); }
-.driver-dd-item.is-selected { background: rgba(225,6,0,0.12); color: #fff; }
-.driver-dd-item.is-disabled { opacity: 0.35; cursor: not-allowed; }
-.driver-dd-num {
-  font-size: 0.7rem;
-  font-weight: 700;
-  border: 1px solid;
-  border-radius: 3px;
-  padding: 1px 5px;
-  flex-shrink: 0;
-  min-width: 26px;
+.landing-hero {
   text-align: center;
+  padding: 4rem 0 3rem;
 }
-.driver-dd-name { font-weight: 600; flex: 1; }
-.driver-dd-team { font-size: 0.72rem; white-space: nowrap; opacity: 0.75; }
-.driver-dd-check { margin-left: auto; font-size: 0.85rem; color: var(--gl-red, #E10600); flex-shrink: 0; }
-.driver-dd-empty { padding: 1rem; text-align: center; color: rgba(255,255,255,0.3); font-size: 0.875rem; }
 
-/* ── Predict page header + countdown ── */
-.predict-countdown {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  font-size: 0.82rem;
-  color: rgba(255,255,255,0.5);
-}
-.predict-countdown-label {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.35);
-}
-.predict-countdown-value {
-  font-weight: 700;
-  color: rgba(0,210,170,1);
-  font-size: 0.9rem;
-}
-.predict-already-banner {
-  max-width: 900px;
-  margin: 0.75rem auto 0;
-  padding: 0.65rem clamp(1rem, 5vw, 2.5rem);
-  font-size: 0.82rem;
-  color: rgba(0,210,170,0.85);
-  background: rgba(0,210,170,0.06);
-  border-bottom: 1px solid rgba(0,210,170,0.15);
-}
-.predict-step-note {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0.65rem clamp(1rem, 5vw, 2.5rem);
-  font-size: 0.82rem;
-  color: rgba(255,255,255,0.4);
-  background: rgba(255,255,255,0.02);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-.predict-step-error {
-  color: #f87171;
+.landing-round {
   font-size: 0.85rem;
-  margin: 0;
-}
-
-/* ── Profile-specific classes not yet defined ── */
-.profile-stats-strip {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 2rem;
-}
-.profile-stat-block {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1.25rem 1rem;
-  gap: 0.25rem;
-}
-.profile-stat-num {
-  font-size: 1.6rem;
-  font-weight: 900;
-  color: #fff;
-  line-height: 1;
-}
-.profile-stat-lbl {
-  font-size: 0.65rem;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.4);
-  font-weight: 700;
-  text-align: center;
-}
-.profile-stat-divider {
-  width: 1px;
-  background: rgba(255,255,255,0.08);
-  flex-shrink: 0;
-}
-.profile-identity-card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-.profile-field-group { display: flex; flex-direction: column; gap: 0.4rem; }
-.profile-field-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.4);
-}
-.profile-field-row { display: flex; gap: 0.75rem; align-items: center; }
-.profile-field-static {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.75);
-}
-.profile-field-note { font-size: 0.72rem; color: rgba(255,255,255,0.3); }
-.profile-wallet-addr { word-break: break-all; }
-.profile-wallet-text { font-family: monospace; font-size: 0.8rem; color: rgba(255,255,255,0.7); }
-.profile-save-msg { font-size: 0.82rem; margin: 0.25rem 0 0; }
-.profile-save-msg.is-ok { color: #4ade80; }
-.profile-save-msg.is-err { color: #f87171; }
-
-/* ── League card prize ── */
-.league-card-prize {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-.league-card-prize-label {
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(255,215,0,0.6);
-  font-weight: 700;
-}
-.league-card-prize-amount {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #ffd700;
-}
-.league-card-contribution {
-  font-size: 0.75rem;
-  color: rgba(0,210,170,0.7);
-}
-.league-prize-banner {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  background: rgba(255,215,0,0.08);
-  border: 1px solid rgba(255,215,0,0.2);
-  border-radius: 8px;
-  padding: 0.75rem 1.1rem;
-}
-.league-prize-banner-label {
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255,215,0,0.6);
-  font-weight: 700;
-}
-.league-prize-banner-amount {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: #ffd700;
-}
-
-/* =============================================================
-   BREAKPOINT: ≤ 768px  (tablets + large phones)
-============================================================= */
-@media (max-width: 768px) {
-  /* ── Shared: reduce horizontal padding on page content ── */
-  .gla-content { padding: 1.5rem 1rem 3rem; }
-
-  /* ── Nav: tighten horizontal padding, reduce font-clutter ── */
-  .gla-nav { padding: 0 1rem; }
-  /* Shrink balance pill so it doesn't overflow nav ── */
-  .dash-balance-pill { font-size: 0.75rem; padding: 0.4rem 0.7rem; }
-
-  /* ── Dashboard: full-width race cards ── */
-  .gla-race-grid { grid-template-columns: 1fr; }
-
-  /* ── Prediction form: full-width navigation buttons ── */
-  .predict-nav { flex-direction: column; }
-  .predict-nav-btn { width: 100%; text-align: center; min-height: 44px; }
-
-  /* ── Leaderboard: tighten columns for small viewports ── */
-  .lb-header,
-  .lb-row { grid-template-columns: 44px 1fr 56px 72px; padding: 0.75rem 0.85rem; }
-  .profile-history-header,
-  .profile-history-row { grid-template-columns: minmax(0, 1fr) 84px 92px; }
-
-  /* ── Leagues: single-column card grid ── */
-  .league-grid { grid-template-columns: 1fr; }
-
-  /* ── League detail: stack header vertically ── */
-  .league-detail-header { flex-direction: column; }
-  .league-invite-box { align-items: flex-start; }
-  .league-invite-hint { max-width: 100%; text-align: left; }
-
-  /* ── League join form: stack on small screens ── */
-  .league-join-form { flex-direction: column; align-items: stretch; }
-  .league-join-form .gla-race-btn { width: 100%; min-height: 44px; }
-  .league-join-input { min-width: unset; width: 100%; }
-
-  /* ── Profile: stats strip — reduce padding on small screens ── */
-  .profile-stats-strip { flex-direction: column; }
-  .profile-stat-divider { width: 100%; height: 1px; }
-  .profile-stat-block { padding: 1rem; align-items: flex-start; }
-  .profile-field-row { flex-direction: column; align-items: stretch; }
-  .profile-field-row .gla-race-btn { width: 100%; min-height: 44px; }
-
-  /* ── Scores page: category summary 3-col → 1-col on small ── */
-  .scores-category-grid { grid-template-columns: 1fr !important; }
-
-  /* ── Score breakdown: question rows handle overflow ── */
-  .score-question-row { grid-template-columns: 1.25rem 1fr auto !important; gap: 0.5rem !important; }
-
-  /* ── Onboarding action buttons stack ── */
-  .onboarding-actions { flex-direction: column; }
-  .onboarding-actions button,
-  .onboarding-actions .gla-race-btn { width: 100%; min-height: 44px; }
-
-  /* ── Auth card: remove extra horizontal padding ── */
-  .gla-auth-card { padding: 1.5rem 1rem; }
-
-  /* ── How it works section already handled but ensure proper mobile ── */
-  .home-hero-sub { font-size: 0.88rem; }
-  .home-countdown-box { max-width: 100%; }
-}
-
-/* =============================================================
-   BREAKPOINT: ≤ 480px  (iPhone SE and similar narrow phones)
-============================================================= */
-@media (max-width: 480px) {
-  /* ── App-wide content padding at narrowest ── */
-  .gla-content { padding: 1.25rem 0.875rem 2.5rem; }
-
-  /* ── Nav: all items must fit in a single tight row ── */
-  .gla-nav { padding: 0 0.75rem; flex-wrap: wrap; min-height: 52px; height: auto; padding-top: 0.4rem; padding-bottom: 0.4rem; gap: 0.25rem; }
-  .gla-nav-logo { width: 96px; }
-  .gla-nav-right { gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end; }
-  .gla-nav-link { font-size: 0.6rem; letter-spacing: 0.08em; }
-  /* Hide leaderboard link in nav on very small screens — accessible via bottom of app */
-  .gla-nav-right .gla-nav-link[href="/leaderboard"] { display: none; }
-  /* Shorten admin link text won't truncate */
-  .dash-balance-pill { font-size: 0.68rem; padding: 0.35rem 0.55rem; }
-
-  /* ── Race cards: tighten padding ── */
-  .gla-race-card { padding: 1rem 1.1rem; }
-  /* Ensure race action buttons are full-width touch-friendly ── */
-  .gla-race-btn { min-height: 44px; display: flex; align-items: center; justify-content: center; }
-
-  /* ── Prediction step tabs: scrollable, never overflow ── */
-  .predict-steps { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; padding-bottom: 0.25rem; }
-  .predict-step-tab { white-space: nowrap; flex-shrink: 0; padding: 0.65rem 1rem; min-height: 44px; }
-
-  /* ── Prediction options: full-width on mobile ── */
-  .predict-options { flex-direction: column; }
-  .predict-option { width: 100%; min-height: 44px; display: flex; align-items: center; }
-
-  /* ── Driver dropdown list: bigger touch targets ── */
-  .driver-dd-item { min-height: 48px; }
-  .driver-dd-list { max-height: 240px; }
-
-  /* ── Leaderboard: only rank, name, score on very narrow ── */
-  .lb-header { grid-template-columns: 40px 1fr 70px; padding: 0.65rem 0.75rem; }
-  .lb-row { grid-template-columns: 40px 1fr 70px; padding: 0.75rem 0.75rem; }
-  .profile-history-header,
-  .profile-history-row { grid-template-columns: minmax(0, 1fr) 72px 84px; }
-  /* Hide "Races" column on very narrow screens ── */
-  .lb-header span:nth-child(3),
-  .lb-row .lb-races { display: none; }
-
-  /* ── Profile stats: horizontal row of numbers stays compact ── */
-  .profile-stats-strip { flex-direction: row; }
-  .profile-stat-divider { width: 1px; height: auto; }
-  .profile-stat-block { padding: 0.875rem 0.5rem; }
-  .profile-stat-num { font-size: 1.3rem; }
-  .profile-stat-lbl { font-size: 0.58rem; }
-
-  /* ── Scores: category summary 3-col preserved when wide enough else 1 col ── */
-  /* Already handled at 768px via .scores-category-grid override */
-
-  /* ── League page header title: prevent overflow ── */
-  .gla-page-title { font-size: clamp(1.4rem, 7vw, 2rem); }
-
-  /* ── League join: compact ── */
-  .league-join-box { padding: 1.1rem; }
-
-  /* ── Auth form: ensure inputs don't overflow ── */
-  .gla-auth-card { padding: 1.25rem 0.875rem; }
-  .gla-field-input { font-size: 0.875rem; }
-
-  /* ── Home page: tighten nav ── */
-  .home-nav { padding: 0 1rem; }
-  .home-nav-logo { width: 100px; }
-  .home-hero-inner { padding: 1.75rem 1rem 2.5rem; }
-  .home-hero-actions { flex-direction: column; }
-  .home-cta-primary { width: 100%; justify-content: center; }
-  .home-how-inner { padding: 0 1rem; }
-  .home-footer { padding: 1rem; }
-
-  /* ── Countdown timer: shrink numbers slightly ── */
-  .home-countdown-n { font-size: 1.25rem; }
-  .home-countdown-unit { min-width: 2.5rem; }
-  .home-countdown-sep { font-size: 1.1rem; }
-
-  /* ── Login page: single column always, tighter padding ── */
-  .gl-login-panel { padding: 1.75rem 1rem 2rem; }
-  .gl-login-h1 { font-size: 1.8rem; }
-  .gl-login-stats { flex-wrap: wrap; width: 100%; }
-  .gl-login-stat { flex: 1 1 40%; }
-  .gl-login-btn { max-width: 100%; }
-
-  /* ── Dashboard: page sub text wrap ── */
-  .gla-page-sub { font-size: 0.78rem; }
-
-  /* ── League detail invite code: no overflow ── */
-  .league-invite-code { font-size: 0.95rem; letter-spacing: 0.1em; word-break: break-all; }
-  .league-invite-box { width: 100%; }
-
-  /* ── League type toggle: stack vertically on very narrow ── */
-  .league-type-toggle { flex-direction: column; }
-  .league-type-btn { min-height: 44px; }
-
-  /* ── Predict locked/saved: inline-flex to block ── */
-  .predict-locked-box-inner { flex-direction: column; align-items: stretch; }
-  .predict-locked-box-inner .gla-race-btn { width: 100%; min-height: 44px; text-align: center; display: flex; align-items: center; justify-content: center; }
-
-  /* ── Create league form: submit button full width ── */
-  .gla-predict-submit { width: 100%; min-height: 44px; justify-content: center; }
-}
-
-/* ── Admin: Platform Revenue ── */
-.admin-section {
-  margin-bottom: 2rem;
-}
-.admin-section-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 1rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.admin-subsection-title {
-  font-size: 0.8rem;
-  font-weight: 600;
   color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  margin-bottom: 0.75rem;
 }
-.admin-stats-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-}
-.admin-stat-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 1rem;
-  text-align: center;
-}
-.admin-stat-value {
-  display: block;
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: rgba(0, 210, 170, 1);
-}
-.admin-stat-label {
-  display: block;
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.4);
-  margin-top: 0.2rem;
-}
-.admin-fee-list {
-  margin-bottom: 1rem;
-}
-.admin-fee-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 1rem;
-  align-items: center;
-  padding: 0.6rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  font-size: 0.85rem;
-}
-.admin-fee-desc {
-  color: rgba(255, 255, 255, 0.7);
-}
-.admin-fee-amount {
-  color: rgba(0, 210, 170, 0.9);
+
+.landing-race-name {
+  font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.admin-fee-date {
-  color: rgba(255, 255, 255, 0.35);
-  font-size: 0.75rem;
-}
-.admin-fee-note {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.3);
-  margin-top: 0.75rem;
-  line-height: 1.5;
-}
-.admin-loading {
-  color: rgba(255, 255, 255, 0.35);
-  font-size: 0.85rem;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   DASHBOARD — stats row, next race, leagues strip
-═══════════════════════════════════════════════════════════════ */
-
-.dash-stats-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 1px;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.06);
-  margin-bottom: 2rem;
-}
-
-.dash-stat-card {
-  background: #080808;
-  padding: 1.1rem 1.4rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  transition: background .18s;
-  text-decoration: none;
-  color: inherit;
-}
-.dash-stat-card:hover { background: #0d0d0d; }
-
-.dash-stat-label {
-  font-size: .56rem;
-  font-weight: 700;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.32);
-}
-
-.dash-stat-value {
-  font-size: 1.6rem;
-  font-weight: 900;
-  letter-spacing: -.03em;
-  line-height: 1;
-  color: #fff;
-}
-
-.dash-stat-value--race {
-  font-size: 1rem;
-  letter-spacing: -.01em;
-  line-height: 1.2;
-}
-
-.dash-stat-card--balance {
-  border-left: 2px solid rgba(0, 210, 170, 0.4);
-}
-.dash-stat-card--balance .dash-stat-value {
-  color: rgba(0, 210, 170, 0.9);
-}
-
-/* Next race featured banner */
-.dash-next-race {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  background: linear-gradient(135deg, #0d0000 0%, #100000 50%, #080808 100%);
-  border: 1px solid rgba(225,6,0,.22);
-  border-left: 3px solid #E10600;
-  padding: 1.4rem 1.75rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-}
-
-.dash-next-race-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.dash-next-race-label {
-  font-size: .56rem;
-  font-weight: 700;
-  letter-spacing: .2em;
-  text-transform: uppercase;
-  color: #E10600;
-}
-
-.dash-next-race-name {
-  font-size: 1.3rem;
-  font-weight: 900;
-  letter-spacing: -.02em;
-  text-transform: uppercase;
-  margin: 0;
+  letter-spacing: -0.02em;
   line-height: 1.1;
-}
-
-.dash-next-race-info {
-  font-size: .75rem;
-  color: rgba(255,255,255,.38);
-  letter-spacing: .05em;
-  margin: 0;
-}
-
-/* Section header */
-.dash-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-  gap: 1rem;
-}
-
-.dash-section-title {
-  font-size: .62rem;
-  font-weight: 700;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.45);
-}
-
-.dash-section-link {
-  font-size: .6rem;
-  font-weight: 700;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: #E10600;
-  text-decoration: none;
-  transition: color .15s;
-}
-.dash-section-link:hover { color: #ff2010; }
-
-/* My leagues strip */
-.dash-leagues-section {
-  margin-bottom: 2.5rem;
-}
-
-.dash-leagues-strip {
-  display: flex;
-  gap: 0.75rem;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 0.25rem;
-  scrollbar-width: none;
-}
-.dash-leagues-strip::-webkit-scrollbar { display: none; }
-
-.dash-league-chip {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  background: #0d0d0d;
-  border: 1px solid rgba(255,255,255,.08);
-  padding: 0.85rem 1.1rem;
-  min-width: 160px;
-  text-decoration: none;
-  color: inherit;
-  transition: border-color .18s, background .18s;
-}
-.dash-league-chip:hover {
-  background: #111;
-  border-color: rgba(255,255,255,.18);
-}
-
-.dash-league-chip--create {
-  border-style: dashed;
-  border-color: rgba(225,6,0,.25);
-  align-items: center;
-  justify-content: center;
-  font-size: .68rem;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: rgba(225,6,0,.7);
-  min-width: 140px;
-}
-.dash-league-chip--create:hover {
-  border-color: #E10600;
-  color: #E10600;
-  background: rgba(225,6,0,.04);
-}
-
-.dash-league-chip-type {
-  font-size: .52rem;
-  font-weight: 700;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.32);
-}
-
-.dash-league-chip-name {
-  font-size: .88rem;
-  font-weight: 700;
-  letter-spacing: -.01em;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 180px;
-}
-
-.dash-league-chip-pool {
-  font-size: .6rem;
-  color: rgba(0, 210, 170, 0.7);
-  font-weight: 600;
-  letter-spacing: .06em;
-}
-
-/* Highlight the next race card */
-.gla-race-card.is-next {
-  border-left: 2px solid #E10600;
-  background: #0a0101;
-}
-.gla-race-card.is-next::before { opacity: 1; }
-
-/* ═══════════════════════════════════════════════════════════════
-   CREATE LEAGUE WIZARD
-═══════════════════════════════════════════════════════════════ */
-
-.wizard-steps {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  margin: 1.75rem 0 2rem;
-  position: relative;
-}
-.wizard-steps::before {
-  content: '';
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  right: 14px;
-  height: 1px;
-  background: rgba(255,255,255,.08);
-  z-index: 0;
-}
-
-.wizard-step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  flex: 1;
-  position: relative;
-  z-index: 1;
-}
-
-.wizard-step-dot {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,.14);
-  background: #080808;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: .65rem;
-  font-weight: 700;
-  color: rgba(255,255,255,.28);
-  transition: all .2s;
-}
-
-.wizard-step.is-active .wizard-step-dot {
-  border-color: #E10600;
-  background: #E10600;
-  color: #fff;
-}
-
-.wizard-step.is-done .wizard-step-dot {
-  border-color: rgba(74,222,128,.5);
-  background: rgba(74,222,128,.12);
-  color: #4ade80;
-}
-
-.wizard-step-label {
-  font-size: .52rem;
-  font-weight: 700;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.22);
-  transition: color .2s;
-}
-.wizard-step.is-active .wizard-step-label { color: rgba(255,255,255,.6); }
-.wizard-step.is-done .wizard-step-label { color: rgba(74,222,128,.6); }
-
-.wizard-panel {
-  margin-top: 0.5rem;
-}
-
-/* Type selection cards */
-.league-type-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
   margin-bottom: 1.5rem;
 }
 
-.league-type-card {
+.landing-countdown {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  background: #0a0a0a;
-  border: 1px solid rgba(255,255,255,.1);
-  padding: 1.1rem 1.2rem;
-  cursor: pointer;
-  text-align: left;
-  transition: border-color .18s, background .18s;
-  font-family: inherit;
-  color: #fff;
-}
-.league-type-card:hover {
-  border-color: rgba(255,255,255,.22);
-  background: #0f0f0f;
-}
-.league-type-card.is-selected {
-  border-color: #E10600;
-  background: rgba(225,6,0,.06);
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 2.5rem;
 }
 
-.league-type-card-icon {
-  font-size: 1.1rem;
-  line-height: 1;
+.landing-countdown-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
 }
 
-.league-type-card-title {
-  font-size: .82rem;
+.landing-countdown-value {
+  font-size: 1.8rem;
   font-weight: 700;
-  letter-spacing: .02em;
-  display: block;
+  color: var(--gl-red, #e10600);
+  font-variant-numeric: tabular-nums;
 }
 
-.league-type-card-desc {
-  font-size: .72rem;
-  color: rgba(255,255,255,.4);
-  line-height: 1.45;
-  display: block;
+.landing-ctas {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
-/* Entry fee preset pills */
-.entry-fee-presets {
+.landing-cta-primary {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.85rem 2rem;
+  background: var(--gl-red, #e10600);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.landing-cta-primary:hover {
+  background: #ff1a0e;
+  box-shadow: 0 0 20px rgba(225, 6, 0, 0.4);
+}
+
+.landing-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.85rem 2rem;
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.landing-cta-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.landing-stats {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  padding: 2rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 3rem;
+}
+
+.landing-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.landing-stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-stat-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.landing-section {
+  margin-bottom: 3rem;
+}
+
+.landing-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.landing-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.landing-step-card {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.landing-step-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.landing-step-card p {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.5;
+}
+
+.landing-step-num {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gl-red, #e10600);
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.landing-footer {
+  text-align: center;
+  padding: 3rem 0 2rem;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+}
+
+/* ========================================
+   PREDICT — REVIEW STEP
+   ======================================== */
+
+.predict-review {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.predict-review-category {
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.predict-review-category h3 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 1rem;
+}
+
+.predict-review-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.predict-review-row:last-child {
+  border-bottom: none;
+}
+
+.predict-review-label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  flex: 1;
+}
+
+.predict-review-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+  flex: 1;
+}
+
+.predict-review-pick {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.predict-review-missing {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.25);
+  font-style: italic;
+}
+
+.predict-review-edit-btn {
+  font-size: 0.75rem;
+  color: rgba(0, 210, 170, 1);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.predict-review-edit-btn:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .landing-stats {
+    gap: 1.5rem;
+  }
+
+  .landing-hero {
+    padding: 2.5rem 0 2rem;
+  }
+}
+
+/* ========================================
+   LEAGUE ECONOMICS & PAYOUT
+   ======================================== */
+
+.league-economics {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.league-econ-card {
+  flex: 1;
+  min-width: 120px;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.league-econ-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.league-econ-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.league-payout-section {
+  margin-top: 2rem;
+}
+
+.league-payout-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.league-payout-tier {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.league-payout-place {
+  width: 36px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.league-payout-bar-bg {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.league-payout-bar {
+  height: 100%;
+  background: var(--gl-red, #e10600);
+  transition: width 0.3s ease;
+}
+
+.league-payout-pct {
+  width: 40px;
+  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.league-payout-amt {
+  width: 70px;
+  text-align: right;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========================================
+   LEAGUE CREATE — FEE PRESETS & PAYOUT EDITOR
+   ======================================== */
+
+.league-fee-presets {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
-  margin-bottom: 0.25rem;
+  margin-top: 0.5rem;
 }
 
-.entry-fee-pill {
-  background: #0a0a0a;
-  border: 1px solid rgba(255,255,255,.12);
-  color: rgba(255,255,255,.7);
-  font-family: inherit;
-  font-size: .78rem;
-  font-weight: 700;
-  letter-spacing: .06em;
-  padding: 0.6rem 1.2rem;
+.league-fee-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: border-color .15s, background .15s, color .15s;
-}
-.entry-fee-pill:hover {
-  border-color: rgba(255,255,255,.3);
-  color: #fff;
-}
-.entry-fee-pill.is-selected {
-  border-color: #E10600;
-  background: rgba(225,6,0,.1);
-  color: #fff;
-}
-.entry-fee-pill:disabled {
-  opacity: .3;
-  cursor: not-allowed;
+  transition: all 0.15s;
 }
 
-/* Wizard navigation row */
-.wizard-nav {
+.league-fee-btn.is-active {
+  background: var(--gl-red, #e10600);
+  border-color: var(--gl-red, #e10600);
+  color: #fff;
+}
+
+.league-fee-btn:hover:not(.is-active) {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.league-payout-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.league-payout-edit-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.league-payout-place-label {
+  width: 36px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ========================================
+   PROFILE — WALLET SECTION (INLINE)
+   ======================================== */
+
+.profile-wallet-section {
   margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(255,255,255,.06);
 }
 
-/* Review card */
-.wizard-review-card {
-  background: #0a0a0a;
-  border: 1px solid rgba(255,255,255,.1);
-  padding: 1.5rem;
+.profile-wallet-card {
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.wizard-review-name {
-  font-size: 1.3rem;
-  font-weight: 900;
-  letter-spacing: -.02em;
+.profile-wallet-balance {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.profile-wallet-amount {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-wallet-currency {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin: 0 0 0.25rem;
 }
 
-.wizard-review-grid {
+.profile-wallet-actions {
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
+}
+
+.profile-wallet-address {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: 0.5rem;
+  font-family: monospace;
+}
+
+/* ========================================
+   PREDICT — EDIT BANNER & SECTION NOTES
+   ======================================== */
+
+.predict-edit-banner {
+  margin: 0 auto;
+  max-width: var(--predict-max-width, 640px);
+  padding: 0.6rem 1rem;
+  background: rgba(0, 210, 170, 0.08);
+  border: 1px solid rgba(0, 210, 170, 0.25);
+  color: rgba(0, 210, 170, 1);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.predict-section-note {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 1rem;
+  font-style: italic;
+}
+
+.predict-section-warning {
+  padding: 0.6rem 0.875rem;
+  background: rgba(225, 6, 0, 0.08);
+  border: 1px solid rgba(225, 6, 0, 0.3);
+  color: rgba(255, 160, 160, 1);
+  font-size: 0.82rem;
   margin-top: 0.75rem;
-  border-top: 1px solid rgba(255,255,255,.06);
-  padding-top: 0.75rem;
 }
 
-.wizard-review-row {
+/* ========================================
+   DASHBOARD — EDIT STATE BUTTON
+   ======================================== */
+
+.gla-race-btn.is-edit {
+  background: transparent;
+  border: 1px solid rgba(0, 210, 170, 0.5);
+  color: rgba(0, 210, 170, 1);
+}
+
+.gla-race-btn.is-edit:hover {
+  background: rgba(0, 210, 170, 0.08);
+  border-color: rgba(0, 210, 170, 0.8);
+}
+
+/* ========================================
+   LEAGUE — PREDICT CTA STRIP
+   ======================================== */
+
+.league-predict-cta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.wizard-review-label {
-  font-size: .65rem;
-  font-weight: 700;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.32);
-}
-
-.wizard-review-val {
-  font-size: .88rem;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -.01em;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   LEAGUE DETAIL — tabs + stats row
-═══════════════════════════════════════════════════════════════ */
-
-.league-stats-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.06);
-  margin: 1.25rem 0 1.5rem;
-}
-
-.league-stats-card {
-  background: #080808;
+  gap: 1.5rem;
   padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.league-predict-cta-text {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
 }
 
-.league-stats-label {
-  font-size: .55rem;
-  font-weight: 700;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.3);
+.league-predict-cta-text strong {
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.league-stats-value {
-  font-size: 1.5rem;
-  font-weight: 900;
-  letter-spacing: -.03em;
-  line-height: 1;
-  color: #fff;
+/* ========================================
+   PROFILE — IDENTITY HEADER
+   ======================================== */
+
+.profile-identity {
+  margin-bottom: 1.5rem;
 }
 
-/* Tab navigation */
-.league-tabs {
-  display: flex;
-  gap: 0;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-  margin-bottom: 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.league-tabs::-webkit-scrollbar { display: none; }
+/* ========================================
+   DASHBOARD — DRAFT PREDICTIONS BANNER
+   ======================================== */
 
-.league-tab {
-  flex-shrink: 0;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: rgba(255,255,255,.35);
-  font-family: inherit;
-  font-size: .65rem;
-  font-weight: 700;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  padding: 0.75rem 1.25rem;
-  cursor: pointer;
-  transition: color .15s, border-color .15s;
-  margin-bottom: -1px;
-}
-.league-tab:hover { color: rgba(255,255,255,.65); }
-.league-tab.is-active {
-  color: #fff;
-  border-bottom-color: #E10600;
-}
-
-/* League races list */
-.league-races-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.06);
-}
-
-.league-race-item {
-  background: #080808;
-  padding: 1.1rem 1.4rem;
+.dash-draft-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  margin-bottom: 1.5rem;
+  background: rgba(255, 200, 0, 0.06);
+  border: 1px solid rgba(255, 200, 0, 0.25);
+  flex-wrap: wrap;
 }
 
-.league-race-item-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+.dash-draft-banner-text {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.5;
 }
 
-.league-race-item-name {
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -.01em;
+.dash-draft-banner-text strong {
+  color: rgba(255, 210, 60, 1);
 }
 
-/* ── Responsive ── */
-@media (max-width: 700px) {
-  .dash-stats-row { grid-template-columns: 1fr 1fr; }
-  .dash-next-race { flex-direction: column; align-items: flex-start; }
-  .league-type-cards { grid-template-columns: 1fr; }
-  .league-stats-row { grid-template-columns: 1fr 1fr 1fr; }
-  .wizard-steps::before { display: none; }
+.dash-draft-banner-cta {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.875rem;
+  background: transparent;
+  border: 1px solid rgba(255, 210, 60, 0.45);
+  color: rgba(255, 210, 60, 1);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s;
 }
 
-/* ─── Mobile nav ─── */
-.gla-nav-hamburger { display: none; }
-@media (max-width: 768px) {
-  .gla-nav { padding: 0 1rem; }
-  .gla-nav-right--desktop { display: none !important; }
-  .gla-nav-hamburger {
-    display: flex; flex-direction: column; gap: 5px;
-    cursor: pointer; background: none; border: none;
-    padding: 8px; margin-left: auto;
-  }
-  .gla-nav-hamburger span {
-    display: block; width: 22px; height: 2px;
-    background: rgba(255,255,255,0.7); border-radius: 1px; transition: transform 0.2s;
-  }
-  .gla-nav-mobile-menu {
-    position: fixed; top: 63px; left: 0; right: 0;
-    background: rgba(0,0,0,0.97); backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    padding: 1rem 1.5rem 1.5rem; display: flex; flex-direction: column; gap: 0;
-    z-index: 88;
-  }
-  .gla-nav-mobile-link {
-    display: block; padding: 0.875rem 0;
-    font-size: 0.8rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
-    color: rgba(255,255,255,0.6); border-bottom: 1px solid rgba(255,255,255,0.05);
-    cursor: pointer; background: none; border-left: none; border-right: none; border-top: none;
-    font-family: inherit; text-align: left; width: 100%; transition: color 0.15s;
-  }
-  .gla-nav-mobile-link:last-child { border-bottom: none; }
-  .gla-nav-mobile-link:hover, .gla-nav-mobile-link.is-active { color: #E10600; }
-  .gla-content { padding: 1.5rem 1rem 3rem; }
+.dash-draft-banner-cta:hover {
+  background: rgba(255, 210, 60, 0.08);
 }
-
-/* ─── Landing page ─── */
-.gl-landing-root {
-  min-height: 100svh; background: #000; color: #fff;
-  display: grid; grid-template-columns: 1fr 1fr;
-  font-family: var(--font-titillium, "Titillium Web", "Arial Narrow", Arial, sans-serif);
-}
-.gl-landing-left {
-  position: relative; overflow: hidden;
-  padding: 3rem 3.5rem; display: flex; flex-direction: column; justify-content: center;
-  min-height: 100svh;
-}
-.gl-landing-right {
-  background: rgba(255,255,255,0.02); border-left: 1px solid rgba(255,255,255,0.06);
-  padding: 3rem 3rem; display: flex; flex-direction: column; justify-content: center;
-  overflow-y: auto;
-}
-.gl-landing-badge {
-  display: inline-flex; align-items: center; gap: 0.5rem;
-  background: rgba(225,6,0,0.1); border: 1px solid rgba(225,6,0,0.25);
-  border-radius: 999px; padding: 0.35rem 0.9rem;
-  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
-  color: rgba(225,6,0,0.9); margin-bottom: 1.5rem;
-}
-.gl-landing-badge-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: #E10600; animation: pulse-dot 1.5s ease-in-out infinite;
-}
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
-}
-.gl-landing-headline {
-  font-size: clamp(2.8rem, 5vw, 4.5rem); font-weight: 900; line-height: 0.95;
-  letter-spacing: -0.03em; text-transform: uppercase; margin: 0 0 0.2rem;
-  color: #E10600;
-}
-.gl-landing-headline-2 {
-  font-size: clamp(2.8rem, 5vw, 4.5rem); font-weight: 900; line-height: 0.95;
-  letter-spacing: -0.03em; text-transform: uppercase; margin: 0 0 1.5rem; color: #fff;
-}
-.gl-landing-sub {
-  font-size: 1rem; line-height: 1.6; color: rgba(255,255,255,0.65); margin: 0 0 2rem;
-  max-width: 400px;
-}
-.gl-landing-stats {
-  display: flex; gap: 2rem; margin-bottom: 2.5rem; flex-wrap: wrap;
-}
-.gl-landing-stat-val {
-  display: block; font-size: 1.6rem; font-weight: 900; color: rgba(0,210,170,1);
-  line-height: 1; letter-spacing: -0.02em;
-}
-.gl-landing-stat-lbl {
-  display: block; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em;
-  text-transform: uppercase; color: rgba(255,255,255,0.35); margin-top: 0.3rem;
-}
-.gl-landing-cta {
-  display: inline-block; width: 100%; max-width: 360px; padding: 1.1rem 2rem;
-  background: #E10600; color: #fff; font-size: 0.85rem; font-weight: 800;
-  letter-spacing: 0.12em; text-transform: uppercase; border: none; border-radius: 6px;
-  cursor: pointer; font-family: inherit; transition: background 0.15s, transform 0.1s;
-  text-align: center;
-}
-.gl-landing-cta:hover:not(:disabled) { background: #c00400; transform: translateY(-1px); }
-.gl-landing-cta:disabled { opacity: 0.6; cursor: not-allowed; }
-.gl-landing-cta-note {
-  margin-top: 0.75rem; font-size: 0.72rem; color: rgba(255,255,255,0.35);
-}
-.gl-landing-how-title {
-  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
-  color: rgba(255,255,255,0.35); margin: 0 0 1.5rem;
-}
-.gl-landing-steps { display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 2rem; }
-.gl-landing-step { display: flex; gap: 1rem; align-items: flex-start; }
-.gl-landing-step-icon {
-  font-size: 1.4rem; line-height: 1; flex-shrink: 0; width: 2.5rem; text-align: center;
-}
-.gl-landing-step-label {
-  font-size: 0.85rem; font-weight: 700; color: #fff; display: block; margin-bottom: 0.2rem;
-}
-.gl-landing-step-desc { font-size: 0.8rem; color: rgba(255,255,255,0.5); line-height: 1.5; }
-.gl-landing-divider {
-  height: 1px; background: rgba(255,255,255,0.06); margin: 1.5rem 0;
-}
-.gl-landing-drivers-title {
-  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
-  color: rgba(255,255,255,0.3); margin: 0 0 0.75rem;
-}
-.gl-landing-drivers {
-  display: flex; flex-wrap: wrap; gap: 0.4rem;
-}
-.gl-landing-driver {
-  font-size: 0.68rem; color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.07); border-radius: 4px; padding: 0.25rem 0.5rem;
-}
-@media (max-width: 768px) {
-  .gl-landing-root { grid-template-columns: 1fr; }
-  .gl-landing-right { display: none; }
-  .gl-landing-left { padding: 2rem 1.5rem 2.5rem; min-height: 100svh; }
-  .gl-landing-headline, .gl-landing-headline-2 { font-size: clamp(2.2rem, 8vw, 3.5rem); }
-  .gl-landing-cta { max-width: 100%; }
-}
-
-/* ─── Leaderboard pinned row ─── */
-.lb-pinned-you { border-top: 1px solid rgba(0,210,170,0.2); margin-top: 0.5rem; padding-top: 0.5rem; }
-
-/* ─── League join notice ─── */
-.league-join-notice { font-size: 0.78rem; color: rgba(255,255,255,0.45); margin: 0 0 0.75rem; }
-.league-join-link { color: rgba(0,210,170,0.8); text-decoration: underline; }
-
-/* ─── League join CTA banner ─── */
-.league-join-cta-banner {
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  background: rgba(225,6,0,0.07); border: 1px solid rgba(225,6,0,0.2);
-  border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; flex-wrap: wrap;
-}
-.league-join-cta-banner p { margin: 0; font-size: 0.85rem; color: rgba(255,255,255,0.7); }
-
-/* ─── Dashboard leagues empty state ─── */
-.dash-leagues-empty {
-  display: flex; align-items: center; gap: 1.5rem; padding: 1rem 1.25rem;
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 10px; flex-wrap: wrap;
-}
-.dash-leagues-empty p { margin: 0; font-size: 0.85rem; color: rgba(255,255,255,0.5); flex: 1; }
-
-/* ─── Fix nav active link visibility ─── */
-.gla-nav-link.is-active { color: rgba(255,255,255,0.9); }
