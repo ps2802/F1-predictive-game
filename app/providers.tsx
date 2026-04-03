@@ -1,22 +1,50 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { PrivyProvider } from "@privy-io/react-auth";
-import posthog from "posthog-js";
+import {
+  captureInitialAcquisitionContext,
+  getPageGroup,
+  getRaceIdFromPath,
+  initClarityClient,
+  initPostHogClient,
+  setClarityTag,
+} from "@/lib/analytics";
 
-function PostHogInit() {
+function AnalyticsRuntime() {
+  const pathname = usePathname();
+
   useEffect(() => {
-    const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-    const host = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
-    if (!key) return;
-    posthog.init(key, {
-      api_host: host,
-      capture_pageview: true,
-      capture_pageleave: true,
-      autocapture: false, // manual events only — keeps data clean for beta
-      persistence: "localStorage",
-    });
+    captureInitialAcquisitionContext();
+    initPostHogClient();
+    initClarityClient();
   }, []);
+
+  useEffect(() => {
+    if (!pathname) {
+      return;
+    }
+
+    setClarityTag("page_group", getPageGroup(pathname));
+
+    const raceId = getRaceIdFromPath(pathname);
+    if (raceId) {
+      setClarityTag("race_id", raceId);
+    }
+  }, [pathname]);
+
+  return null;
+}
+
+function MissingPrivyConfigNotice() {
+  useEffect(() => {
+    console.error(
+      "[Gridlock] NEXT_PUBLIC_PRIVY_APP_ID is not set. " +
+      "Auth will not work until the variable is configured in the active environment."
+    );
+  }, []);
+
   return null;
 }
 
@@ -24,8 +52,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
   if (!appId) {
-    // No Privy app ID configured — auth will not work. Check .env.local.
-    return <>{children}</>;
+    return (
+      <>
+        <MissingPrivyConfigNotice />
+        {children}
+      </>
+    );
   }
 
   return (
@@ -48,7 +80,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      <PostHogInit />
+      <AnalyticsRuntime />
       {children}
     </PrivyProvider>
   );

@@ -88,7 +88,7 @@ function ResetPasswordForm() {
             <>
               <p className="gla-auth-msg is-error">{sessionError}</p>
               <div className="gla-auth-footer">
-                <a href="/login">Back to sign in</a>
+                <a href="/">Back to sign in</a>
               </div>
             </>
           ) : !sessionReady ? (

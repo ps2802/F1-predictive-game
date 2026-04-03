@@ -16,10 +16,13 @@
     "@privy-io/server-auth": "^1.32.5",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.99.0",
+    "@vercel/speed-insights": "^2.0.0",
     "next": "16.1.6",
     "posthog-js": "^1.363.3",
+    "posthog-node": "^5.28.9",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "resend": "^6.10.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

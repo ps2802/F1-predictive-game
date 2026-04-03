@@ -4,8 +4,11 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { races, driverInfo } from "@/lib/races";
+import { buildFallbackRaceTiming, findRaceById } from "@/lib/races";
 import { track } from "@/lib/analytics";
+import { PREDICTION_EDIT_FEE_USDC } from "@/lib/gameRules";
+import { formatCountdown, resolvePredictionWindow } from "@/lib/predictionWindows";
+import { AppNav } from "@/app/components/AppNav";
 
 type Option = {
   id: string;
@@ -28,190 +31,32 @@ type Question = {
 
 // question_id → option_id[]
 type Answers = Record<string, string[]>;
+type RaceTiming = {
+  qualifying_starts_at: string | null;
+  race_starts_at: string | null;
+  quali_locked: boolean;
+  race_locked: boolean;
+};
 
-const STEPS = ["qualifying", "race", "chaos"] as const;
+const STEPS = ["qualifying", "race", "chaos", "review"] as const;
 const STEP_LABELS: Record<string, string> = {
   qualifying: "Qualifying",
   race: "Race",
   chaos: "Chaos",
+  review: "Review",
 };
 const STEP_ICONS: Record<string, string> = {
   qualifying: "Q",
   race: "R",
   chaos: "⚡",
+  review: "✎",
 };
 
-// Checks if an option is a driver-type pick based on option_value matching known drivers
-function isDriverOption(opts: Option[]): boolean {
-  if (opts.length === 0) return false;
-  const driverNames = driverInfo.map((d) => d.name.toLowerCase());
-  return opts.some((o) => driverNames.includes(o.option_value.toLowerCase()));
-}
-
-function getDriverInfo(name: string) {
-  return driverInfo.find(
-    (d) => d.name.toLowerCase() === name.toLowerCase()
-  );
-}
-
-// ── Countdown timer ────────────────────────────────────────────────────────────
-function useCountdown(deadline: string | null) {
-  const [timeLeft, setTimeLeft] = useState<string>("");
-
-  useEffect(() => {
-    if (!deadline) return;
-    const target = new Date(deadline).getTime();
-
-    function update() {
-      const now = Date.now();
-      const diff = target - now;
-      if (diff <= 0) {
-        setTimeLeft("Locked");
-        return;
-      }
-      const days = Math.floor(diff / 86400000);
-      const hours = Math.floor((diff % 86400000) / 3600000);
-      const mins = Math.floor((diff % 3600000) / 60000);
-      const secs = Math.floor((diff % 60000) / 1000);
-
-      if (days > 0) {
-        setTimeLeft(`${days}d ${hours}h ${mins}m`);
-      } else if (hours > 0) {
-        setTimeLeft(`${hours}h ${mins}m ${secs}s`);
-      } else {
-        setTimeLeft(`${mins}m ${secs}s`);
-      }
-    }
-
-    update();
-    const id = setInterval(update, 1000);
-    return () => clearInterval(id);
-  }, [deadline]);
-
-  return timeLeft;
-}
-
-// ── Searchable driver dropdown ─────────────────────────────────────────────────
-function DriverDropdown({
-  options,
-  selected,
-  onSelect,
-  multiSelect,
-  disabled,
-}: {
-  options: Option[];
-  selected: string[];
-  onSelect: (optionId: string) => void;
-  multiSelect: number;
-  disabled: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
-
-  // Close on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-        setSearch("");
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  const filtered = options.filter((o) =>
-    o.option_value.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const selectedOptions = options.filter((o) => selected.includes(o.id));
-
-  const displayText =
-    selectedOptions.length === 0
-      ? "Select driver…"
-      : selectedOptions.map((o) => o.option_value).join(", ");
-
-  return (
-    <div className="driver-dd" ref={ref}>
-      <button
-        type="button"
-        className={`driver-dd-trigger${open ? " is-open" : ""}${disabled ? " is-disabled" : ""}`}
-        onClick={() => { if (!disabled) setOpen((v) => !v); }}
-        disabled={disabled}
-      >
-        <span className="driver-dd-value">{displayText}</span>
-        <span className="driver-dd-arrow">{open ? "▲" : "▼"}</span>
-      </button>
-
-      {open && (
-        <div className="driver-dd-panel">
-          <div className="driver-dd-search-wrap">
-            <input
-              className="driver-dd-search"
-              placeholder="Search driver…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              autoFocus
-            />
-          </div>
-          <div className="driver-dd-list">
-            {filtered.length === 0 ? (
-              <div className="driver-dd-empty">No drivers found</div>
-            ) : (
-              filtered.map((opt) => {
-                const info = getDriverInfo(opt.option_value);
-                const isSelected = selected.includes(opt.id);
-                const isFull = !isSelected && selected.length >= multiSelect;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    disabled={isFull}
-                    className={`driver-dd-item${isSelected ? " is-selected" : ""}${isFull ? " is-disabled" : ""}`}
-                    onClick={() => {
-                      onSelect(opt.id);
-                      if (multiSelect === 1) {
-                        setOpen(false);
-                        setSearch("");
-                      }
-                    }}
-                  >
-                    {info && (
-                      <span
-                        className="driver-dd-num"
-                        style={{ borderColor: info.teamColor, color: info.teamColor }}
-                      >
-                        {info.number}
-                      </span>
-                    )}
-                    <span className="driver-dd-name">{opt.option_value}</span>
-                    {info && (
-                      <span
-                        className="driver-dd-team"
-                        style={{ color: info.teamColor }}
-                      >
-                        {info.team}
-                      </span>
-                    )}
-                    {isSelected && <span className="driver-dd-check">✓</span>}
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Main page ──────────────────────────────────────────────────────────────────
 export default function PredictPage() {
   const params = useParams();
   const router = useRouter();
   const raceId = params?.raceId as string;
-  const race = races.find((r) => r.id === raceId);
+  const race = findRaceById(raceId);
 
   const [step, setStep] = useState(0);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -220,19 +65,74 @@ export default function PredictPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
-  const [stepError, setStepError] = useState("");
-  const [isLocked, setIsLocked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [alreadyPredicted, setAlreadyPredicted] = useState(false);
-  const [qualifyingDeadline, setQualifyingDeadline] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [sectionIncomplete, setSectionIncomplete] = useState(false);
+  const [raceTiming, setRaceTiming] = useState<RaceTiming | null>(null);
+  const [chargedEditFee, setChargedEditFee] = useState(false);
+  const [copyingExpert, setCopyingExpert] = useState(false);
+  const [expertCopied, setExpertCopied] = useState(false);
+  const [myScore, setMyScore] = useState<number | null | "loading">("loading");
+  const [showEditConfirm, setShowEditConfirm] = useState(false);
+  const hasTrackedPredictionStart = useRef(false);
 
   const currentCategory = STEPS[step];
   const currentQuestions = questions.filter(
     (q) => q.category === currentCategory
   );
-  const countdown = useCountdown(qualifyingDeadline);
+  const qualifyingWindow = resolvePredictionWindow(
+    raceTiming ?? {},
+    "qualifying"
+  );
+  const raceWindow = resolvePredictionWindow(raceTiming ?? {}, "race");
+  const currentWindow =
+    currentCategory === "qualifying" ? qualifyingWindow : currentCategory === "review" ? null : raceWindow;
+  const allQuestionsComplete = questions.every((q) => {
+    const picks = (answers[q.id] ?? []).filter(Boolean);
+    return picks.length >= q.multi_select;
+  });
+  const anyLiveEditWindow = qualifyingWindow.paidEdit || raceWindow.paidEdit;
+
+  function getTimingCardValue(windowState: typeof qualifyingWindow) {
+    if (windowState.paidEdit) {
+      return formatCountdown(windowState.paidEditClosesAt);
+    }
+    if (windowState.lockAt) {
+      return formatCountdown(windowState.lockAt);
+    }
+    if (windowState.locked) {
+      return "Locked";
+    }
+    return "Schedule Soon";
+  }
+
+  function getTimingCardLabel(
+    windowState: typeof qualifyingWindow,
+    sessionLabel: "Qualifying" | "GP"
+  ) {
+    if (windowState.paidEdit) {
+      return `${sessionLabel} Live Edit`;
+    }
+    if (windowState.locked) {
+      return `${sessionLabel} Closed`;
+    }
+    if (!windowState.lockAt) {
+      return `${sessionLabel} Schedule`;
+    }
+    return `${sessionLabel} Locks In`;
+  }
 
   const loadData = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    setSaved(false);
+    setChargedEditFee(false);
+    setSectionIncomplete(false);
+    setQuestions([]);
+    setAnswers({});
+    setIsEditing(false);
+    setRaceTiming(buildFallbackRaceTiming(raceId));
+
     const supabase = createSupabaseBrowserClient();
     if (!supabase) { setLoading(false); return; }
 
@@ -241,18 +141,11 @@ export default function PredictPage() {
     } = await supabase.auth.getUser();
     setIsAuthenticated(!!user);
 
-    const [{ data: qData }, { data: raceRow }] = await Promise.all([
-      supabase
-        .from("prediction_questions")
-        .select("*, options:prediction_options(*)")
-        .eq("race_id", raceId)
-        .order("display_order"),
-      supabase
-        .from("races")
-        .select("race_locked, qualifying_starts_at")
-        .eq("id", raceId)
-        .single(),
-    ]);
+    const { data: qData } = await supabase
+      .from("prediction_questions")
+      .select("*, options:prediction_options(*)")
+      .eq("race_id", raceId)
+      .order("display_order");
 
     if (qData) {
       setQuestions(
@@ -265,22 +158,38 @@ export default function PredictPage() {
       );
     }
 
+    const { data: raceRow } = await supabase
+      .from("races")
+      .select("qualifying_starts_at, race_starts_at, quali_locked, race_locked")
+      .eq("id", raceId)
+      .single();
+
     if (raceRow) {
-      const manuallyLocked = raceRow.race_locked === true;
-      const pastDeadline =
-        raceRow.qualifying_starts_at != null &&
-        new Date() >= new Date(raceRow.qualifying_starts_at);
-      if (manuallyLocked || pastDeadline) {
-        setIsLocked(true);
-      } else if (raceRow.qualifying_starts_at) {
-        setQualifyingDeadline(raceRow.qualifying_starts_at);
-      }
+      setRaceTiming({
+        qualifying_starts_at: raceRow.qualifying_starts_at,
+        race_starts_at: raceRow.race_starts_at,
+        quali_locked: raceRow.quali_locked === true,
+        race_locked: raceRow.race_locked === true,
+      });
     }
 
     // Load saved answers from localStorage (for anon flow)
     const stored = localStorage.getItem(`picks_${raceId}`);
     if (stored) {
       try { setAnswers(JSON.parse(stored)); } catch { /* ignore */ }
+    }
+
+    // Load race score if authenticated (for locked race results CTA)
+    if (user) {
+      const { data: scoreRow } = await supabase
+        .from("race_scores")
+        .select("total_score")
+        .eq("race_id", raceId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setMyScore(scoreRow?.total_score ?? null);
+    } else {
+      setMyScore(null);
     }
 
     // Load server-side answers if authenticated
@@ -293,19 +202,19 @@ export default function PredictPage() {
         .single();
 
       if (pred) {
-        setAlreadyPredicted(true);
         const { data: ansData } = await supabase
           .from("prediction_answers")
           .select("question_id, option_id, pick_order")
           .eq("prediction_id", pred.id);
 
-        if (ansData) {
+        if (ansData && ansData.length > 0) {
           const loaded: Answers = {};
           for (const ans of ansData) {
             if (!loaded[ans.question_id]) loaded[ans.question_id] = [];
             loaded[ans.question_id][ans.pick_order - 1] = ans.option_id;
           }
           setAnswers(loaded);
+          setIsEditing(true); // user already predicted — show edit mode
         }
       }
     }
@@ -314,6 +223,16 @@ export default function PredictPage() {
   }, [raceId]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    if (!loading && !hasTrackedPredictionStart.current) {
+      hasTrackedPredictionStart.current = true;
+      track("prediction_started", {
+        is_editing: isEditing,
+        race_id: raceId,
+      });
+    }
+  }, [isEditing, loading, raceId]);
 
   // Persist answers to localStorage as user picks
   useEffect(() => {
@@ -325,25 +244,33 @@ export default function PredictPage() {
   function handleSelect(
     questionId: string,
     optionId: string,
-    multiSelect: number
+    multiSelect: number,
+    currentPicks: string[]
   ) {
     setAnswers((prev) => {
       const picks = [...(prev[questionId] ?? [])];
-      if (multiSelect === 1) {
-        // Toggle single-select: clicking selected option unselects it
-        if (picks[0] === optionId) {
-          return { ...prev, [questionId]: [] };
-        }
-        return { ...prev, [questionId]: [optionId] };
-      }
+
+      // Deselection check runs first for ALL question types, including single-select.
+      // This allows users to change their mind before submitting.
       const existing = picks.indexOf(optionId);
       if (existing !== -1) {
         picks.splice(existing, 1);
-      } else if (picks.filter(Boolean).length < multiSelect) {
+        return { ...prev, [questionId]: picks.filter(Boolean) };
+      }
+
+      // Single-select: replace any existing pick with this one
+      if (multiSelect === 1) {
+        return { ...prev, [questionId]: [optionId] };
+      }
+
+      // Multi-select: add if slots remain
+      if (picks.filter(Boolean).length < multiSelect) {
         picks.push(optionId);
       }
       return { ...prev, [questionId]: picks.filter(Boolean) };
     });
+    void currentPicks; // suppress lint
+    setSectionIncomplete(false); // clear warning on any selection
   }
 
   function isOptionSelected(questionId: string, optionId: string) {
@@ -355,6 +282,7 @@ export default function PredictPage() {
   }
 
   function stepComplete(category: string) {
+    if (category === "review") return false;
     const qs = questions.filter((q) => q.category === category);
     if (qs.length === 0) return true;
     return qs.every((q) => {
@@ -363,43 +291,69 @@ export default function PredictPage() {
     });
   }
 
-  function getMissingQuestions(category: string): string[] {
-    return questions
-      .filter((q) => q.category === category)
-      .filter((q) => (answers[q.id] ?? []).filter(Boolean).length < q.multi_select)
-      .map((q) => q.label);
+  function getOptionLabel(optionId: string): string {
+    for (const q of questions) {
+      for (const opt of q.options) {
+        if (opt.id === optionId) return opt.option_value;
+      }
+    }
+    return "—";
   }
 
-  function handleNextStep() {
-    const missing = getMissingQuestions(currentCategory);
-    if (missing.length > 0) {
-      setStepError(
-        `Please answer all questions before continuing. Missing: ${missing.slice(0, 2).join(", ")}${missing.length > 2 ? " and more" : ""}.`
-      );
-      return;
-    }
-    setStepError("");
-    setStep(step + 1);
+  function renderReview() {
+    const categories = ["qualifying", "race", "chaos"] as const;
+    return (
+      <div className="predict-review">
+        {categories.map((cat) => {
+          const catQuestions = questions.filter((q) => q.category === cat);
+          if (catQuestions.length === 0) return null;
+          return (
+            <div key={cat} className="predict-review-category">
+              <h3>{STEP_LABELS[cat]}</h3>
+              {catQuestions.map((q) => {
+                const picks = (answers[q.id] ?? []).filter(Boolean);
+                return (
+                  <div key={q.id} className="predict-review-row">
+                    <span className="predict-review-label">{q.label}</span>
+                    <div className="predict-review-picks">
+                      {picks.length > 0 ? (
+                        picks.map((optId, i) => (
+                          <span key={i} className="predict-review-pick">
+                            {getOptionLabel(optId)}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="predict-review-missing">No pick</span>
+                      )}
+                    </div>
+                    <button
+                      className="predict-review-edit-btn"
+                      onClick={() => setStep(categories.indexOf(cat))}
+                    >
+                      Edit
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
   async function handleSubmit() {
-    // Validate all steps before submitting
-    const allMissing: string[] = [];
-    for (const cat of STEPS) {
-      allMissing.push(...getMissingQuestions(cat));
-    }
-    if (allMissing.length > 0) {
-      setError(
-        `Please answer all questions before submitting. ${allMissing.length} unanswered question${allMissing.length > 1 ? "s" : ""} remaining.`
-      );
-      return;
-    }
-
     if (!isAuthenticated) {
-      router.push(`/login?redirect=/predict/${raceId}`);
+      router.push(`/?redirect=/predict/${raceId}`);
       return;
     }
 
+    if (anyLiveEditWindow && isAuthenticated && !showEditConfirm) {
+      setShowEditConfirm(true);
+      return;
+    }
+
+    setShowEditConfirm(false);
     setSaving(true);
     setError("");
 
@@ -411,16 +365,54 @@ export default function PredictPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to save");
-      track("prediction_submitted", { race_id: raceId });
+      const eventName =
+        data.status === "draft"
+          ? "prediction_saved_draft"
+          : isEditing
+            ? "prediction_edit_submitted"
+            : "prediction_submitted";
+
+      track(
+        eventName,
+        {
+          charged_edit_fee: Boolean(data.chargedEditFee),
+          race_id: raceId,
+          status: data.status,
+        },
+        { send_to_posthog: false, send_to_clarity: true }
+      );
       localStorage.removeItem(`picks_${raceId}`);
+      setChargedEditFee(Boolean(data.chargedEditFee));
       setSaved(true);
-      setAlreadyPredicted(true);
     } catch (e) {
+      const message = e instanceof Error ? e.message : "Something went wrong";
+      track("prediction_submit_failed", {
+        error_category: message,
+        race_id: raceId,
+      });
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setSaving(false);
     }
   }
+
+  async function handleCopyExpert() {
+    setCopyingExpert(true);
+    try {
+      const res = await fetch(`/api/races/${raceId}/top-picks`);
+      const data = await res.json();
+      if (data.picks && Object.keys(data.picks).length > 0) {
+        setAnswers((prev) => ({ ...prev, ...data.picks }));
+        setExpertCopied(true);
+        setTimeout(() => setExpertCopied(false), 3000);
+      }
+    } catch {
+      // ignore — non-critical
+    } finally {
+      setCopyingExpert(false);
+    }
+  }
+
 
   if (!race) {
     return (
@@ -438,34 +430,11 @@ export default function PredictPage() {
   if (loading) {
     return (
       <div className="gla-root">
+        <div className="gl-stripe" aria-hidden="true" />
+        <AppNav />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <div className="gl-spinner" />
-          <p style={{ color: "rgba(255,255,255,0.5)", marginTop: "1rem" }}>Loading…</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLocked) {
-    return (
-      <div className="gla-root">
-        <div className="gl-stripe" aria-hidden="true" />
-        <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
-          <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>🔒</div>
-          <h1 className="gla-page-title">Predictions Closed</h1>
-          <p className="gla-page-sub" style={{ marginTop: "0.5rem" }}>
-            {race.name} · Round {race.round}
-          </p>
-          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.9rem", marginTop: "1rem" }}>
-            The prediction window for this race has closed.
-          </p>
-          <Link
-            href="/dashboard"
-            className="gla-race-btn"
-            style={{ marginTop: "2rem", display: "inline-block" }}
-          >
-            Back to Dashboard
-          </Link>
+          <p style={{ color: "rgba(255,255,255,0.5)", marginTop: "1rem" }}>Loading...</p>
         </div>
       </div>
     );
@@ -475,35 +444,54 @@ export default function PredictPage() {
     return (
       <div className="gla-root">
         <div className="gl-stripe" aria-hidden="true" />
+        <AppNav />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
           <div className="predict-success-icon">✓</div>
           <h1 className="gla-page-title" style={{ marginTop: "1.5rem" }}>
-            Predictions Locked In
+            {allQuestionsComplete ? "Predictions Locked In" : "Progress Saved"}
           </h1>
           <p className="gla-page-sub">
             {race.name} · Round {race.round}
           </p>
-          <div
-            style={{
-              display: "flex",
-              gap: "1rem",
-              justifyContent: "center",
-              marginTop: "2rem",
-              flexWrap: "wrap",
-            }}
-          >
-            <Link href="/leagues" className="gla-race-btn">
-              Join a League
+          {!allQuestionsComplete && (
+            <p style={{
+              color: "rgba(0, 210, 170, 1)",
+              fontSize: "0.9rem",
+              marginTop: "1rem",
+              maxWidth: "400px",
+              marginInline: "auto",
+              lineHeight: 1.5,
+            }}>
+              Come back before each lock window to finish the rest of your picks.
+            </p>
+          )}
+          {chargedEditFee && (
+            <p style={{ color: "rgba(255,255,255,0.72)", marginTop: "0.75rem" }}>
+              A ${PREDICTION_EDIT_FEE_USDC} USDC edit fee was charged for this update.
+            </p>
+          )}
+
+          {/* Primary CTA: league join */}
+          {allQuestionsComplete && (
+            <div style={{ marginTop: "2rem", padding: "1.25rem", background: "rgba(0,210,170,0.07)", border: "1px solid rgba(0,210,170,0.2)", borderRadius: "12px", maxWidth: "400px", marginInline: "auto" }}>
+              <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(0,210,170,0.7)", marginBottom: "0.5rem" }}>
+                Next Step
+              </p>
+              <p style={{ fontSize: "0.95rem", color: "#fff", marginBottom: "1rem" }}>
+                Join a league to compete for the prize pool
+              </p>
+              <Link href={`/leagues?raceId=${raceId}`} className="gla-race-btn" style={{ display: "block", textAlign: "center" }}>
+                Choose a League &rarr;
+              </Link>
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "1.5rem", flexWrap: "wrap" }}>
+            <Link href="/leaderboard" className="gla-race-btn" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}>
+              Global Leaderboard
             </Link>
-            <Link
-              href="/dashboard"
-              className="gla-race-btn"
-              style={{
-                background: "transparent",
-                border: "1px solid rgba(255,255,255,0.2)",
-              }}
-            >
-              Back to Dashboard
+            <Link href="/dashboard" className="gla-race-btn" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}>
+              All Races
             </Link>
           </div>
         </div>
@@ -514,6 +502,7 @@ export default function PredictPage() {
   return (
     <div className="gla-root">
       <div className="gl-stripe" aria-hidden="true" />
+      <AppNav />
 
       {/* Header */}
       <div className="predict-header">
@@ -521,23 +510,33 @@ export default function PredictPage() {
           ← Dashboard
         </Link>
         <div className="predict-race-info">
-          <span className="predict-round">Round {race.round} · {race.flag} {race.country}</span>
+          <span className="predict-round">Round {race.round}</span>
           <h1 className="predict-race-name">{race.name}</h1>
         </div>
-
-        {/* Countdown timer */}
-        {qualifyingDeadline && countdown && countdown !== "Locked" && (
-          <div className="predict-countdown">
-            <span className="predict-countdown-label">Closes in</span>
-            <span className="predict-countdown-value">{countdown}</span>
-          </div>
-        )}
       </div>
 
-      {/* Already predicted banner */}
-      {alreadyPredicted && !saved && (
-        <div className="predict-already-banner">
-          ✓ You&apos;ve already submitted predictions for this race. You can update them below until the window closes.
+      <div className="predict-timing-grid">
+        <div className="predict-timing-card">
+          <span className="predict-timing-value">
+            {getTimingCardValue(qualifyingWindow)}
+          </span>
+          <span className="predict-timing-label">
+            {getTimingCardLabel(qualifyingWindow, "Qualifying")}
+          </span>
+        </div>
+        <div className="predict-timing-card">
+          <span className="predict-timing-value">
+            {getTimingCardValue(raceWindow)}
+          </span>
+          <span className="predict-timing-label">
+            {getTimingCardLabel(raceWindow, "GP")}
+          </span>
+        </div>
+      </div>
+
+      {isEditing && (
+        <div className="predict-edit-banner">
+          Editing your predictions. During a live edit window, updates cost ${PREDICTION_EDIT_FEE_USDC} USDC.
         </div>
       )}
 
@@ -548,17 +547,14 @@ export default function PredictPage() {
             key={s}
             className={`predict-step-tab${step === i ? " is-active" : ""}${stepComplete(s) ? " is-done" : ""}`}
             onClick={() => {
-              // Backward navigation is always allowed
-              if (i <= step) { setStepError(""); setStep(i); return; }
-              // Forward jump: find the first incomplete section and land there
-              for (let check = step; check < i; check++) {
-                if (!stepComplete(STEPS[check] as string)) {
-                  setStepError("Answer all questions in this section before moving on.");
-                  setStep(check);
-                  return;
-                }
+              setSectionIncomplete(false);
+              if (i > step && currentCategory !== "review") {
+                track("prediction_step_completed", {
+                  completed: stepComplete(currentCategory),
+                  race_id: raceId,
+                  step_name: currentCategory,
+                });
               }
-              setStepError("");
               setStep(i);
             }}
           >
@@ -570,16 +566,42 @@ export default function PredictPage() {
         ))}
       </div>
 
-      {/* Step context note for Race step */}
-      {currentCategory === "race" && (
-        <div className="predict-step-note">
-          <strong>Race predictions</strong> — These are for the race day (typically a day after qualifying). You can update all predictions until the qualifying window closes.
+      {/* Expert copy CTA — only shown before review step */}
+      {currentCategory !== "review" && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.5rem", paddingInline: "1.5rem" }}>
+          <button
+            className="predict-copy-expert-btn"
+            onClick={handleCopyExpert}
+            disabled={copyingExpert}
+            title="Copy the top player's picks as a starting point, then modify"
+          >
+            {copyingExpert ? "Loading..." : expertCopied ? "✓ Copied!" : "Copy Expert Picks"}
+          </button>
         </div>
       )}
 
       {/* Questions */}
       <div className="predict-body">
-        {currentQuestions.length === 0 ? (
+        {currentCategory === "review" && raceTiming?.race_locked ? (
+          <div className="predict-results-cta">
+            {!isAuthenticated ? (
+              <p className="predict-results-locked-msg">Log in to see your score for this race.</p>
+            ) : myScore === "loading" ? (
+              <div className="gl-spinner" />
+            ) : typeof myScore === "number" ? (
+              <>
+                <p className="predict-results-score">You scored <strong>{myScore.toFixed(1)} pts</strong></p>
+                <Link href={`/scores/${raceId}`} className="gla-race-btn" style={{ display: "inline-block", marginTop: "1rem" }}>
+                  View full breakdown →
+                </Link>
+              </>
+            ) : (
+              <p className="predict-results-locked-msg">Results are being calculated — check back soon.</p>
+            )}
+          </div>
+        ) : currentCategory === "review" ? (
+          renderReview()
+        ) : currentQuestions.length === 0 ? (
           <div className="predict-empty">
             <p>No {currentCategory} questions available yet.</p>
           </div>
@@ -587,8 +609,6 @@ export default function PredictPage() {
           currentQuestions.map((q) => {
             const picks = (answers[q.id] ?? []).filter(Boolean);
             const isFull = picks.length >= q.multi_select;
-            const useDropdown = isDriverOption(q.options);
-
             return (
               <div key={q.id} className="predict-question">
                 <div className="predict-q-header">
@@ -599,79 +619,121 @@ export default function PredictPage() {
                     {q.multi_select > 1 && ` · pick ${q.multi_select}`}
                   </span>
                 </div>
-
-                {useDropdown ? (
-                  <DriverDropdown
-                    options={q.options}
-                    selected={answers[q.id] ?? []}
-                    onSelect={(optionId) => handleSelect(q.id, optionId, q.multi_select)}
-                    multiSelect={q.multi_select}
-                    disabled={isLocked}
-                  />
-                ) : (
-                  <div className="predict-options">
-                    {q.options.map((opt) => {
-                      const selected = isOptionSelected(q.id, opt.id);
-                      const pickIdx = getPickIndex(q.id, opt.id);
-                      const disabled = isLocked || (!selected && isFull);
-                      return (
-                        <button
-                          key={opt.id}
-                          disabled={disabled}
-                          onClick={() =>
-                            handleSelect(q.id, opt.id, q.multi_select)
-                          }
-                          className={`predict-option${selected ? " is-selected" : ""}${disabled && !selected ? " is-disabled" : ""}`}
-                        >
-                          {q.multi_select > 1 && selected && (
-                            <span className="predict-pick-badge">
-                              {pickIdx + 1}
-                            </span>
-                          )}
-                          {opt.option_value}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                <div className="predict-options">
+                  {q.options.map((opt) => {
+                    const selected = isOptionSelected(q.id, opt.id);
+                    const pickIdx = getPickIndex(q.id, opt.id);
+                    const disabled = !currentWindow?.editable || (!selected && isFull);
+                    return (
+                      <button
+                        key={opt.id}
+                        disabled={disabled}
+                        onClick={() =>
+                          handleSelect(q.id, opt.id, q.multi_select, picks)
+                        }
+                        className={`predict-option${selected ? " is-selected" : ""}${disabled && !selected ? " is-disabled" : ""}`}
+                      >
+                        {q.multi_select > 1 && selected && (
+                          <span className="predict-pick-badge">
+                            {pickIdx + 1}
+                          </span>
+                        )}
+                        {opt.option_value}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             );
           })
         )}
 
-        {stepError && <p className="predict-step-error">{stepError}</p>}
+        {currentCategory === "qualifying" && (
+          <p className="predict-section-note">
+            Qualifying picks lock 10 minutes before qualifying starts. If you already submitted, you can edit for 10 minutes after lights out by paying ${PREDICTION_EDIT_FEE_USDC} USDC.
+          </p>
+        )}
+
+        {currentCategory === "race" && (
+          <p className="predict-section-note">
+            GP and chaos picks lock 10 minutes before the Grand Prix. After the start, live edits stay open for 10 minutes with a ${PREDICTION_EDIT_FEE_USDC} USDC fee.
+          </p>
+        )}
+
+        {currentWindow && !currentWindow.editable && (
+          <p className="predict-section-warning">
+            This section is locked. Your previously saved picks are still visible, but you can&apos;t change them now.
+          </p>
+        )}
+
+        {showEditConfirm && (
+          <div className="predict-edit-confirm">
+            <p>This will charge <strong>${PREDICTION_EDIT_FEE_USDC} USDC</strong> from your balance to update your picks during the live edit window.</p>
+            <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
+              <button className="predict-nav-btn primary" onClick={handleSubmit}>
+                Confirm &amp; Pay
+              </button>
+              <button className="predict-nav-btn secondary" onClick={() => setShowEditConfirm(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {error && <p className="predict-error">{error}</p>}
+
+        {sectionIncomplete && currentCategory !== "review" && (
+          <p className="predict-section-warning">
+            This section is incomplete. You can still keep moving, but unanswered questions won&apos;t score.
+          </p>
+        )}
 
         {/* Navigation */}
         <div className="predict-nav">
           {step > 0 && (
             <button
               className="predict-nav-btn secondary"
-              onClick={() => { setStepError(""); setStep(step - 1); }}
+              onClick={() => { setSectionIncomplete(false); setStep(step - 1); }}
             >
               ← Back
             </button>
           )}
-          {step < STEPS.length - 1 ? (
+          {currentCategory === "review" ? (
             <button
               className="predict-nav-btn primary"
-              onClick={handleNextStep}
+              onClick={handleSubmit}
+              disabled={saving}
             >
-              Next: {STEP_LABELS[STEPS[step + 1]]} →
+              {saving
+                ? "Saving..."
+                : isAuthenticated
+                ? anyLiveEditWindow
+                  ? `Pay $${PREDICTION_EDIT_FEE_USDC} to Update`
+                  : allQuestionsComplete
+                    ? isEditing ? "Update Predictions" : "Submit Predictions"
+                    : "Save Progress"
+                : "Continue to Login →"}
             </button>
           ) : (
             <button
               className="predict-nav-btn primary"
-              onClick={handleSubmit}
-              disabled={saving || isLocked}
+              onClick={() => {
+                setSectionIncomplete(!stepComplete(currentCategory as string));
+                track("prediction_step_completed", {
+                  completed: stepComplete(currentCategory),
+                  race_id: raceId,
+                  step_name: currentCategory,
+                });
+                if (isEditing) {
+                  track("prediction_edit_started", {
+                    race_id: raceId,
+                    step_name: STEPS[step + 1],
+                  });
+                }
+                setStep(step + 1);
+              }}
             >
-              {saving
-                ? "Saving…"
-                : isAuthenticated
-                ? alreadyPredicted
-                  ? "Update Predictions"
-                  : "Lock In Predictions"
-                : "Continue to Login →"}
+              Next: {STEP_LABELS[STEPS[step + 1]]} →
             </button>
           )}
         </div>

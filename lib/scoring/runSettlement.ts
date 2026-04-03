@@ -10,6 +10,11 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  findPredictionIdsMissingVersionRows,
+  formatMissingPredictionVersionsError,
+  selectLatestPredictionVersionRows,
+} from "@/lib/predictions";
+import {
   settleRace,
   type PredictionQuestion,
   type PredictionAnswer,
@@ -34,7 +39,7 @@ function versionToAnswers(answersJson: Record<string, string[]>): PredictionAnsw
 export async function runSettlement(
   raceId: string,
   admin: SupabaseClient
-): Promise<{ scores_computed: number }> {
+): Promise<{ scores_computed: number; flagged_users: string[] }> {
   // 1. Load questions
   const { data: questions } = await admin
     .from("prediction_questions")
@@ -63,9 +68,14 @@ export async function runSettlement(
   if (snapshotData?.length) {
     snapshots = snapshotData as PopularitySnapshot[];
   } else {
-    const { data: countData } = await admin.rpc("compute_pick_popularity", {
+    const { data: countData, error: countErr } = await admin.rpc("compute_pick_popularity", {
       p_race_id: raceId,
     });
+    if (countErr) {
+      throw new Error(
+        `Unable to load pick popularity for settlement: ${countErr.message}. Apply the latest Supabase migrations and retry.`
+      );
+    }
     snapshots = (countData ?? []) as PopularitySnapshot[];
   }
 
@@ -76,22 +86,46 @@ export async function runSettlement(
     .eq("race_id", raceId)
     .eq("status", "active");
 
-  if (!predictions?.length) return { scores_computed: 0 };
+  if (!predictions?.length) return { scores_computed: 0, flagged_users: [] };
 
   const predictionIds = predictions.map((p) => p.id);
 
   // 5. Load frozen answer snapshots (latest version per prediction)
-  const { data: allVersions } = await admin
+  const { data: allVersions, error: versionsErr } = await admin
     .from("prediction_versions")
-    .select("prediction_id, version_number, answers_json")
+    .select("id, prediction_id, version_number, answers_json, created_at")
     .in("prediction_id", predictionIds)
-    .order("version_number", { ascending: false });
+    .order("version_number", { ascending: false })
+    .order("created_at", { ascending: false });
 
-  const latestByPrediction = new Map<string, Record<string, string[]>>();
-  for (const v of allVersions ?? []) {
-    if (!latestByPrediction.has(v.prediction_id)) {
-      latestByPrediction.set(v.prediction_id, v.answers_json as Record<string, string[]>);
-    }
+  if (versionsErr) {
+    throw new Error(
+      `Settlement requires prediction_versions and the current database is behind the app schema: ${versionsErr.message}`
+    );
+  }
+
+  const latestByPrediction = selectLatestPredictionVersionRows(
+    (allVersions ?? []).map((version) => ({
+      id: version.id,
+      prediction_id: version.prediction_id,
+      version_number: version.version_number,
+      answers_json: version.answers_json as Record<string, string[]>,
+      created_at: version.created_at,
+    }))
+  );
+
+  const missingPredictionIds = findPredictionIdsMissingVersionRows(
+    predictionIds,
+    latestByPrediction
+  );
+
+  if (missingPredictionIds.length > 0) {
+    throw new Error(
+      formatMissingPredictionVersionsError(
+        missingPredictionIds.length,
+        predictionIds.length
+      )
+    );
   }
 
   // 6. Run scoring engine
@@ -104,8 +138,9 @@ export async function runSettlement(
       .filter((p) => latestByPrediction.has(p.id))
       .map((p) => ({
         userId: p.user_id,
-        answers: versionToAnswers(latestByPrediction.get(p.id)!),
+        answers: versionToAnswers(latestByPrediction.get(p.id)!.answers_json),
         editCount: p.edit_count ?? 0,
+        submittedAt: latestByPrediction.get(p.id)?.created_at ?? null,
       })),
   });
 
@@ -147,10 +182,52 @@ export async function runSettlement(
   }
 
   if (leagueScoreRows.length > 0) {
-    await admin
+    const { error: leagueScoresErr } = await admin
       .from("league_scores")
       .upsert(leagueScoreRows, { onConflict: "league_id,user_id,race_id" });
+
+    if (leagueScoresErr) throw new Error(leagueScoresErr.message);
   }
 
-  return { scores_computed: scores.length };
+  // Fraud check — flag users with identical picks for admin review.
+  // Payouts are NOT automatically blocked; the admin sees flagged users in the settle response.
+  const predictionAnswers = predictions
+    .filter((p) => latestByPrediction.has(p.id))
+    .map((p) => ({ user_id: p.user_id, answers_json: latestByPrediction.get(p.id)!.answers_json }));
+  const flaggedSet = detectIdenticalPicks(predictionAnswers);
+  const flagged_users = Array.from(flaggedSet);
+
+  return { scores_computed: scores.length, flagged_users };
+}
+
+/**
+ * Detect users with identical answers to another user in the same settlement.
+ * Returns a Set of user_ids that have exact duplicates — their payouts should be frozen.
+ * Exported for use in admin tooling and future automated flagging.
+ */
+export function detectIdenticalPicks(
+  predictions: Array<{ user_id: string; answers_json: Record<string, string[]> }>
+): Set<string> {
+  const flagged = new Set<string>();
+  const seen = new Map<string, string>(); // fingerprint → first user_id
+
+  for (const pred of predictions) {
+    const fingerprint = JSON.stringify(
+      Object.fromEntries(
+        Object.entries(pred.answers_json)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([k, v]) => [k, [...v].sort()])
+      )
+    );
+
+    const existing = seen.get(fingerprint);
+    if (existing) {
+      flagged.add(pred.user_id);
+      flagged.add(existing);
+    } else {
+      seen.set(fingerprint, pred.user_id);
+    }
+  }
+
+  return flagged;
 }

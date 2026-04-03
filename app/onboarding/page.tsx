@@ -13,15 +13,17 @@ function OnboardingForm() {
   const [username, setUsername] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [showBetaNotice, setShowBetaNotice] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   useEffect(() => {
+    track("onboarding_viewed", { redirect_to: redirect });
+
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.push("/login");
+      if (!user) router.push("/");
     });
-  }, [router]);
+  }, [redirect, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,14 +41,17 @@ function OnboardingForm() {
       setError(data.error ?? "Failed to save username.");
       setSaving(false);
     } else {
-      track("onboarding_completed", { username });
-      setShowBetaNotice(true);
-      // Give user enough time to read the beta credits notice before redirecting
-      setTimeout(() => router.push(redirect), 5000);
+      track("onboarding_completed", {
+        redirect_to: redirect,
+        username_length: username.trim().length,
+      });
+      setOnboardingComplete(true);
+      setTimeout(() => router.push(redirect), 3000);
     }
   }
 
   function handleSkip() {
+    track("onboarding_skipped", { redirect_to: redirect });
     router.push(redirect);
   }
 
@@ -60,55 +65,66 @@ function OnboardingForm() {
           This is how you&apos;ll appear on leaderboards. You can change it anytime.
         </p>
 
-        {showBetaNotice && (
-          <div style={{ marginTop: "1.5rem", padding: "1rem 1.25rem", borderRadius: "8px", background: "rgba(232,0,45,0.1)", border: "1px solid rgba(232,0,45,0.25)", fontSize: "0.875rem", color: "rgba(255,255,255,0.85)", textAlign: "left" }}>
-            <strong style={{ color: "var(--gl-red)", display: "block", marginBottom: "0.4rem" }}>₮100 Test USDC credited.</strong>
-            You&apos;ve been credited 100 Test USDC to use during the Gridlock beta. This is not real money — explore freely.
-            <button
-              type="button"
-              className="gla-race-btn"
-              style={{ marginTop: "1rem", width: "100%", textAlign: "center" }}
-              onClick={() => router.push(redirect)}
-            >
-              Enter the Grid →
-            </button>
+        {onboardingComplete && (
+          <div style={{
+            marginTop: "1.5rem",
+            padding: "1.25rem 1.25rem",
+            borderRadius: "10px",
+            background: "rgba(0,210,170,0.08)",
+            border: "1px solid rgba(0,210,170,0.3)",
+            textAlign: "left",
+          }}>
+            <p style={{ fontSize: "1rem", fontWeight: 700, color: "rgba(0,210,170,1)", marginBottom: "0.5rem" }}>
+              Welcome to Gridlock, {username}!
+            </p>
+            <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.8)", lineHeight: 1.6, margin: 0 }}>
+              Gridlock is the F1 prediction game where you call the podium before every race —
+              1st, 2nd, and 3rd. Nail the exact positions, score big. Miss by one spot, still
+              earn points. The sharpest strategist on the leaderboard wins the prize pool.
+            </p>
+            <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.45)", marginTop: "0.75rem", marginBottom: 0 }}>
+              $100 Test USDC credited. Explore leagues, make your first prediction, and get
+              ready for 2026 lights out.
+            </p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ marginTop: "2rem", textAlign: "left" }}>
-          <input
-            className="auth-input"
-            placeholder="e.g. LewisH44"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            minLength={2}
-            maxLength={30}
-            autoFocus
-          />
-          {error && (
-            <p style={{ color: "var(--gl-red)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
-              {error}
-            </p>
-          )}
-          <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem" }}>
-            <button
-              type="submit"
-              className="gla-race-btn"
-              style={{ flex: 1 }}
-              disabled={saving || username.trim().length < 2}
-            >
-              {saving ? "Saving..." : "Set Username"}
-            </button>
-            <button
-              type="button"
-              className="gla-race-btn"
-              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}
-              onClick={handleSkip}
-            >
-              Skip
-            </button>
-          </div>
-        </form>
+        {!onboardingComplete && (
+          <form onSubmit={handleSubmit} style={{ marginTop: "2rem", textAlign: "left" }}>
+            <input
+              className="auth-input"
+              placeholder="e.g. LewisH44"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              minLength={2}
+              maxLength={30}
+              autoFocus
+            />
+            {error && (
+              <p style={{ color: "var(--gl-red)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
+                {error}
+              </p>
+            )}
+            <div className="onboarding-actions" style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem" }}>
+              <button
+                type="submit"
+                className="gla-race-btn"
+                style={{ flex: 1 }}
+                disabled={saving || username.trim().length < 2}
+              >
+                {saving ? "Saving..." : "Set Username"}
+              </button>
+              <button
+                type="button"
+                className="gla-race-btn"
+                style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}
+                onClick={handleSkip}
+              >
+                Skip
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

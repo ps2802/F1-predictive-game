@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { trackServer } from "@/lib/analytics.server";
 
 /**
  * GET /api/cron/lock-races
@@ -55,16 +56,49 @@ export async function GET(request: NextRequest) {
 
   const { error: updateErr } = await admin
     .from("races")
-    .update({ race_locked: true, is_locked: true })
+    .update({ race_locked: true })
     .in("id", ids);
 
   if (updateErr)
     return NextResponse.json({ error: updateErr.message }, { status: 500 });
 
   // Snapshot pick popularity at lock time so settlement uses deterministic data
+  const snapshotErrors: { raceId: string; error: string }[] = [];
   for (const raceId of ids) {
-    await admin.rpc("freeze_pick_popularity", { p_race_id: raceId });
+    const { error: snapshotErr } = await admin.rpc("freeze_pick_popularity", { p_race_id: raceId });
+    if (snapshotErr) {
+      snapshotErrors.push({ raceId, error: snapshotErr.message });
+    }
+
+    // Void draft predictions — they were never paid/entered so should not score
+    await admin
+      .from("predictions")
+      .update({ status: "locked" })
+      .eq("race_id", raceId)
+      .eq("status", "draft");
   }
+
+  if (snapshotErrors.length > 0) {
+    return NextResponse.json(
+      {
+        error: "Some races were locked, but popularity snapshots were not frozen. Apply the missing Supabase migrations and retry before settlement.",
+        locked: ids,
+        count: ids.length,
+        lockedAt: now,
+        snapshotsFrozen: ids.length - snapshotErrors.length,
+        snapshotErrors,
+      },
+      { status: 500 }
+    );
+  }
+
+  await Promise.all(
+    ids.map((raceId) =>
+      trackServer("race_locked", {
+        race_id: raceId,
+      })
+    )
+  );
 
   return NextResponse.json({
     locked: ids,

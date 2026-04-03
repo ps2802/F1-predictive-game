@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isAdminEmail } from "@/lib/admin";
 
 const CreateRaceBody = z.object({
   id: z.string().regex(/^[a-z0-9-]+$/, "id must be lowercase alphanumeric with hyphens only (e.g. japan-2026)").min(1),
@@ -15,6 +16,7 @@ const CreateRaceBody = z.object({
 async function requireAdmin(supabase: NonNullable<Awaited<ReturnType<typeof createSupabaseServerClient>>>) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { user: null, error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  if (!isAdminEmail(user.email)) return { user: null, error: NextResponse.json({ error: "Forbidden: admin only." }, { status: 403 }) };
   const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single();
   if (!profile?.is_admin) return { user: null, error: NextResponse.json({ error: "Forbidden: admin only." }, { status: 403 }) };
   return { user, error: null };
@@ -33,7 +35,7 @@ export async function GET() {
 
   const { data, error } = await admin
     .from("races")
-    .select("id, season, round, grand_prix_name, circuit, race_starts_at, qualifying_starts_at, race_locked, is_locked, prediction_questions(count)")
+    .select("id, season, round, grand_prix_name, circuit, race_starts_at, qualifying_starts_at, race_locked, prediction_questions(count)")
     .order("round");
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
@@ -47,7 +49,6 @@ export async function GET() {
     race_starts_at: r.race_starts_at,
     qualifying_starts_at: r.qualifying_starts_at,
     race_locked: r.race_locked,
-    is_locked: r.is_locked,
     question_count: (r.prediction_questions as unknown as { count: number }[])?.[0]?.count ?? 0,
   }));
 
@@ -85,7 +86,6 @@ export async function POST(request: Request) {
     qualifying_starts_at: qualifying_starts_at ?? null,
     season: 2026,
     race_locked: false,
-    is_locked: false,
   });
 
   if (insertError)

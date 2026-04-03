@@ -2,15 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { AppNav } from "@/app/components/AppNav";
+import { track } from "@/lib/analytics";
 
 type LeaderboardEntry = {
   user_id: string;
   username: string | null;
   avatar_url: string | null;
   total_score: number;
+  raw_total?: number;
+  loyalty_multiplier?: number;
   races_played: number;
+  races_dropped?: number;
 };
 
 export default function LeaderboardPage() {
@@ -28,23 +33,28 @@ export default function LeaderboardPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) { router.push("/login"); return; }
+      if (!user) { router.push("/"); return; }
       setCurrentUserId(user.id);
 
-      const { data, error: fetchErr } = await supabase
-        .from("leaderboard")
-        .select("*")
-        .limit(100);
-
-      if (fetchErr) {
+      const res = await fetch("/api/leaderboard");
+      if (!res.ok) {
         setError("Failed to load leaderboard. Please refresh.");
       } else {
-        setEntries(data ?? []);
+        const data = await res.json();
+        setEntries(data.entries ?? []);
       }
       setLoading(false);
     }
     load();
   }, [router]);
+
+  useEffect(() => {
+    if (!loading && !error) {
+      track("leaderboard_viewed", {
+        entry_count: entries.length,
+      });
+    }
+  }, [entries.length, error, loading]);
 
   if (loading) {
     return (
@@ -96,7 +106,11 @@ export default function LeaderboardPage() {
 
           {entries.length === 0 ? (
             <div className="lb-empty">
-              No scores yet — predictions are still being settled.
+              <p className="lb-empty-headline">No scores posted yet for this season.</p>
+              <p className="lb-empty-sub">Make your predictions before qualifying to appear here once results are settled.</p>
+              <Link href="/dashboard" className="gla-race-btn" style={{ display: "inline-block", marginTop: "1.25rem" }}>
+                Make Your Predictions
+              </Link>
             </div>
           ) : (
             entries.map((entry, i) => (
@@ -112,6 +126,11 @@ export default function LeaderboardPage() {
                   {entry.user_id === currentUserId && (
                     <span className="lb-you-badge"> you</span>
                   )}
+                  {entry.loyalty_multiplier && entry.loyalty_multiplier > 1 && (
+                    <span className="lb-loyalty-badge" title={`${entry.loyalty_multiplier}× loyalty bonus`}>
+                      🔥 {entry.loyalty_multiplier}×
+                    </span>
+                  )}
                 </span>
                 <span className="lb-races">{entry.races_played}</span>
                 <span className="lb-score">
@@ -120,9 +139,16 @@ export default function LeaderboardPage() {
               </div>
             ))
           )}
+          {currentUserId && !entries.some(e => e.user_id === currentUserId) && (
+            <div className="lb-row is-you lb-pinned-you">
+              <span className="lb-rank">—</span>
+              <span className="lb-name">You <span className="lb-you-badge">not yet ranked</span></span>
+              <span className="lb-races">—</span>
+              <span className="lb-score">—</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
-

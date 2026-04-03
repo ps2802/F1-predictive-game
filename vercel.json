@@ -2,7 +2,15 @@
   "crons": [
     {
       "path": "/api/cron/lock-races",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/cron/advance-race-state",
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/settle-races",
+      "schedule": "0 16 * * *"
     }
   ]
 }

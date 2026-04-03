@@ -86,27 +86,74 @@ describe("all wrong predictions", () => {
 // ─── Tie-breaking by difficulty score ─────────────────────────
 
 describe("tie-breaking", () => {
-  it("same total_score: tie is deterministic (difficulty score)", () => {
+  it("breaks ties by difficulty score, then correct picks, then earlier submission timestamp", () => {
     const qA: PredictionQuestion = { ...baseQuestion, id: "q-a", base_points: 20 };
-    const qB: PredictionQuestion = { ...baseQuestion, id: "q-b", base_points: 20 };
+    const qB: PredictionQuestion = { ...baseQuestion, id: "q-b", base_points: 40 };
+    const qC: PredictionQuestion = { ...baseQuestion, id: "q-c", base_points: 5 };
+    const qD: PredictionQuestion = { ...baseQuestion, id: "q-d", base_points: 20 };
+    const qE: PredictionQuestion = { ...baseQuestion, id: "q-e", base_points: 20 };
 
     const { scores } = settleRace({
       raceId: "test",
-      questions: [qA, qB],
+      questions: [qA, qB, qC, qD, qE],
       results: [
         { question_id: "q-a", correct_option_id: "opt-a", pick_order: 1 },
         { question_id: "q-b", correct_option_id: "opt-b", pick_order: 1 },
+        { question_id: "q-c", correct_option_id: "opt-c", pick_order: 1 },
+        { question_id: "q-d", correct_option_id: "opt-d", pick_order: 1 },
+        { question_id: "q-e", correct_option_id: "opt-e", pick_order: 1 },
       ],
       snapshots: [
-        { question_id: "q-a", option_id: "opt-a", popularity_percent: 0.5 },
+        { question_id: "q-a", option_id: "opt-a", popularity_percent: 0.25 },
         { question_id: "q-b", option_id: "opt-b", popularity_percent: 0.5 },
+        { question_id: "q-c", option_id: "opt-c", popularity_percent: 0.5 },
+        { question_id: "q-d", option_id: "opt-d", popularity_percent: 0.5 },
+        { question_id: "q-e", option_id: "opt-e", popularity_percent: 0.5 },
       ],
       userPredictions: [
-        { userId: "u1", answers: [{ question_id: "q-a", option_id: "opt-a", pick_order: 1 }], editCount: 0 },
-        { userId: "u2", answers: [{ question_id: "q-b", option_id: "opt-b", pick_order: 1 }], editCount: 0 },
+        {
+          userId: "u1",
+          answers: [{ question_id: "q-a", option_id: "opt-a", pick_order: 1 }],
+          editCount: 0,
+          submittedAt: "2026-03-27T12:05:00.000Z",
+        },
+        {
+          userId: "u2",
+          answers: [{ question_id: "q-b", option_id: "opt-b", pick_order: 1 }],
+          editCount: 0,
+          submittedAt: "2026-03-27T12:10:00.000Z",
+        },
+        {
+          userId: "u3",
+          answers: [
+            { question_id: "q-d", option_id: "opt-d", pick_order: 1 },
+            { question_id: "q-e", option_id: "opt-e", pick_order: 1 },
+          ],
+          editCount: 0,
+          submittedAt: "2026-03-27T12:20:00.000Z",
+        },
+        {
+          userId: "u4",
+          answers: [
+            { question_id: "q-d", option_id: "opt-d", pick_order: 1 },
+            { question_id: "q-e", option_id: "opt-e", pick_order: 1 },
+          ],
+          editCount: 0,
+          submittedAt: "2026-03-27T12:00:00.000Z",
+        },
       ],
     });
+
+    expect(scores.map((score) => score.user_id)).toEqual(["u1", "u4", "u3", "u2"]);
     expect(scores[0].total_score).toBe(scores[1].total_score);
+    expect(scores[0].difficulty_score).toBeGreaterThan(scores[1].difficulty_score);
+    expect(scores[1].total_score).toBe(scores[2].total_score);
+    expect(scores[1].difficulty_score).toBe(scores[2].difficulty_score);
+    expect(scores[1].correct_picks).toBe(scores[2].correct_picks);
+    expect(new Date(scores[1].submitted_at!).getTime()).toBeLessThan(
+      new Date(scores[2].submitted_at!).getTime()
+    );
+    expect(scores[2].correct_picks).toBeGreaterThan(scores[3].correct_picks);
   });
 });
 

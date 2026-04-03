@@ -21,6 +21,7 @@
  */
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { identifyUser, track } from "@/lib/analytics";
 
 type RouterLike = { push: (href: string) => void };
 
@@ -75,10 +76,11 @@ export async function handlePrivyAuthComplete(
     throw new Error(`Auth sync failed (${res.status}): ${body}`);
   }
 
-  const { token, email, hasUsername } = (await res.json()) as {
+  const { token, hasUsername, privyUserId, userId } = (await res.json()) as {
     token: string;
-    email: string;
     hasUsername: boolean;
+    privyUserId?: string;
+    userId?: string;
   };
 
   // Step 3: Establish Supabase browser session
@@ -102,8 +104,22 @@ export async function handlePrivyAuthComplete(
     throw new Error(`Session handshake failed: ${otpError.message}`);
   }
 
-  // Step 4: Redirect — use hasUsername from API to skip extra profile query
-  if (redirectTo) {
+  const distinctId = userId ?? privyUserId;
+  if (distinctId) {
+    identifyUser(distinctId, {
+      auth_provider: "privy",
+      has_username: hasUsername,
+    });
+  }
+
+  track("auth_completed", {
+    has_username: hasUsername,
+    redirect_to: redirectTo ?? undefined,
+  });
+
+  // Step 4: Redirect — use hasUsername from API to skip extra profile query.
+  // Only allow relative paths (starting with /) to prevent open redirect attacks.
+  if (redirectTo && /^\/[^/]/.test(redirectTo)) {
     router.push(redirectTo);
     return;
   }

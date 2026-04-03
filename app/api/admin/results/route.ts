@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isAdminEmail } from "@/lib/admin";
 
 const ResultsBody = z.object({
   raceId: z.string().min(1),
@@ -24,6 +25,9 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!isAdminEmail(user.email))
+    return NextResponse.json({ error: "Forbidden: admin only." }, { status: 403 });
 
   // Check admin flag
   const { data: profile } = await supabase
@@ -48,7 +52,19 @@ export async function POST(request: Request) {
       { status: 503 }
     );
 
-  await admin.from("race_results").delete().eq("race_id", raceId);
+  const { error: schemaErr } = await admin.from("races").select("id, race_locked").limit(1);
+  if (schemaErr) {
+    return NextResponse.json(
+      {
+        error: `Results cannot be saved on this database because it is behind the current schema: ${schemaErr.message}. Apply the missing Supabase migrations and retry.`,
+      },
+      { status: 503 }
+    );
+  }
+
+  const { error: deleteErr } = await admin.from("race_results").delete().eq("race_id", raceId);
+  if (deleteErr)
+    return NextResponse.json({ error: deleteErr.message }, { status: 400 });
 
   const { error: insertErr } = await admin.from("race_results").insert(
     results.map((r) => ({
@@ -63,10 +79,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: insertErr.message }, { status: 400 });
 
   // Lock the race
-  await admin
+  const { error: lockErr } = await admin
     .from("races")
-    .update({ race_locked: true, is_locked: true })
+    .update({ race_locked: true })
     .eq("id", raceId);
+
+  if (lockErr) {
+    return NextResponse.json(
+      {
+        error: `Results were saved, but the race lock step failed: ${lockErr.message}. Apply the missing Supabase migrations and retry the lock before settling.`,
+        partial: true,
+      },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ success: true });
 }
