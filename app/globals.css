@@ -1667,6 +1667,14 @@ h1, h2, h3 { margin-top: 0; }
 .predict-nav-btn.secondary:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
 
 .predict-error { color: var(--gl-red, #E10600); font-size: 0.85rem; margin: 0; }
+.predict-edit-confirm {
+  background: rgba(225,6,0,0.08);
+  border: 1px solid rgba(225,6,0,0.3);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.85);
+}
 .predict-anon-note { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin: 0; }
 
 .predict-success-icon {

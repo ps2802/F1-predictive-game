@@ -73,6 +73,7 @@ export default function PredictPage() {
   const [copyingExpert, setCopyingExpert] = useState(false);
   const [expertCopied, setExpertCopied] = useState(false);
   const [myScore, setMyScore] = useState<number | null | "loading">("loading");
+  const [showEditConfirm, setShowEditConfirm] = useState(false);
   const hasTrackedPredictionStart = useRef(false);
 
   const currentCategory = STEPS[step];
@@ -347,10 +348,12 @@ export default function PredictPage() {
       return;
     }
 
-    if (anyLiveEditWindow && isAuthenticated && !window.confirm(`This will charge $${PREDICTION_EDIT_FEE_USDC} USDC from your balance to update your picks. Continue?`)) {
+    if (anyLiveEditWindow && isAuthenticated && !showEditConfirm) {
+      setShowEditConfirm(true);
       return;
     }
 
+    setShowEditConfirm(false);
     setSaving(true);
     setError("");
 
@@ -661,6 +664,20 @@ export default function PredictPage() {
           <p className="predict-section-warning">
             This section is locked. Your previously saved picks are still visible, but you can&apos;t change them now.
           </p>
+        )}
+
+        {showEditConfirm && (
+          <div className="predict-edit-confirm">
+            <p>This will charge <strong>${PREDICTION_EDIT_FEE_USDC} USDC</strong> from your balance to update your picks during the live edit window.</p>
+            <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
+              <button className="predict-nav-btn primary" onClick={handleSubmit}>
+                Confirm &amp; Pay
+              </button>
+              <button className="predict-nav-btn secondary" onClick={() => setShowEditConfirm(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
         )}
 
         {error && <p className="predict-error">{error}</p>}
