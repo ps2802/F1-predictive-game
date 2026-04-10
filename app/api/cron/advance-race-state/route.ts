@@ -10,7 +10,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
  *
  * Transitions races through their lifecycle:
  *   upcoming → active   when qualifying_starts_at has passed AND race_locked = true
- *   active   → completed  when race_date + 4 hours has passed
+ *   active   → completed  when race_starts_at + 4 hours has passed
  *   upcoming → completed  safety net for any race that was never marked active
  *
  * Security: requires Authorization: Bearer <CRON_SECRET> header.
@@ -39,9 +39,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   const now = new Date().toISOString();
-  // race_date is a date-only column; add 4 hours by computing a cutoff timestamp.
-  // We use Postgres interval arithmetic via a raw rpc filter rather than JS math
-  // to keep the comparison database-authoritative.
   const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
 
   const [activatedCount, completedCount] = await Promise.all([
@@ -101,28 +98,18 @@ async function markRacesActive(
 }
 
 /**
- * Marks races as "completed" once 4 hours have elapsed since race_date.
+ * Marks races as "completed" once 4 hours have elapsed since race_starts_at.
  * Transitions both "upcoming" and "active" races (handles any that were skipped).
- * race_date is a date column (no time component), so we compare against
- * a cutoff timestamp of (now - 4 hours) mapped to a date for portability.
  */
 async function markRacesCompleted(
   admin: NonNullable<ReturnType<typeof createSupabaseAdminClient>>,
   fourHoursAgo: string
 ): Promise<number | Error> {
-  // race_date is stored as a date (YYYY-MM-DD). Casting fourHoursAgo to date
-  // via ::date in Postgres would be ideal but Supabase client doesn't support
-  // raw SQL filters. Instead we extract the date portion in JS and compare.
-  // This means races on the cutoff date boundary (within 0–24 h after midnight)
-  // complete when the full 4 h have elapsed past the race_date midnight UTC.
-  // Acceptable precision for F1 race state transitions.
-  const cutoffDate = fourHoursAgo.slice(0, 10); // "YYYY-MM-DD"
-
   const { data: toComplete, error: fetchErr } = await admin
     .from("races")
     .select("id")
     .neq("status", "completed")
-    .lte("race_date", cutoffDate);
+    .lte("race_starts_at", fourHoursAgo);
 
   if (fetchErr) return new Error(fetchErr.message);
   if (!toComplete || toComplete.length === 0) return 0;
