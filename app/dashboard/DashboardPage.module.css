@@ -1218,9 +1218,7 @@
 /* Responsive                                                                   */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
-@media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
-}
+/* prefers-reduced-motion handled in globals.css */
 
 @media (max-width: 1100px) {
   .raceAndBoard,
