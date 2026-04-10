@@ -258,7 +258,9 @@ export default function WalletPage() {
 
         <div className="profile-stats-strip" style={{ marginTop: "1.5rem" }} data-clarity-mask="true">
           <div className="profile-stat-block">
-            <span className="profile-stat-num">{formatUsdc(balance)}</span>
+            <span className="profile-stat-num" data-testid="wallet-balance">
+              {formatUsdc(balance)}
+            </span>
             <span className="profile-stat-lbl">Available {ledgerCurrency}</span>
           </div>
           <div className="profile-stat-divider" />

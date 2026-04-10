@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed:races": "ts-node scripts/seed-races.ts",
+    "canary:gridlock": "tsx scripts/run-gridlock-canary.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -26,6 +27,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

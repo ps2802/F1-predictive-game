@@ -106,18 +106,22 @@ function NextRaceCountdownCard() {
     return null;
   }
 
-  const dateLabel = new Date(targetIso).toLocaleDateString("en-GB", {
+  const dateParts = new Intl.DateTimeFormat("en-GB", {
     weekday: "short",
     day: "numeric",
     month: "short",
     timeZone: "UTC",
-  });
+  }).formatToParts(new Date(targetIso));
+  const weekday = dateParts.find((part) => part.type === "weekday")?.value ?? "";
+  const day = dateParts.find((part) => part.type === "day")?.value ?? "";
+  const month = dateParts.find((part) => part.type === "month")?.value ?? "";
+  const dateLabel = `${weekday} ${day} ${month}`.trim();
 
   return (
     <div className="home-countdown-box gl-login-countdown-box">
       <p className="home-countdown-label">
         <span className="home-countdown-dot" aria-hidden="true" />
-        NEXT RACE - PREDICTIONS LOCK IN
+        NEXT RACE - QUALIFYING LOCKS IN
       </p>
       <p className="home-countdown-race">{nextRace.grand_prix_name}</p>
       <p className="home-countdown-date">{dateLabel} · Round {nextRace.round}</p>
@@ -557,33 +561,8 @@ function AuthForm() {
         </h1>
 
         <p className="gl-login-sub">
-          Call 1st, 2nd, 3rd before qualifying locks. Nail the exact position — 3 pts. Right driver, wrong spot — 1 pt. Top scorer wins the USDC prize pool.
+          Pick the podium. Win USDC. Your rivals are already in.
         </p>
-
-        {/* How it works — 3 steps */}
-        <div className="gl-login-how">
-          <div className="gl-login-how-step">
-            <span className="gl-login-how-icon" aria-hidden="true">🏁</span>
-            <div>
-              <span className="gl-login-how-label">PREDICT</span>
-              <span className="gl-login-how-desc">Pick podium before qualifying locks</span>
-            </div>
-          </div>
-          <div className="gl-login-how-step">
-            <span className="gl-login-how-icon" aria-hidden="true">⚡</span>
-            <div>
-              <span className="gl-login-how-label">SCORE</span>
-              <span className="gl-login-how-desc">3 pts exact · 1 pt right driver wrong slot</span>
-            </div>
-          </div>
-          <div className="gl-login-how-step">
-            <span className="gl-login-how-icon" aria-hidden="true">🏆</span>
-            <div>
-              <span className="gl-login-how-label">WIN</span>
-              <span className="gl-login-how-desc">Top scorers split the USDC prize pool</span>
-            </div>
-          </div>
-        </div>
 
         <NextRaceCountdownCard />
 
@@ -608,6 +587,7 @@ function AuthForm() {
           className="gl-login-btn"
           onClick={handleEnter}
           disabled={loading}
+          data-testid="auth-enter-button"
         >
           {loading ? <span className="gl-login-spinner" /> : "CLAIM YOUR SEAT"}
         </button>

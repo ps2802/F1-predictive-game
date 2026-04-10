@@ -99,6 +99,7 @@ function OnboardingForm() {
               minLength={2}
               maxLength={30}
               autoFocus
+              data-testid="onboarding-username-input"
             />
             {error && (
               <p style={{ color: "var(--gl-red)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
@@ -111,6 +112,7 @@ function OnboardingForm() {
                 className="gla-race-btn"
                 style={{ flex: 1 }}
                 disabled={saving || username.trim().length < 2}
+                data-testid="onboarding-submit-button"
               >
                 {saving ? "Saving..." : "Set Username"}
               </button>
@@ -119,6 +121,7 @@ function OnboardingForm() {
                 className="gla-race-btn"
                 style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}
                 onClick={handleSkip}
+                data-testid="onboarding-skip-button"
               >
                 Skip
               </button>

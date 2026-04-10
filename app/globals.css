@@ -1994,8 +1994,95 @@ h1, h2, h3 { margin-top: 0; }
   line-height: 1.65;
   color: rgba(255,255,255,0.42);
   letter-spacing: 0.02em;
-  max-width: 380px;
-  margin: 0 0 2rem;
+  max-width: 340px;
+  margin: 0 0 1.5rem;
+}
+
+.gl-login-countdown-box {
+  width: min(100%, 344px);
+  margin: 0 0 1.35rem;
+  padding: 1rem 1.05rem 1.1rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.018) 100%);
+  box-shadow:
+    0 18px 48px rgba(0,0,0,0.28),
+    inset 0 0 0 1px rgba(225,6,0,0.05);
+}
+
+.home-countdown-label {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  margin: 0 0 0.7rem;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.42);
+}
+
+.home-countdown-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #E10600;
+  box-shadow: 0 0 8px rgba(225,6,0,0.45);
+  flex-shrink: 0;
+}
+
+.home-countdown-race {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.home-countdown-date {
+  margin: 0 0 0.95rem;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.34);
+  letter-spacing: 0.04em;
+}
+
+.home-countdown-timer {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.42rem;
+}
+
+.home-countdown-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 3rem;
+}
+
+.home-countdown-n {
+  font-size: 1.95rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: #63e7c1;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-countdown-u {
+  margin-top: 0.25rem;
+  font-size: 0.48rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.32);
+}
+
+.home-countdown-sep {
+  margin-top: 0.1rem;
+  color: rgba(255,255,255,0.22);
+  font-size: 1.25rem;
+  line-height: 1;
 }
 
 /* Stats row */
@@ -2110,9 +2197,17 @@ h1, h2, h3 { margin-top: 0; }
   letter-spacing: 0.02em;
 }
 
+.gl-login-returning {
+  margin: 0.9rem 0 0;
+  max-width: 340px;
+  font-size: 0.66rem;
+  color: rgba(255,255,255,0.34);
+  letter-spacing: 0.04em;
+}
+
 /* Loss aversion micro-copy */
 .gl-login-urgency {
-  margin-top: 1rem;
+  margin-top: 0.75rem;
   font-size: 0.64rem;
   font-style: italic;
   color: rgba(255,255,255,0.2);
@@ -2179,12 +2274,35 @@ h1, h2, h3 { margin-top: 0; }
     font-size: 2rem;
   }
 
+  .gl-login-countdown-box {
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .home-countdown-timer {
+    flex-wrap: wrap;
+    gap: 0.55rem 0.4rem;
+  }
+
+  .home-countdown-unit {
+    min-width: 2.75rem;
+  }
+
+  .home-countdown-n {
+    font-size: 1.65rem;
+  }
+
   .gl-login-btn {
     max-width: 100%;
   }
 
   .gl-login-stat {
     padding: 0.7rem 1.1rem;
+  }
+
+  .gl-login-returning,
+  .gl-login-urgency {
+    max-width: 100%;
   }
 }
 

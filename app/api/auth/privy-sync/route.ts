@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { PrivyClient } from "@privy-io/server-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { addAddressToHeliusWebhook } from "@/lib/helius/addWebhookAddress";
+import { getPrivyAppId, getPrivyAppSecret } from "@/lib/privy";
 
 const BETA_SIGNIN_CREDIT_USDC = 100;
 const LEGACY_BETA_CREDIT_DESCRIPTION = "Beta signup — 100 Beta Credits";
@@ -23,6 +24,43 @@ function getMissingProfileColumn(message?: string): string | null {
 
   const match = message.match(/Could not find the '([^']+)' column of 'profiles'/i);
   return match?.[1] ?? null;
+}
+
+function buildProfilePayload(
+  userId: string,
+  privyUserId: string,
+  walletAddress?: string
+): Record<string, string | boolean> {
+  return {
+    id: userId,
+    privy_user_id: privyUserId,
+    is_beta_account: true,
+    ...(walletAddress ? { wallet_address: walletAddress } : {}),
+  };
+}
+
+async function upsertProfile(
+  admin: NonNullable<ReturnType<typeof createSupabaseAdminClient>>,
+  profilePayload: Record<string, string | boolean>
+): Promise<{ message: string } | null> {
+  const mutablePayload = { ...profilePayload };
+
+  while (true) {
+    const { error } = await admin.from("profiles").upsert(mutablePayload, {
+      onConflict: "id",
+    });
+
+    if (!error) {
+      return null;
+    }
+
+    const missingColumn = getMissingProfileColumn(error.message);
+    if (!missingColumn || !(missingColumn in mutablePayload) || missingColumn === "id") {
+      return error;
+    }
+
+    delete mutablePayload[missingColumn];
+  }
 }
 
 async function ensureBetaSigninCredit(
@@ -124,8 +162,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
-    const appSecret = process.env.PRIVY_APP_SECRET;
+    const appId = getPrivyAppId();
+    const appSecret = getPrivyAppSecret();
 
     if (!appId || !appSecret) {
       return NextResponse.json(
@@ -228,72 +266,53 @@ export async function POST(request: NextRequest) {
     }
 
     const resolvedUserId = newUserData?.user?.id ?? linkData.user?.id;
+    const isNewUser = Boolean(newUserData?.user?.id);
     let hasUsername = false;
 
     if (resolvedUserId) {
-      const profilePayload: Record<string, string | boolean> = {
-        id: resolvedUserId,
-        privy_user_id: privyUserId,
-        is_beta_account: true,
-        ...(walletAddress ? { wallet_address: walletAddress } : {}),
-      };
+      if (!isNewUser) {
+        const { data: profileRow, error: profileReadError } = await admin
+          .from("profiles")
+          .select("username")
+          .eq("id", resolvedUserId)
+          .maybeSingle();
 
-      let profileUpsertError: { message: string } | null = null;
-
-      while (true) {
-        const { error } = await admin.from("profiles").upsert(profilePayload, {
-          onConflict: "id",
-        });
-
-        if (!error) {
-          profileUpsertError = null;
-          break;
+        if (profileReadError) {
+          console.error("[Gridlock] privy-sync profile read failed:", profileReadError.message);
+          return NextResponse.json(
+            { error: "Could not read profile." },
+            { status: 500 }
+          );
         }
 
-        const missingColumn = getMissingProfileColumn(error.message);
-        if (!missingColumn || !(missingColumn in profilePayload) || missingColumn === "id") {
-          profileUpsertError = error;
-          break;
+        hasUsername = !!profileRow?.username;
+      }
+
+      const profilePayload = buildProfilePayload(
+        resolvedUserId,
+        privyUserId,
+        walletAddress
+      );
+
+      // Profile syncing and wallet enrichment should not block session
+      // establishment. The dashboard only needs an authenticated Supabase user.
+      after(async () => {
+        const profileUpsertError = await upsertProfile(admin, profilePayload);
+        if (profileUpsertError) {
+          console.error("[Gridlock] privy-sync profile upsert failed:", profileUpsertError.message);
+          return;
         }
 
-        delete profilePayload[missingColumn];
-      }
+        await ensureBetaSigninCredit(admin, resolvedUserId);
 
-      if (profileUpsertError) {
-        console.error("[Gridlock] privy-sync profile upsert failed:", profileUpsertError.message);
-        return NextResponse.json(
-          { error: "Could not sync profile." },
-          { status: 500 }
-        );
-      }
-
-      const { data: profileRow, error: profileReadError } = await admin
-        .from("profiles")
-        .select("username")
-        .eq("id", resolvedUserId)
-        .maybeSingle();
-
-      if (profileReadError) {
-        console.error("[Gridlock] privy-sync profile read failed:", profileReadError.message);
-        return NextResponse.json(
-          { error: "Could not read profile." },
-          { status: 500 }
-        );
-      }
-
-      // Beta-only behavior: every account should receive a one-time 100 Test
-      // USDC credit on sign-in. Keep this in the app layer so it works even if
-      // the database trigger/migration path was not deployed.
-      await ensureBetaSigninCredit(admin, resolvedUserId);
-
-      hasUsername = !!profileRow?.username;
-    }
-
-    // Register wallet address with Helius so USDC deposits are auto-detected.
-    // Awaited so the enrollment completes before the serverless function exits.
-    // Non-fatal — addAddressToHeliusWebhook has its own try/catch and never throws.
-    if (walletAddress) {
-      await addAddressToHeliusWebhook(walletAddress);
+        if (walletAddress) {
+          await addAddressToHeliusWebhook(walletAddress);
+        }
+      });
+    } else if (walletAddress) {
+      after(async () => {
+        await addAddressToHeliusWebhook(walletAddress);
+      });
     }
 
     return NextResponse.json({
