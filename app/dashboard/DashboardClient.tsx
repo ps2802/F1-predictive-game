@@ -201,7 +201,7 @@ function HeroCard({
   return (
     <div style={heroWrap}>
       <div style={heroInner}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           <span style={heroStep}>
             Your next move · Round {race.round}
           </span>
@@ -266,8 +266,8 @@ function CountdownRow({ countdown }: { countdown: CountdownParts }) {
           <span style={{
             fontSize: "clamp(28px,4vw,42px)",
             fontWeight: 900,
-            lineHeight: 0.85,
-            letterSpacing: "-0.08em",
+            lineHeight: 1,
+            letterSpacing: "-0.06em",
             fontVariantNumeric: "tabular-nums",
             color: p.red ? R : "#fff",
             textShadow: p.red ? `0 0 20px rgba(225,6,0,0.4)` : "none",
@@ -310,8 +310,8 @@ const heroStep: React.CSSProperties = {
 const heroName: React.CSSProperties = {
   fontSize: "clamp(28px,4.5vw,52px)",
   fontWeight: 900,
-  lineHeight: 0.88,
-  letterSpacing: "-0.055em",
+  lineHeight: 1,
+  letterSpacing: "-0.04em",
   textTransform: "uppercase",
   color: "#fff",
   margin: 0,
@@ -756,8 +756,8 @@ const sectionLabel: React.CSSProperties = {
 };
 
 const sectionTitle: React.CSSProperties = {
-  fontSize: "16px", fontWeight: 900, letterSpacing: "-0.03em", textTransform: "uppercase",
-  marginTop: "2px", color: "#fff",
+  fontSize: "16px", fontWeight: 900, letterSpacing: "-0.02em", textTransform: "uppercase",
+  marginTop: "6px", color: "#fff",
 };
 
 const sectionAction: React.CSSProperties = {
