@@ -247,3 +247,15 @@ Key routing rules:
 - Architecture review → invoke plan-eng-review
 - Save progress, checkpoint, resume → invoke checkpoint
 - Code quality, health check → invoke health
+
+## Design System
+Always read DESIGN.md before making any visual or UI decisions.
+All font choices, colors, spacing, border-radius, motion rules, and aesthetic direction are defined there.
+Do not deviate without explicit user approval.
+In QA mode, flag any code that doesn't match DESIGN.md.
+Key rules from DESIGN.md:
+- Logo image asset everywhere — never typeset "GRIDLOCK" as text in rendered UI
+- Titillium Web only — no Inter, Roboto, or system fonts
+- No card grids — use rails, rows, and panel splits
+- Color tokens: --red (action/urgency only), --teal (success/active only), --amber (warning/draft only)
+- Border-radius: 0px on data surfaces, small radius on buttons only
