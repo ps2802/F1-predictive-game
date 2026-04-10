@@ -11,6 +11,12 @@ import {
   initPostHogClient,
   setClarityTag,
 } from "@/lib/analytics";
+import {
+  getPrivyAppId,
+  getPrivyClientId,
+  isPrivyEmailOnlyEnvironment,
+  shouldEnablePrivyEmbeddedWallets,
+} from "@/lib/privy";
 
 function AnalyticsRuntime() {
   const pathname = usePathname();
@@ -49,7 +55,10 @@ function MissingPrivyConfigNotice() {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+  const appId = getPrivyAppId();
+  const clientId = getPrivyClientId();
+  const isEmailOnlyEnvironment = isPrivyEmailOnlyEnvironment();
+  const enableEmbeddedWallets = shouldEnablePrivyEmbeddedWallets();
 
   if (!appId) {
     return (
@@ -63,11 +72,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <PrivyProvider
       appId={appId}
+      {...(clientId ? { clientId } : {})}
       config={{
         // loginMethods is intentionally omitted — Privy will show whatever
         // methods are enabled in the dashboard. Passing methods that are NOT
         // enabled in the dashboard causes Privy to throw internally and the
         // modal never renders (silent failure).
+        //
+        // Preview deployments run on transient Vercel URLs. Privy's OAuth
+        // redirect allowlist uses exact URL matches, so Google/social login
+        // can 403 on preview builds even when production works. Limit preview
+        // auth to email so the preview remains testable without dashboard
+        // changes for every deployment URL.
         appearance: {
           theme: "dark",
           accentColor: "#E8002D",
@@ -75,9 +91,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
           landingHeader: "Gridlock",
           loginMessage: "Predict the grid. Outsmart the crowd.",
         },
-        embeddedWallets: {
-          solana: { createOnLogin: "all-users" },
-        },
+        ...(isEmailOnlyEnvironment ? { loginMethods: ["email"] } : {}),
+        ...(enableEmbeddedWallets
+          ? {
+              embeddedWallets: {
+                solana: { createOnLogin: "all-users" },
+              },
+            }
+          : {}),
       }}
     >
       <AnalyticsRuntime />

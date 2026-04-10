@@ -360,11 +360,15 @@ export default function LeaguePage() {
         <div className="league-stats-row">
           <div className="league-stats-card">
             <span className="league-stats-label">Prize Pool</span>
-            <span className="league-stats-value">${pool > 0 ? pool.toFixed(2) : "0"}</span>
+            <span className="league-stats-value" data-testid="league-prize-pool">
+              ${pool > 0 ? pool.toFixed(2) : "0"}
+            </span>
           </div>
           <div className="league-stats-card">
             <span className="league-stats-label">Participants</span>
-            <span className="league-stats-value">{league.member_count}</span>
+            <span className="league-stats-value" data-testid="league-member-count">
+              {league.member_count}
+            </span>
           </div>
           <div className="league-stats-card">
             <span className="league-stats-label">Races Left</span>
@@ -376,8 +380,10 @@ export default function LeaguePage() {
         {league.type === "private" && membership && (
           <div className="league-invite-box" style={{ marginBottom: "1.5rem" }}>
             <span className="league-invite-label">Invite Code</span>
-            <code className="league-invite-code">{league.invite_code}</code>
-            <button className="league-copy-btn" onClick={copyInvite}>
+            <code className="league-invite-code" data-testid="league-invite-code">
+              {league.invite_code}
+            </code>
+            <button className="league-copy-btn" onClick={copyInvite} data-testid="league-invite-link">
               {copied ? "Copied!" : "Copy Link"}
             </button>
           </div>
@@ -400,7 +406,46 @@ export default function LeaguePage() {
         {/* Leaderboard tab */}
         {activeTab === "leaderboard" && (
           <div>
-            <div className="lb-table" style={{ marginTop: "1.5rem" }}>
+            {/* Top 3 Podium */}
+            {members.length >= 3 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem', marginTop: '1.5rem' }}>
+                {members.slice(0, 3).map((m, i) => {
+                  const medals = ['🥇', '🥈', '🥉'];
+                  const gradients = [
+                    'linear-gradient(135deg, #b45309 0%, #d97706 100%)',
+                    'linear-gradient(135deg, #374151 0%, #6b7280 100%)',
+                    'linear-gradient(135deg, #92400e 0%, #b45309 100%)',
+                  ];
+                  const borders = ['rgba(217, 119, 6, 0.5)', 'rgba(107, 114, 128, 0.5)', 'rgba(180, 83, 9, 0.5)'];
+                  return (
+                    <div key={m.user_id} style={{
+                      background: gradients[i],
+                      border: `1px solid ${borders[i]}`,
+                      borderRadius: '12px',
+                      padding: '1rem',
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                        <span style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', fontWeight: 700 }}>#{i+1}</span>
+                        <span style={{ fontSize: '1.25rem' }}>{medals[i]}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.9rem', color: '#fff', flexShrink: 0 }}>
+                          {(m.username ?? 'A').substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <p style={{ color: '#fff', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>
+                            {m.user_id === currentUserId ? 'You' : (m.username ?? 'Anonymous')}
+                          </p>
+                          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.8rem', margin: 0 }}>{Number(m.total_score).toFixed(1)} pts</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="lb-table" style={{ marginTop: '1.5rem' }}>
               <div className="lb-header">
                 <span>Rank</span>
                 <span>Driver</span>
@@ -431,6 +476,57 @@ export default function LeaguePage() {
                     <span className="lb-score">{Number(m.total_score).toFixed(1)}</span>
                   </div>
                 ))
+              )}
+            </div>
+
+            {/* Stats + Prize Pool */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginTop: '1.5rem' }}>
+              {/* Your Stats */}
+              {membership && (
+                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1.25rem' }}>
+                  <h3 style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)', margin: '0 0 1rem' }}>Your Stats</h3>
+                  {(() => {
+                    const myEntry = members.find(m => m.user_id === currentUserId);
+                    const myRank = myEntry ? members.indexOf(myEntry) + 1 : null;
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>Current Rank</span>
+                          <span style={{ color: '#E10600', fontWeight: 800, fontSize: '1rem' }}>{myRank ? `#${myRank}` : '—'}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>Your Points</span>
+                          <span style={{ color: '#fff' }}>{myEntry ? `${Number(myEntry.total_score).toFixed(1)} pts` : '—'}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>Your Stake</span>
+                          <span style={{ color: 'rgba(0,210,170,1)' }}>${Number(membership.stake_amount_usdc).toFixed(2)} USDC</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+              {/* Prize Pool */}
+              {pool > 0 && (
+                <div style={{ background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.2) 0%, rgba(180, 83, 9, 0.2) 100%)', border: '1px solid rgba(217, 119, 6, 0.3)', borderRadius: '12px', padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <span>🏆</span>
+                    <h3 style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.8)', margin: 0 }}>Prize Pool</h3>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>Total Pool</span>
+                    <span style={{ color: '#fff', fontSize: '1.4rem', fontWeight: 800 }}>${pool.toFixed(2)}</span>
+                  </div>
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {payoutTiers.map((tier) => (
+                      <div key={tier.place} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                        <span style={{ color: 'rgba(255,255,255,0.6)' }}>{tier.place === 1 ? '1st' : tier.place === 2 ? '2nd' : '3rd'} Place</span>
+                        <span style={{ color: '#fff' }}>${(pool * tier.percent / 100).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -509,6 +605,20 @@ export default function LeaguePage() {
             {targetRace && (
               <div className="league-predict-cta">
                 <div className="league-predict-cta-text">
+                  <span
+                    className={`league-card-type ${nextRacePredStatus === "active" ? "public" : "private"}`}
+                    data-testid="prediction-status-badge"
+                    style={{ marginBottom: "0.65rem", display: "inline-flex" }}
+                  >
+                    {nextRacePredStatus === "active"
+                      ? "Prediction Active"
+                      : nextRacePredStatus === "draft"
+                        ? "Prediction Draft"
+                        : "No Prediction"}
+                  </span>
+                  <span className="league-entry-note" data-testid="league-race-name" style={{ display: "block" }}>
+                    {targetRace.name}
+                  </span>
                   {nextRacePredStatus === "active" ? (
                     <>
                       <strong>Your picks for {targetRace.name} are active.</strong>

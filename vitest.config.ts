@@ -12,6 +12,7 @@ export default defineConfig({
       ".claude/**",
       ".gstack/**",
       ".next/**",
+      "e2e/**",
       "node_modules/**",
     ],
   },

@@ -64,6 +64,7 @@ export default function PredictPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savedStatus, setSavedStatus] = useState<"draft" | "active" | null>(null);
   const [error, setError] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -162,7 +163,7 @@ export default function PredictPage() {
       .from("races")
       .select("qualifying_starts_at, race_starts_at, quali_locked, race_locked")
       .eq("id", raceId)
-      .single();
+      .maybeSingle();
 
     if (raceRow) {
       setRaceTiming({
@@ -199,7 +200,7 @@ export default function PredictPage() {
         .select("id")
         .eq("race_id", raceId)
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (pred) {
         const { data: ansData } = await supabase
@@ -383,6 +384,7 @@ export default function PredictPage() {
       );
       localStorage.removeItem(`picks_${raceId}`);
       setChargedEditFee(Boolean(data.chargedEditFee));
+      setSavedStatus(data.status === "active" ? "active" : "draft");
       setSaved(true);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Something went wrong";
@@ -446,13 +448,22 @@ export default function PredictPage() {
         <div className="gl-stripe" aria-hidden="true" />
         <AppNav />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
-          <div className="predict-success-icon">✓</div>
+          <div className="predict-success-icon" data-testid="prediction-success-panel">✓</div>
           <h1 className="gla-page-title" style={{ marginTop: "1.5rem" }}>
             {allQuestionsComplete ? "Predictions Locked In" : "Progress Saved"}
           </h1>
           <p className="gla-page-sub">
             {race.name} · Round {race.round}
           </p>
+          {savedStatus && (
+            <p
+              className="league-entry-note"
+              data-testid="prediction-status-badge"
+              style={{ marginTop: "0.85rem" }}
+            >
+              Status: {savedStatus === "active" ? "Active" : "Draft"}
+            </p>
+          )}
           {!allQuestionsComplete && (
             <p style={{
               color: "rgba(0, 210, 170, 1)",
@@ -534,6 +545,29 @@ export default function PredictPage() {
         </div>
       </div>
 
+      {currentCategory !== "review" && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(124, 58, 237, 0.1) 100%)',
+          border: '1px solid rgba(37, 99, 235, 0.3)',
+          borderRadius: '10px',
+          padding: '0.875rem 1rem',
+          marginBottom: '1rem',
+          display: 'flex',
+          gap: '0.75rem',
+          alignItems: 'flex-start',
+        }}>
+          <span style={{ color: '#60a5fa', fontSize: '1rem', flexShrink: 0 }}>ℹ</span>
+          <div>
+            <p style={{ color: '#bfdbfe', fontSize: '0.82rem', margin: '0 0 0.25rem', fontWeight: 600 }}>
+              Dynamic Scoring: Less popular predictions earn more points!
+            </p>
+            <p style={{ color: '#93c5fd', fontSize: '0.75rem', margin: 0 }}>
+              Your predictions automatically apply to both your league and the Global League.
+            </p>
+          </div>
+        </div>
+      )}
+
       {isEditing && (
         <div className="predict-edit-banner">
           Editing your predictions. During a live edit window, updates cost ${PREDICTION_EDIT_FEE_USDC} USDC.
@@ -557,6 +591,15 @@ export default function PredictPage() {
               }
               setStep(i);
             }}
+            data-testid={
+              s === "qualifying"
+                ? "prediction-step-qualifying"
+                : s === "race"
+                  ? "prediction-step-race"
+                  : s === "chaos"
+                    ? "prediction-step-chaos"
+                    : undefined
+            }
           >
             <span className="predict-step-icon">
               {stepComplete(s) ? "✓" : STEP_ICONS[s]}
@@ -610,7 +653,13 @@ export default function PredictPage() {
             const picks = (answers[q.id] ?? []).filter(Boolean);
             const isFull = picks.length >= q.multi_select;
             return (
-              <div key={q.id} className="predict-question">
+              <div key={q.id} className="predict-question" style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '12px',
+                padding: '1.25rem',
+                marginBottom: '1rem',
+              }}>
                 <div className="predict-q-header">
                   <h3 className="predict-q-label">{q.label}</h3>
                   <span className="predict-q-meta">
@@ -703,6 +752,7 @@ export default function PredictPage() {
               className="predict-nav-btn primary"
               onClick={handleSubmit}
               disabled={saving}
+              data-testid="prediction-submit-button"
             >
               {saving
                 ? "Saving..."
@@ -732,6 +782,7 @@ export default function PredictPage() {
                 }
                 setStep(step + 1);
               }}
+              data-testid="prediction-next-button"
             >
               Next: {STEP_LABELS[STEPS[step + 1]]} →
             </button>

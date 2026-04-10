@@ -5,10 +5,10 @@ import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ inviteCode: string }> }
+  { params }: { params: Promise<{ leagueId: string }> }
 ) {
-  const { inviteCode } = await params;
-  const normalizedCode = inviteCode.trim().toUpperCase();
+  const { leagueId } = await params;
+  const normalizedCode = leagueId.trim().toUpperCase();
 
   if (!normalizedCode) {
     return NextResponse.json({ error: "Invite code is required." }, { status: 400 });

@@ -16,8 +16,8 @@
  *      the client. Fix: createBrowserClient uses flowType: 'implicit'.
  *
  * Performance optimization:
- *   The privy-sync API now returns hasUsername so we skip the extra profile
- *   query, reducing the client-side redirect latency significantly.
+ *   Redirect as soon as verifyOtp establishes a real Supabase session.
+ *   Profile/wallet enrichment runs after the auth response.
  */
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -119,16 +119,17 @@ export async function handlePrivyAuthComplete(
 
   // Step 4: Redirect — use hasUsername from API to skip extra profile query.
   // Only allow relative paths (starting with /) to prevent open redirect attacks.
-  if (redirectTo && /^\/[^/]/.test(redirectTo)) {
-    router.push(redirectTo);
+  const destination =
+    redirectTo && /^\/[^/]/.test(redirectTo)
+      ? redirectTo
+      : !hasUsername
+        ? "/onboarding"
+        : "/dashboard";
+
+  if (typeof window !== "undefined") {
+    window.location.assign(destination);
     return;
   }
 
-  // New users (no username yet) go through onboarding; returning users skip it.
-  if (!hasUsername) {
-    router.push("/onboarding");
-    return;
-  }
-
-  router.push("/dashboard");
+  router.push(destination);
 }
