@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard Preview — Gridlock</title>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red: #E10600;
+    --teal: #00D2AA;
+    --gold: #FFD23C;
+    --bg: #060606;
+    --panel: #0D0D0D;
+    --border: rgba(255,255,255,0.07);
+  }
+
+  body {
+    font-family: 'Titillium Web', sans-serif;
+    background: var(--bg);
+    color: #fff;
+    min-height: 100vh;
+  }
+
+  /* ── Nav ─────────────────────────────────────────────────────────────────── */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 36px;
+    height: 54px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(6,6,6,0.98);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-logo-link { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
+  .nav-logo-img { height: 34px; width: auto; display: block; }
+
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+
+  .nav-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px 6px 6px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+  }
+
+  .nav-avatar {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--red), #800);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 900;
+  }
+
+  .nav-username { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: rgba(255,255,255,0.7); }
+
+  .nav-balance {
+    font-size: 13px; font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--teal);
+  }
+
+  .stripe { height: 2px; background: linear-gradient(90deg, var(--red) 0%, rgba(225,6,0,0.3) 50%, transparent 100%); }
+
+  /* ── Layout ──────────────────────────────────────────────────────────────── */
+  .viewport {
+    width: min(1320px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 28px 0 100px;
+  }
+
+  .stack { display: flex; flex-direction: column; gap: 14px; }
+
+  /* ── HERO CTAs — the two dominant actions ─────────────────────────────────── */
+  .hero-cta-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .hero-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px 26px;
+    border: 1px solid;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 150ms ease, box-shadow 180ms ease;
+    text-decoration: none;
+    color: #fff;
+  }
+
+  .hero-cta:hover { transform: translateY(-2px); }
+
+  /* Add Money — teal */
+  .hero-cta-money {
+    border-color: rgba(0,210,170,0.4);
+    background: linear-gradient(135deg, rgba(0,210,170,0.14), rgba(0,150,120,0.08));
+    box-shadow: 0 4px 32px rgba(0,210,170,0.1);
+  }
+
+  .hero-cta-money:hover {
+    box-shadow: 0 8px 40px rgba(0,210,170,0.22);
+  }
+
+  /* Make Prediction — red */
+  .hero-cta-predict {
+    border-color: rgba(225,6,0,0.5);
+    background: linear-gradient(135deg, rgba(225,6,0,0.18), rgba(120,0,0,0.1));
+    box-shadow: 0 4px 32px rgba(225,6,0,0.14);
+  }
+
+  .hero-cta-predict:hover {
+    box-shadow: 0 8px 40px rgba(225,6,0,0.28);
+  }
+
+  .hero-cta-left { display: flex; flex-direction: column; gap: 4px; }
+
+  .hero-cta-eyebrow {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.26em; text-transform: uppercase;
+  }
+
+  .hero-cta-money .hero-cta-eyebrow { color: rgba(0,210,170,0.7); }
+  .hero-cta-predict .hero-cta-eyebrow { color: rgba(225,6,0,0.7); }
+
+  .hero-cta-label {
+    font-size: 26px; font-weight: 900; line-height: 1.05; letter-spacing: -0.03em; text-transform: uppercase;
+  }
+
+  .hero-cta-sub { font-size: 12px; color: rgba(255,255,255,0.46); margin-top: 4px; }
+
+  .hero-cta-btn {
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 44px; padding: 0 22px;
+    font-size: 11px; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase;
+    font-family: inherit; cursor: pointer; border: none;
+    transition: opacity 160ms ease;
+  }
+
+  .hero-cta-money .hero-cta-btn {
+    background: var(--teal); color: #00251e;
+    box-shadow: 0 0 0 1px rgba(0,210,170,0.6), 0 4px 20px rgba(0,210,170,0.3);
+  }
+
+  .hero-cta-predict .hero-cta-btn {
+    background: var(--red); color: #fff;
+    box-shadow: 0 0 0 1px rgba(225,6,0,0.6), 0 4px 20px rgba(225,6,0,0.35);
+  }
+
+  /* Decorative slash */
+  .hero-cta::after {
+    content: "";
+    position: absolute; right: -40px; top: -40px;
+    width: 120px; height: 120px;
+    opacity: 0.06;
+    transform: rotate(22deg);
+  }
+
+  .hero-cta-money::after { background: var(--teal); }
+  .hero-cta-predict::after { background: var(--red); }
+
+  /* ── Next race + Player card row ──────────────────────────────────────────── */
+  .next-and-player {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 12px;
+  }
+
+  /* Next race */
+  .next-race {
+    padding: 22px 26px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--red);
+    background: var(--panel);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .next-race::after {
+    content: "";
+    position: absolute; right: -50px; top: -50px;
+    width: 180px; height: 180px;
+    background: rgba(225,6,0,0.04);
+    transform: rotate(22deg);
+    pointer-events: none;
+  }
+
+  .race-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+
+  .eyebrow {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.26em; text-transform: uppercase;
+    color: rgba(255,255,255,0.32);
+  }
+
+  .race-name-row { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+  .race-flag { font-size: 34px; line-height: 1; }
+  .race-title { font-size: clamp(28px,4vw,48px); font-weight: 900; letter-spacing: -0.04em; text-transform: uppercase; line-height: 1; }
+  .race-sub { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.38); margin-top: 6px; }
+
+  .pill {
+    display: inline-flex; align-items: center; height: 22px; padding: 0 10px;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase;
+    border: 1px solid rgba(225,6,0,0.35); background: rgba(225,6,0,0.1); color: var(--red);
+  }
+
+  /* Countdown */
+  .countdown {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    margin-top: 18px; padding: 16px 0 14px;
+    border-top: 1px solid rgba(255,255,255,0.07); border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .cd-parts { display: flex; align-items: flex-end; gap: 4px; }
+
+  .cd-unit { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 56px; }
+  .cd-unit strong { font-size: clamp(32px,4vw,52px); font-weight: 900; line-height: 1; letter-spacing: -0.06em; font-variant-numeric: tabular-nums; }
+  .cd-unit:first-child strong { color: var(--red); text-shadow: 0 0 24px rgba(225,6,0,0.3); }
+  .cd-unit span { font-size: 9px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.3); }
+  .cd-sep { font-size: 32px; font-weight: 200; color: rgba(255,255,255,0.14); margin-bottom: 12px; align-self: flex-end; line-height: 1; }
+  .cd-lock { font-size: 11px; color: rgba(255,255,255,0.36); text-align: right; line-height: 1.5; }
+
+  /* ── Player card ──────────────────────────────────────────────────────────── */
+  .player-card {
+    display: flex; flex-direction: column; gap: 0;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    overflow: hidden;
+  }
+
+  .player-card-top {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 18px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .player-avatar {
+    width: 44px; height: 44px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--red), #800);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 900; letter-spacing: -0.04em;
+  }
+
+  .player-info { flex: 1; }
+  .player-name { font-size: 18px; font-weight: 900; letter-spacing: -0.03em; }
+  .player-rank { font-size: 11px; color: rgba(255,255,255,0.46); margin-top: 2px; }
+
+  .player-wallet {
+    text-align: right;
+  }
+
+  .player-wallet-val { font-size: 22px; font-weight: 900; letter-spacing: -0.04em; color: var(--teal); }
+  .player-wallet-lbl { font-size: 9px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(0,210,170,0.5); margin-top: 2px; }
+
+  .player-stats { display: grid; grid-template-columns: repeat(4,1fr); }
+
+  .player-stat {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 16px 8px;
+    border-right: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .player-stat:last-child { border-right: none; }
+
+  .ps-val { font-size: 22px; font-weight: 900; line-height: 1; letter-spacing: -0.04em; }
+  .ps-lbl { font-size: 9px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.36); margin-top: 4px; text-align: center; }
+
+  .ps-val.gold { color: var(--gold); }
+  .ps-val.teal { color: var(--teal); }
+
+  /* ── League section ───────────────────────────────────────────────────────── */
+  .league-section {
+    display: flex; flex-direction: column; gap: 16px;
+    padding: 22px 24px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+  }
+
+  .section-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+
+  .section-eyebrow { font-size: 9px; font-weight: 800; letter-spacing: 0.26em; text-transform: uppercase; color: rgba(255,255,255,0.32); }
+  .section-title { font-size: 22px; font-weight: 900; letter-spacing: -0.04em; text-transform: uppercase; margin-top: 4px; }
+
+  .join-paths { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .join-card {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.025);
+    cursor: pointer;
+    transition: border-color 180ms ease, background-color 180ms ease;
+  }
+
+  .join-card:hover {
+    border-color: rgba(0,210,170,0.22);
+    background: rgba(0,210,170,0.04);
+  }
+
+  .join-card-icon { font-size: 24px; line-height: 1; }
+  .join-card-title { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
+  .join-card-sub { font-size: 12px; color: rgba(255,255,255,0.46); line-height: 1.4; }
+
+  .join-card-cta {
+    display: inline-flex; align-items: center; height: 36px; padding: 0 16px;
+    font-size: 10px; font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase;
+    font-family: inherit; cursor: pointer; border: 1px solid;
+    align-self: flex-start;
+    transition: opacity 160ms ease;
+  }
+
+  .join-browse .join-card-cta { border-color: rgba(0,210,170,0.35); background: rgba(0,210,170,0.08); color: var(--teal); }
+  .join-code .join-card-cta { border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.7); }
+
+  .code-input-row { display: flex; gap: 8px; }
+
+  .code-input {
+    flex: 1; height: 36px; padding: 0 12px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
+    color: #fff; font-family: inherit; font-size: 13px; letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .code-input::placeholder { color: rgba(255,255,255,0.28); }
+
+  /* League grid */
+  .league-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+
+  .league-card {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.025);
+    cursor: pointer;
+    transition: border-color 200ms, background 200ms, transform 160ms;
+    text-decoration: none; color: inherit; position: relative; overflow: hidden;
+  }
+
+  .league-card:hover { border-color: rgba(0,210,170,0.22); background: rgba(0,210,170,0.04); transform: translateY(-2px); }
+  .league-card::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: transparent; transition: background 200ms; }
+  .league-card:hover::after { background: linear-gradient(90deg, var(--teal), transparent); }
+
+  .lc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .lc-name { font-size: 14px; font-weight: 800; color: #fff; line-height: 1.2; letter-spacing: -0.02em; }
+
+  .prize { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; font-size: 12px; font-weight: 900; color: var(--teal); border: 1px solid rgba(0,210,170,0.28); background: rgba(0,210,170,0.08); white-space: nowrap; flex-shrink: 0; }
+
+  .lc-race { font-size: 11px; color: rgba(255,255,255,0.42); }
+
+  .fill-bar { height: 2px; background: rgba(255,255,255,0.07); overflow: hidden; margin-top: 4px; }
+  .fill-inner { height: 100%; background: var(--red); }
+
+  .lc-members { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.36); margin-top: 4px; }
+
+  .create-card {
+    display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+    gap: 10px; padding: 16px;
+    border: 1px dashed rgba(255,255,255,0.1);
+    background: transparent;
+    cursor: pointer; transition: border-color 180ms, background 180ms;
+  }
+
+  .create-card:hover { border-color: rgba(225,6,0,0.3); background: rgba(225,6,0,0.04); }
+
+  .create-card-icon { font-size: 24px; color: rgba(255,255,255,0.28); }
+  .create-card-label { font-size: 14px; font-weight: 800; color: rgba(255,255,255,0.6); }
+  .create-card-sub { font-size: 11px; color: rgba(255,255,255,0.36); }
+
+  /* ── Global standings ────────────────────────────────────────────────────── */
+  .standings-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .standings-panel {
+    padding: 20px 22px; border: 1px solid var(--border); background: var(--panel);
+    position: relative; overflow: hidden;
+  }
+
+  .standings-panel::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, var(--teal) 0%, rgba(0,210,170,0.2) 60%, transparent 100%);
+  }
+
+  .panel-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .panel-title { font-size: 18px; font-weight: 900; letter-spacing: -0.04em; text-transform: uppercase; margin-top: 4px; }
+  .panel-link { font-size: 9px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(0,210,170,0.6); text-decoration: none; padding-top: 3px; }
+  .panel-link:hover { color: var(--teal); }
+
+  .podium-list { display: flex; flex-direction: column; gap: 4px; }
+
+  .podium-row {
+    display: grid; grid-template-columns: 38px 1fr auto; align-items: center;
+    gap: 10px; padding: 9px 12px;
+    background: rgba(255,255,255,0.025);
+  }
+
+  .podium-row.you { border-left: 2px solid var(--red); background: rgba(225,6,0,0.07); }
+
+  .rank { font-size: 10px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
+  .rank.p1 { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.4); }
+  .rank.p2 { color: #c0c8d0; }
+  .rank.p3 { color: #c87533; }
+
+  .podium-name { font-size: 14px; font-weight: 700; }
+  .podium-races { font-size: 11px; color: rgba(255,255,255,0.38); margin-top: 2px; }
+  .podium-score { font-size: 20px; font-weight: 900; letter-spacing: -0.05em; }
+
+  .pinned-sep { font-size: 9px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.26); padding: 10px 0 6px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 6px; }
+
+  /* ── F1 standings (bottom) ───────────────────────────────────────────────── */
+  .f1-standings {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+
+  .f1-panel {
+    padding: 20px 22px; border: 1px solid var(--border); background: var(--panel);
+  }
+
+  .f1-panel-header {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 14px;
+  }
+
+  .f1-title { font-size: 16px; font-weight: 900; letter-spacing: -0.03em; text-transform: uppercase; margin-top: 4px; }
+  .f1-season { font-size: 9px; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.32); }
+
+  .f1-list { display: flex; flex-direction: column; gap: 2px; }
+
+  .f1-row {
+    display: grid; grid-template-columns: 32px 1fr auto; align-items: center;
+    gap: 10px; padding: 8px 10px;
+    background: rgba(255,255,255,0.02);
+  }
+
+  .f1-pos { font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.36); }
+  .f1-name { font-size: 13px; font-weight: 700; }
+  .f1-team { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .f1-pts { font-size: 16px; font-weight: 900; letter-spacing: -0.04em; }
+
+  .team-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+  /* Season rail */
+  .season-bar-section {
+    padding: 16px 22px; border: 1px solid var(--border); background: var(--panel);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+
+  .season-bar-header { display: flex; align-items: center; justify-content: space-between; }
+  .season-track { height: 3px; background: rgba(255,255,255,0.06); overflow: hidden; }
+  .season-fill { height: 100%; background: linear-gradient(90deg, var(--red), rgba(225,6,0,0.4)); box-shadow: 0 0 8px rgba(225,6,0,0.3); }
+
+  .markers { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; overflow-x: auto; }
+  .m-item { display: grid; gap: 4px; justify-items: center; }
+  .m-dot { width: 100%; height: 5px; background: rgba(255,255,255,0.07); }
+  .m-dot.settled { background: rgba(255,255,255,0.22); }
+  .m-dot.next { background: var(--red); box-shadow: 0 0 8px rgba(225,6,0,0.4); animation: pulse 1.8s ease-in-out infinite; }
+  .m-lbl { font-size: 8px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.24); }
+
+  /* Buttons */
+  .btn-primary {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 40px; padding: 0 22px;
+    font-size: 10px; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase;
+    background: var(--red); color: #fff; border: none; font-family: inherit; cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(225,6,0,0.6), 0 4px 18px rgba(225,6,0,0.3);
+    transition: box-shadow 160ms, transform 120ms;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(225,6,0,0.8), 0 6px 28px rgba(225,6,0,0.45); }
+
+  .btn-ghost {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 40px; padding: 0 18px;
+    font-size: 10px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03);
+    color: rgba(255,255,255,0.7); font-family: inherit; cursor: pointer;
+    transition: border-color 160ms, color 160ms;
+  }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.22); color: #fff; }
+
+  .preview-badge {
+    position: fixed; bottom: 20px; right: 20px; padding: 8px 14px;
+    background: rgba(225,6,0,0.9); font-size: 9px; font-weight: 800; letter-spacing: 0.2em;
+    text-transform: uppercase; color: #fff; z-index: 9999;
+    box-shadow: 0 4px 20px rgba(225,6,0,0.4);
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <a href="/dashboard" class="nav-logo-link">
+    <img src="/gridlock logo - transparent.png" alt="Gridlock" class="nav-logo-img" />
+  </a>
+  <div class="nav-right">
+    <div class="nav-user">
+      <div class="nav-avatar">PS</div>
+      <span class="nav-username">ps2802</span>
+      <span class="nav-balance">$30.00</span>
+    </div>
+  </div>
+</nav>
+<div class="stripe"></div>
+
+<div class="viewport">
+  <div class="stack">
+
+    <!-- ① Hero CTAs — Add Money + Make Prediction -->
+    <div class="hero-cta-bar">
+      <a class="hero-cta hero-cta-money" href="#">
+        <div class="hero-cta-left">
+          <span class="hero-cta-eyebrow">Wallet · $30.00 USDC</span>
+          <span class="hero-cta-label">Add Money</span>
+          <span class="hero-cta-sub">Deposit USDC via Privy — fund leagues &amp; winnings</span>
+        </div>
+        <button class="hero-cta-btn">Deposit →</button>
+      </a>
+      <a class="hero-cta hero-cta-predict" href="#">
+        <div class="hero-cta-left">
+          <span class="hero-cta-eyebrow">Round 4 · Miami · Locks Sat 2 May</span>
+          <span class="hero-cta-label">Make Prediction</span>
+          <span class="hero-cta-sub">27 days left — one sheet powers every league</span>
+        </div>
+        <button class="hero-cta-btn">Pick Now →</button>
+      </a>
+    </div>
+
+    <!-- ② Next race + Player stats card -->
+    <div class="next-and-player">
+
+      <!-- Next race -->
+      <div class="next-race">
+        <div class="race-top">
+          <div>
+            <div class="eyebrow">Next Race · Round 4</div>
+            <div class="race-name-row">
+              <span class="race-flag">🇺🇸</span>
+              <h1 class="race-title">Miami Grand Prix</h1>
+            </div>
+            <p class="race-sub">United States · Miami International Autodrome · Sat, 3 May 2026</p>
+          </div>
+          <span class="pill">Open · No Pick</span>
+        </div>
+
+        <div class="countdown">
+          <div class="cd-parts">
+            <div class="cd-unit"><strong id="days">27</strong><span>Days</span></div>
+            <div class="cd-sep">:</div>
+            <div class="cd-unit"><strong id="hrs">21</strong><span>Hrs</span></div>
+            <div class="cd-sep">:</div>
+            <div class="cd-unit"><strong id="min">11</strong><span>Min</span></div>
+            <div class="cd-sep">:</div>
+            <div class="cd-unit"><strong id="sec">00</strong><span>Sec</span></div>
+          </div>
+          <span class="cd-lock">Qualifying lock<br>Sat 2 May · 18:00 UTC</span>
+        </div>
+      </div>
+
+      <!-- Player card -->
+      <div class="player-card">
+        <div class="player-card-top">
+          <div class="player-avatar">PS</div>
+          <div class="player-info">
+            <div class="player-name">ps2802</div>
+            <div class="player-rank">#12 Global · 2026 Season</div>
+          </div>
+          <div class="player-wallet">
+            <div class="player-wallet-val">$30</div>
+            <div class="player-wallet-lbl">Balance</div>
+          </div>
+        </div>
+
+        <div class="player-stats">
+          <div class="player-stat">
+            <span class="ps-val">24</span>
+            <span class="ps-lbl">Points</span>
+          </div>
+          <div class="player-stat">
+            <span class="ps-val">3</span>
+            <span class="ps-lbl">Predictions</span>
+          </div>
+          <div class="player-stat">
+            <span class="ps-val gold">1</span>
+            <span class="ps-lbl">Wins</span>
+          </div>
+          <div class="player-stat">
+            <span class="ps-val teal">$10</span>
+            <span class="ps-lbl">Earned</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ League join paths + existing leagues -->
+    <div class="league-section">
+      <div class="section-top">
+        <div>
+          <div class="section-eyebrow">Competition</div>
+          <div class="section-title">Leagues</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn-ghost">Browse All</button>
+          <button class="btn-primary">+ Create League</button>
+        </div>
+      </div>
+
+      <!-- Join paths -->
+      <div class="join-paths">
+        <div class="join-card join-browse">
+          <div class="join-card-icon">🏆</div>
+          <div class="join-card-title">Browse Public Leagues</div>
+          <div class="join-card-sub">Join from a pool of open leagues — free entry, paid entry, global boards.</div>
+          <button class="join-card-cta">Browse Leagues →</button>
+        </div>
+        <div class="join-card join-code">
+          <div class="join-card-icon">🔗</div>
+          <div class="join-card-title">Join Private League</div>
+          <div class="join-card-sub">Got an invite code or referral link? Enter it below to join your friends' board.</div>
+          <div class="code-input-row">
+            <input class="code-input" placeholder="Enter code or paste link" />
+            <button class="join-card-cta" style="align-self:auto">Join</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- My leagues grid -->
+      <div>
+        <div class="section-eyebrow" style="margin-bottom:12px">My Leagues · 3 active</div>
+        <div class="league-grid">
+          <a class="league-card" href="#">
+            <div class="lc-top">
+              <span class="lc-name">F1 Global Championship</span>
+              <span class="prize">$500 USDC</span>
+            </div>
+            <span class="lc-race">Next: Miami Grand Prix · R4</span>
+            <div class="fill-bar"><div class="fill-inner" style="width:78%"></div></div>
+            <span class="lc-members">78 / 100 members</span>
+          </a>
+          <a class="league-card" href="#">
+            <div class="lc-top">
+              <span class="lc-name">kj</span>
+              <span class="prize">$10 USDC</span>
+            </div>
+            <span class="lc-race">Next: Miami Grand Prix · R4</span>
+            <div class="fill-bar"><div class="fill-inner" style="width:40%"></div></div>
+            <span class="lc-members">4 / 10 members</span>
+          </a>
+          <div class="league-card create-card">
+            <div class="create-card-icon">＋</div>
+            <div class="create-card-label">Create New League</div>
+            <div class="create-card-sub">Set your own rules, entry fee, and invite friends</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ Global standings + Season rail -->
+    <div class="standings-row">
+      <div class="standings-panel">
+        <div class="panel-header">
+          <div>
+            <div class="eyebrow">Gridlock</div>
+            <div class="panel-title">Global Standings</div>
+          </div>
+          <a class="panel-link" href="#">Full leaderboard →</a>
+        </div>
+        <div class="podium-list">
+          <div class="podium-row">
+            <span class="rank p1">P1</span>
+            <div><div class="podium-name">vmax33</div><div class="podium-races">3 races</div></div>
+            <span class="podium-score">36</span>
+          </div>
+          <div class="podium-row">
+            <span class="rank p2">P2</span>
+            <div><div class="podium-name">norris4fan</div><div class="podium-races">3 races</div></div>
+            <span class="podium-score">31</span>
+          </div>
+          <div class="podium-row">
+            <span class="rank p3">P3</span>
+            <div><div class="podium-name">lectric16</div><div class="podium-races">3 races</div></div>
+            <span class="podium-score">28</span>
+          </div>
+          <div class="podium-row">
+            <span class="rank">P4</span>
+            <div><div class="podium-name">hamilcar</div><div class="podium-races">3 races</div></div>
+            <span class="podium-score">25</span>
+          </div>
+          <div class="pinned-sep">Your position</div>
+          <div class="podium-row you">
+            <span class="rank">P12</span>
+            <div><div class="podium-name">You</div><div class="podium-races">3 races</div></div>
+            <span class="podium-score">24</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Season progress -->
+      <div class="season-bar-section">
+        <div class="season-bar-header">
+          <div>
+            <div class="eyebrow">2026 Season</div>
+            <div class="panel-title">Progress</div>
+          </div>
+          <span style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.38)">3 / 24 · 13%</span>
+        </div>
+        <div class="season-track"><div class="season-fill" style="width:13%"></div></div>
+        <div class="markers" id="markers"></div>
+      </div>
+    </div>
+
+    <!-- ⑤ F1 Driver + Constructor standings -->
+    <div class="f1-standings">
+      <div class="f1-panel">
+        <div class="f1-panel-header">
+          <div>
+            <div class="eyebrow">Formula 1 · 2026</div>
+            <div class="f1-title">Driver Standings</div>
+          </div>
+          <span class="f1-season">After R3</span>
+        </div>
+        <div class="f1-list">
+          <div class="f1-row">
+            <span class="f1-pos">1</span>
+            <div>
+              <div class="f1-name">M. Verstappen</div>
+              <div class="f1-team"><span class="team-dot" style="background:#3671c6"></span>Red Bull Racing</div>
+            </div>
+            <span class="f1-pts">75</span>
+          </div>
+          <div class="f1-row">
+            <span class="f1-pos">2</span>
+            <div>
+              <div class="f1-name">L. Norris</div>
+              <div class="f1-team"><span class="team-dot" style="background:#ff8000"></span>McLaren</div>
+            </div>
+            <span class="f1-pts">64</span>
+          </div>
+          <div class="f1-row">
+            <span class="f1-pos">3</span>
+            <div>
+              <div class="f1-name">C. Leclerc</div>
+              <div class="f1-team"><span class="team-dot" style="background:#e8002d"></span>Ferrari</div>
+            </div>
+            <span class="f1-pts">58</span>
+          </div>
+          <div class="f1-row">
+            <span class="f1-pos">4</span>
+            <div>
+              <div class="f1-name">G. Russell</div>
+              <div class="f1-team"><span class="team-dot" style="background:#27f4d2"></span>Mercedes</div>
+            </div>
+            <span class="f1-pts">49</span>
+          </div>
+          <div class="f1-row">
+            <span class="f1-pos">5</span>
+            <div>
+              <div class="f1-name">O. Piastri</div>
+              <div class="f1-team"><span class="team-dot" style="background:#ff8000"></span>McLaren</div>
+            </div>
+            <span class="f1-pts">44</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="f1-panel">
+        <div class="f1-panel-header">
+          <div>
+            <div class="eyebrow">Formula 1 · 2026</div>
+            <div class="f1-title">Constructor Standings</div>
+          </div>
+          <span class="f1-season">After R3</span>
+        </div>
+        <div class="f1-list">
+          <div class="f1-row">
+            <span class="f1-pos">1</span>
+            <div>
+              <div class="f1-name">McLaren</div>
+              <div class="f1-team"><span class="team-dot" style="background:#ff8000"></span>Norris · Piastri</div>
+            </div>
+            <span class="f1-pts">108</span>
+          </div>
+          <div class="f1-row">
+            <span class="f1-pos">2</span>
+            <div>
+              <div class="f1-name">Red Bull Racing</div>
+              <div class="f1-team"><span class="team-dot" style="background:#3671c6"></span>Verstappen · Lawson</div>
+            </div>
+            <span class="f1-pts">89</span>
+          </div>
+          <div class="f1-row">
+            <span class="f1-pos">3</span>
+            <div>
+              <div class="f1-name">Ferrari</div>
+              <div class="f1-team"><span class="team-dot" style="background:#e8002d"></span>Leclerc · Hamilton</div>
+            </div>
+            <span class="f1-pts">82</span>
+          </div>
+          <div class="f1-row">
+            <span class="f1-pos">4</span>
+            <div>
+              <div class="f1-name">Mercedes</div>
+              <div class="f1-team"><span class="team-dot" style="background:#27f4d2"></span>Russell · Antonelli</div>
+            </div>
+            <span class="f1-pts">71</span>
+          </div>
+          <div class="f1-row">
+            <span class="f1-pos">5</span>
+            <div>
+              <div class="f1-name">Aston Martin</div>
+              <div class="f1-team"><span class="team-dot" style="background:#229971"></span>Alonso · Stroll</div>
+            </div>
+            <span class="f1-pts">34</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="preview-badge">Design Preview</div>
+
+<script>
+  const lockTime = new Date('2026-05-02T18:00:00Z').getTime();
+  function tick() {
+    const diff = Math.max(0, lockTime - Date.now());
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('days').textContent = pad(Math.floor(diff/86400000));
+    document.getElementById('hrs').textContent = pad(Math.floor((diff%86400000)/3600000));
+    document.getElementById('min').textContent = pad(Math.floor((diff%3600000)/60000));
+    document.getElementById('sec').textContent = pad(Math.floor((diff%60000)/1000));
+  }
+  tick(); setInterval(tick, 1000);
+
+  const mr = document.getElementById('markers');
+  for (let i = 1; i <= 24; i++) {
+    const item = document.createElement('div'); item.className = 'm-item';
+    const dot = document.createElement('div');
+    dot.className = 'm-dot' + (i<=3?' settled':i===4?' next':'');
+    const lbl = document.createElement('div'); lbl.className = 'm-lbl'; lbl.textContent = 'R'+i;
+    item.appendChild(dot); item.appendChild(lbl); mr.appendChild(item);
+  }
+</script>
+</body>
+</html>

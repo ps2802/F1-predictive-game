@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard C — Gridlock</title>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --red:    #E10600;
+  --teal:   #00D2AA;
+  --gold:   #FFD23C;
+  --bg:     #060606;
+  --panel:  #0E0E0E;
+  --panel2: #131313;
+  --border: rgba(255,255,255,0.07);
+}
+
+body {
+  font-family: 'Titillium Web', sans-serif;
+  background: var(--bg);
+  color: #fff;
+  min-height: 100vh;
+}
+
+/* ── Nav ── */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px; height: 52px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(6,6,6,0.98);
+  position: sticky; top: 0; z-index: 100;
+}
+
+.logo-link { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
+.logo-img { height: 34px; width: auto; display: block; }
+
+.nav-actions { display: flex; gap: 8px; }
+
+.nav-btn {
+  height: 32px; padding: 0 16px;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+  font-family: inherit; cursor: pointer;
+}
+
+.nav-btn-primary {
+  background: var(--red); color: #fff; border: none;
+  box-shadow: 0 0 0 1px rgba(225,6,0,0.5), 0 3px 14px rgba(225,6,0,0.3);
+}
+
+.nav-btn-ghost {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.85);
+}
+
+.stripe { height: 2px; background: linear-gradient(90deg, var(--red) 0%, rgba(225,6,0,0.3) 50%, transparent 100%); }
+
+/* ── Page wrapper ── */
+.page {
+  width: min(1200px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 28px 0 100px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+/* ── Stat strip ── */
+.stat-strip {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  position: relative; overflow: hidden;
+}
+
+.stat-strip::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, var(--red) 0%, rgba(225,6,0,0.3) 40%, transparent 100%);
+}
+
+.stat-cell {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 22px;
+  border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+.stat-cell:last-child { border-right: none; }
+
+.stat-left { display: flex; flex-direction: column; gap: 6px; }
+
+.stat-lbl {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+
+.stat-val {
+  font-size: 36px; font-weight: 900; line-height: 1;
+  letter-spacing: -0.05em; font-variant-numeric: tabular-nums;
+}
+
+.stat-sub { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+/* Sparkline widget */
+.stat-widget {
+  width: 52px; height: 36px; flex-shrink: 0;
+  display: flex; align-items: flex-end; gap: 3px; padding: 0 4px;
+}
+
+.bar {
+  flex: 1; border-radius: 1px;
+  background: rgba(255,255,255,0.08);
+}
+
+.bar.active { background: var(--red); opacity: 0.7; }
+.bar.peak   { background: var(--red); opacity: 1; box-shadow: 0 0 6px rgba(225,6,0,0.4); }
+.bar.teal   { background: var(--teal); opacity: 0.8; }
+.bar.teal-peak { background: var(--teal); opacity: 1; box-shadow: 0 0 6px rgba(0,210,170,0.4); }
+
+/* ── Featured league banner ── */
+.featured-banner {
+  position: relative; overflow: hidden;
+  padding: 20px 28px;
+  border: 1px solid rgba(0,210,170,0.2);
+  background:
+    radial-gradient(ellipse 60% 100% at 30% 50%, rgba(0,210,170,0.08), transparent),
+    linear-gradient(135deg, rgba(20,20,20,0.98), rgba(10,10,10,0.98));
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+}
+
+/* Teal top line */
+.featured-banner::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, var(--teal) 0%, rgba(0,210,170,0.3) 50%, transparent 100%);
+}
+
+/* Circuit graphic — decorative lines */
+.featured-banner::after {
+  content: "";
+  position: absolute; right: 200px; top: 0; bottom: 0; width: 300px;
+  background:
+    repeating-linear-gradient(90deg, rgba(0,210,170,0.03) 0px, rgba(0,210,170,0.03) 1px, transparent 1px, transparent 40px),
+    repeating-linear-gradient(0deg, rgba(0,210,170,0.03) 0px, rgba(0,210,170,0.03) 1px, transparent 1px, transparent 20px);
+  pointer-events: none;
+}
+
+.featured-left { display: flex; align-items: center; gap: 16px; }
+
+.featured-icon {
+  width: 44px; height: 44px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  border: 1px solid rgba(0,210,170,0.2);
+  background: rgba(0,210,170,0.06);
+}
+
+.featured-info { display: flex; flex-direction: column; gap: 6px; }
+
+.featured-eyebrow {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--teal);
+}
+
+.featured-name { font-size: 20px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.2; }
+
+.featured-meta { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.4; }
+
+.featured-meta span {
+  display: inline-flex; align-items: center; gap: 6px;
+}
+
+.featured-meta span::after {
+  content: "·"; color: rgba(255,255,255,0.2);
+}
+
+.featured-meta span:last-child::after { display: none; }
+
+.btn-board {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; height: 36px; padding: 0 18px;
+  font-size: 10px; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase;
+  font-family: inherit; cursor: pointer;
+  border: 1px solid rgba(0,210,170,0.35); background: rgba(0,210,170,0.08);
+  color: var(--teal);
+  transition: background 160ms, border-color 160ms;
+}
+
+.btn-board:hover { background: rgba(0,210,170,0.14); border-color: rgba(0,210,170,0.55); }
+
+/* ── Next Race ── */
+.next-race-section { display: flex; flex-direction: column; gap: 0; }
+
+.section-head-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 10px;
+}
+
+.section-head-label { font-size: 13px; font-weight: 800; letter-spacing: -0.01em; color: #fff; }
+.section-head-link {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+  color: rgba(255,255,255,0.55); text-decoration: none; cursor: pointer; background: none; border: none; font-family: inherit;
+}
+.section-head-link:hover { color: rgba(255,255,255,0.85); }
+
+.next-race-card {
+  position: relative; overflow: hidden;
+  padding: 22px 28px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--red);
+  background: var(--panel);
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+}
+
+.next-race-card::after {
+  content: "";
+  position: absolute; right: -40px; top: -40px;
+  width: 180px; height: 180px;
+  background: rgba(225,6,0,0.04); transform: rotate(22deg); pointer-events: none;
+}
+
+.nr-left { display: flex; flex-direction: column; gap: 6px; }
+
+.nr-eyebrow {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+}
+
+.nr-name-row { display: flex; align-items: center; gap: 12px; }
+.nr-flag { font-size: 28px; line-height: 1; }
+.nr-name {
+  font-size: clamp(24px, 3.5vw, 40px); font-weight: 900;
+  line-height: 1; letter-spacing: -0.04em; text-transform: uppercase;
+}
+
+.nr-details { display: flex; gap: 14px; align-items: center; }
+
+.nr-detail {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.65);
+}
+
+.nr-sep { width: 1px; height: 12px; background: rgba(255,255,255,0.14); }
+
+.nr-right { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+
+/* Compact countdown */
+.nr-countdown { display: flex; align-items: baseline; gap: 1px; }
+
+.nr-cd-num {
+  font-size: 34px; font-weight: 900; line-height: 1;
+  letter-spacing: -0.06em; font-variant-numeric: tabular-nums;
+}
+
+.nr-cd-num.red { color: var(--red); text-shadow: 0 0 16px rgba(225,6,0,0.35); }
+
+.nr-cd-u {
+  font-size: 9px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.55); margin: 0 6px 0 2px; padding-bottom: 4px;
+}
+
+.nr-cd-sep { font-size: 22px; font-weight: 200; color: rgba(255,255,255,0.3); padding-bottom: 3px; }
+
+.btn-pick {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 42px; padding: 0 24px;
+  font-size: 11px; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #fff; background: var(--red); border: none; font-family: inherit; cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(225,6,0,0.6), 0 4px 20px rgba(225,6,0,0.35);
+  transition: box-shadow 160ms, transform 120ms;
+  white-space: nowrap;
+}
+
+.btn-pick:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(225,6,0,0.8), 0 8px 28px rgba(225,6,0,0.5); }
+
+/* ── Leagues section ── */
+.leagues-section { display: flex; flex-direction: column; gap: 0; }
+
+/* Tab bar + search */
+.league-controls {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 10px;
+}
+
+.tab-group { display: flex; gap: 0; border: 1px solid var(--border); background: var(--panel); }
+
+.tab {
+  height: 36px; padding: 0 18px;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+  font-family: inherit; cursor: pointer; border: none;
+  background: transparent; color: rgba(255,255,255,0.6);
+  border-right: 1px solid var(--border);
+  transition: color 140ms, background 140ms;
+}
+
+.tab:last-child { border-right: none; }
+.tab:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.03); }
+
+.tab.active {
+  background: rgba(225,6,0,0.1);
+  color: #fff;
+  border-bottom: 1px solid var(--red);
+  position: relative;
+}
+
+.league-search-wrap { position: relative; }
+
+.league-search {
+  height: 36px; padding: 0 14px 0 36px; width: 200px;
+  background: var(--panel); border: 1px solid var(--border);
+  color: rgba(255,255,255,0.9); font-family: inherit; font-size: 12px;
+}
+
+.league-search::placeholder { color: rgba(255,255,255,0.45); }
+
+.search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 13px; color: rgba(255,255,255,0.5); pointer-events: none;
+}
+
+/* League card grid */
+.league-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+}
+
+.league-card {
+  display: flex; flex-direction: column; gap: 0;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  text-decoration: none; color: inherit;
+  overflow: hidden; position: relative;
+  transition: border-color 180ms, transform 160ms;
+}
+
+.league-card:hover { border-color: rgba(0,210,170,0.22); transform: translateY(-2px); }
+
+.league-card::after {
+  content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: transparent; transition: background 180ms;
+}
+
+.league-card:hover::after { background: linear-gradient(90deg, var(--teal), transparent); }
+
+/* Card top */
+.lc-top {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+}
+
+.lc-badge {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 8px;
+  font-size: 9px; font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase;
+}
+
+.lc-badge-open   { background: rgba(0,210,170,0.1); border: 1px solid rgba(0,210,170,0.28); color: var(--teal); }
+.lc-badge-closed { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.46); }
+.lc-badge-live   { background: rgba(225,6,0,0.1); border: 1px solid rgba(225,6,0,0.3); color: var(--red); animation: pulse 1.8s ease-in-out infinite; }
+
+.lc-name { font-size: 16px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.15; }
+
+/* Card body */
+.lc-body { padding: 12px 16px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+
+.lc-stat-row { display: flex; align-items: center; gap: 14px; }
+
+.lc-stat { display: flex; flex-direction: column; gap: 4px; }
+.lc-stat-val { font-size: 18px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
+.lc-stat-val.teal { color: var(--teal); }
+.lc-stat-lbl { font-size: 9px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+
+.lc-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.1); flex-shrink: 0; }
+
+.lc-next {
+  font-size: 12px; color: rgba(255,255,255,0.6);
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 2px;
+}
+
+.lc-next-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+
+/* Card footer */
+.lc-footer {
+  padding: 10px 16px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+
+.lc-members { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: rgba(255,255,255,0.58); }
+
+.lc-fill { display: flex; align-items: center; gap: 8px; flex: 1; }
+.lc-fill-bar { flex: 1; height: 2px; background: rgba(255,255,255,0.07); overflow: hidden; }
+.lc-fill-inner { height: 100%; background: var(--red); }
+
+.btn-pick-sm {
+  display: inline-flex; align-items: center; height: 28px; padding: 0 14px;
+  font-size: 9px; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #fff; background: var(--red); border: none; font-family: inherit; cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(225,6,0,0.5), 0 2px 10px rgba(225,6,0,0.25);
+  flex-shrink: 0;
+  transition: box-shadow 140ms, transform 100ms;
+}
+
+.btn-pick-sm:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(225,6,0,0.7), 0 4px 16px rgba(225,6,0,0.4); }
+
+/* "Create" card */
+.create-card {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 28px 20px;
+  border: 1px dashed rgba(255,255,255,0.1);
+  background: transparent; cursor: pointer;
+  transition: border-color 160ms, background 160ms;
+  min-height: 180px;
+}
+
+.create-card:hover { border-color: rgba(225,6,0,0.28); background: rgba(225,6,0,0.04); }
+
+.create-plus { font-size: 28px; color: rgba(255,255,255,0.45); line-height: 1; }
+.create-label { font-size: 14px; font-weight: 800; color: rgba(255,255,255,0.75); letter-spacing: -0.01em; }
+.create-sub { font-size: 12px; color: rgba(255,255,255,0.5); text-align: center; line-height: 1.4; }
+
+/* ── Animations ── */
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <a href="/dashboard" class="logo-link">
+    <img src="/gridlock logo - transparent.png" alt="Gridlock" class="logo-img" />
+  </a>
+  <div class="nav-actions">
+    <button class="nav-btn nav-btn-primary">+ Create League</button>
+    <button class="nav-btn nav-btn-ghost">Join Private</button>
+  </div>
+</nav>
+<div class="stripe"></div>
+
+<div class="page">
+
+  <!-- ① Stat strip -->
+  <div class="stat-strip">
+    <div class="stat-cell">
+      <div class="stat-left">
+        <span class="stat-lbl">Total Points</span>
+        <span class="stat-val">24</span>
+        <span class="stat-sub">+8 pts from last race</span>
+      </div>
+      <div class="stat-widget">
+        <div class="bar" style="height:30%"></div>
+        <div class="bar" style="height:45%"></div>
+        <div class="bar active" style="height:55%"></div>
+        <div class="bar active" style="height:40%"></div>
+        <div class="bar peak" style="height:80%"></div>
+        <div class="bar peak" style="height:100%"></div>
+      </div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-left">
+        <span class="stat-lbl">Leagues Joined</span>
+        <span class="stat-val">3</span>
+        <span class="stat-sub">Active boards</span>
+      </div>
+      <div class="stat-widget">
+        <div class="bar" style="height:50%"></div>
+        <div class="bar active" style="height:50%"></div>
+        <div class="bar active" style="height:50%"></div>
+        <div class="bar active" style="height:50%"></div>
+        <div class="bar" style="height:50%"></div>
+        <div class="bar" style="height:50%"></div>
+      </div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-left">
+        <span class="stat-lbl">Winnings</span>
+        <span class="stat-val" style="color:var(--teal)">$30</span>
+        <span class="stat-sub">USDC balance</span>
+      </div>
+      <div class="stat-widget">
+        <div class="bar" style="height:20%"></div>
+        <div class="bar" style="height:30%"></div>
+        <div class="bar teal" style="height:50%"></div>
+        <div class="bar teal" style="height:70%"></div>
+        <div class="bar teal-peak" style="height:85%"></div>
+        <div class="bar teal-peak" style="height:100%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② Featured global league -->
+  <div class="featured-banner">
+    <div class="featured-left">
+      <div class="featured-icon">🏆</div>
+      <div class="featured-info">
+        <span class="featured-eyebrow">Global League · Free Entry</span>
+        <div class="featured-name">F1 Global Championship</div>
+        <div class="featured-meta">
+          <span>169 USDC prize</span>
+          <span>78 members</span>
+          <span>Open now</span>
+        </div>
+      </div>
+    </div>
+    <button class="btn-board">View Leaderboard →</button>
+  </div>
+
+  <!-- ③ Next Race -->
+  <div class="next-race-section">
+    <div class="section-head-row">
+      <span class="section-head-label">Next Race</span>
+      <button class="section-head-link">View Calendar →</button>
+    </div>
+
+    <div class="next-race-card">
+      <div class="nr-left">
+        <span class="nr-eyebrow">Round 4 · Qualifying locks Sat 2 May</span>
+        <div class="nr-name-row">
+          <span class="nr-flag">🇺🇸</span>
+          <h2 class="nr-name">Miami Grand Prix</h2>
+        </div>
+        <div class="nr-details">
+          <span class="nr-detail">Miami International Autodrome</span>
+          <div class="nr-sep"></div>
+          <span class="nr-detail">Sat, 3 May 2026</span>
+          <div class="nr-sep"></div>
+          <span class="nr-detail" style="color:var(--red)">No prediction yet</span>
+        </div>
+      </div>
+
+      <div class="nr-right">
+        <div class="nr-countdown">
+          <span class="nr-cd-num red" id="days">27</span><span class="nr-cd-u">d</span>
+          <span class="nr-cd-sep">:</span>
+          <span class="nr-cd-num" id="hrs">20</span><span class="nr-cd-u">h</span>
+          <span class="nr-cd-sep">:</span>
+          <span class="nr-cd-num" id="min">55</span><span class="nr-cd-u">m</span>
+          <span class="nr-cd-sep">:</span>
+          <span class="nr-cd-num" id="sec">00</span><span class="nr-cd-u">s</span>
+        </div>
+        <button class="btn-pick">Pick Podium →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ Leagues -->
+  <div class="leagues-section">
+    <div class="league-controls">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="tab-group">
+          <button class="tab active">My Leagues</button>
+          <button class="tab">Public</button>
+          <button class="tab">Global</button>
+        </div>
+      </div>
+      <div class="league-search-wrap">
+        <span class="search-icon">⌕</span>
+        <input class="league-search" placeholder="Search leagues..." />
+      </div>
+    </div>
+
+    <div class="league-grid">
+
+      <!-- Card 1 -->
+      <a class="league-card" href="#">
+        <div class="lc-top">
+          <span class="lc-name">F1 Global Championship</span>
+          <span class="lc-badge lc-badge-open">Open</span>
+        </div>
+        <div class="lc-body">
+          <div class="lc-stat-row">
+            <div class="lc-stat">
+              <span class="lc-stat-val teal">$500</span>
+              <span class="lc-stat-lbl">Prize</span>
+            </div>
+            <div class="lc-divider"></div>
+            <div class="lc-stat">
+              <span class="lc-stat-val">78</span>
+              <span class="lc-stat-lbl">Members</span>
+            </div>
+            <div class="lc-divider"></div>
+            <div class="lc-stat">
+              <span class="lc-stat-val">#12</span>
+              <span class="lc-stat-lbl">Your Rank</span>
+            </div>
+          </div>
+          <div class="lc-next">
+            <div class="lc-next-dot"></div>
+            Miami Grand Prix
+          </div>
+        </div>
+        <div class="lc-footer">
+          <div class="lc-fill">
+            <div class="lc-fill-bar"><div class="lc-fill-inner" style="width:78%"></div></div>
+            <span class="lc-members">78/100</span>
+          </div>
+          <button class="btn-pick-sm">Pick →</button>
+        </div>
+      </a>
+
+      <!-- Card 2 -->
+      <a class="league-card" href="#">
+        <div class="lc-top">
+          <span class="lc-name">kj</span>
+          <span class="lc-badge lc-badge-open">Open</span>
+        </div>
+        <div class="lc-body">
+          <div class="lc-stat-row">
+            <div class="lc-stat">
+              <span class="lc-stat-val teal">$10</span>
+              <span class="lc-stat-lbl">Prize</span>
+            </div>
+            <div class="lc-divider"></div>
+            <div class="lc-stat">
+              <span class="lc-stat-val">4</span>
+              <span class="lc-stat-lbl">Members</span>
+            </div>
+            <div class="lc-divider"></div>
+            <div class="lc-stat">
+              <span class="lc-stat-val">#2</span>
+              <span class="lc-stat-lbl">Your Rank</span>
+            </div>
+          </div>
+          <div class="lc-next">
+            <div class="lc-next-dot"></div>
+            Miami Grand Prix
+          </div>
+        </div>
+        <div class="lc-footer">
+          <div class="lc-fill">
+            <div class="lc-fill-bar"><div class="lc-fill-inner" style="width:40%"></div></div>
+            <span class="lc-members">4/10</span>
+          </div>
+          <button class="btn-pick-sm">Pick →</button>
+        </div>
+      </a>
+
+      <!-- Card 3 -->
+      <a class="league-card" href="#">
+        <div class="lc-top">
+          <span class="lc-name">Test League</span>
+          <span class="lc-badge lc-badge-live">Live</span>
+        </div>
+        <div class="lc-body">
+          <div class="lc-stat-row">
+            <div class="lc-stat">
+              <span class="lc-stat-val teal">$25</span>
+              <span class="lc-stat-lbl">Prize</span>
+            </div>
+            <div class="lc-divider"></div>
+            <div class="lc-stat">
+              <span class="lc-stat-val">21</span>
+              <span class="lc-stat-lbl">Members</span>
+            </div>
+            <div class="lc-divider"></div>
+            <div class="lc-stat">
+              <span class="lc-stat-val">#5</span>
+              <span class="lc-stat-lbl">Your Rank</span>
+            </div>
+          </div>
+          <div class="lc-next">
+            <div class="lc-next-dot"></div>
+            Miami Grand Prix
+          </div>
+        </div>
+        <div class="lc-footer">
+          <div class="lc-fill">
+            <div class="lc-fill-bar"><div class="lc-fill-inner" style="width:21%"></div></div>
+            <span class="lc-members">21/100</span>
+          </div>
+          <button class="btn-pick-sm">Pick →</button>
+        </div>
+      </a>
+
+      <!-- Create new -->
+      <div class="create-card">
+        <div class="create-plus">＋</div>
+        <div class="create-label">Create New League</div>
+        <div class="create-sub">Set rules, entry fee &amp; invite friends</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const lock = new Date('2026-05-02T18:00:00Z').getTime();
+  function tick() {
+    const diff = Math.max(0, lock - Date.now());
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('days').textContent = pad(Math.floor(diff/86400000));
+    document.getElementById('hrs').textContent  = pad(Math.floor((diff%86400000)/3600000));
+    document.getElementById('min').textContent  = pad(Math.floor((diff%3600000)/60000));
+    document.getElementById('sec').textContent  = pad(Math.floor((diff%60000)/1000));
+  }
+  tick(); setInterval(tick, 1000);
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
