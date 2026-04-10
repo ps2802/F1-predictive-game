@@ -18,14 +18,11 @@ type DashboardRaceRecord = {
   id: string;
   round: number;
   season: number | null;
-  country: string | null;
-  race_date: string | null;
   race_starts_at: string | null;
   qualifying_starts_at: string | null;
   grand_prix_name: string | null;
-  name: string | null;
-  is_locked: boolean | null;
   race_locked: boolean | null;
+  quali_locked: boolean | null;
 };
 
 type DashboardPredictionRow = {
@@ -56,7 +53,7 @@ function resolveRaceStatus(race: DashboardRaceRecord, now: Date): "open" | "lock
     !Number.isNaN(qualifyingStart.getTime()) &&
     now >= qualifyingStart;
 
-  if (race.is_locked === true || race.race_locked === true || deadlinePassed) {
+  if (race.race_locked === true || race.quali_locked === true || deadlinePassed) {
     return "locked";
   }
 
@@ -148,7 +145,7 @@ export async function GET() {
     supabase
       .from("races")
       .select(
-        "id, round, season, country, race_date, race_starts_at, qualifying_starts_at, grand_prix_name, name, is_locked, race_locked"
+        "id, round, season, race_starts_at, qualifying_starts_at, grand_prix_name, race_locked, quali_locked"
       )
       .order("round", { ascending: true }),
     supabase
@@ -192,10 +189,10 @@ export async function GET() {
     return {
       id: race.id,
       round: race.round,
-      name: race.grand_prix_name ?? race.name ?? presentation?.name ?? race.id,
-      country: race.country ?? presentation?.country ?? null,
+      name: race.grand_prix_name ?? presentation?.name ?? race.id,
+      country: presentation?.country ?? null,
       flag: presentation?.flag ?? null,
-      date: race.race_starts_at ?? race.race_date,
+      date: race.race_starts_at,
       qualifyingStartsAt: race.qualifying_starts_at,
       raceStartsAt: race.race_starts_at,
       raceStatus,
