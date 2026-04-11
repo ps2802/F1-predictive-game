@@ -5,21 +5,19 @@ All notable changes to Gridlock will be documented in this file.
 ## [0.1.1.0] - 2026-04-11
 
 ### Added
-- Per-league competitive context in the dashboard: users now see their rank, points gap to P1, and points lead over P2 directly in the My Leagues panel
-- `leagueSubline` shows "P1 · Leading by N pts", "P1 · Tied", "P2 · N pts behind P1", or member count as fallback
-- `computeLeagueRankContext` utility for per-league rank and gap calculation, fully tested
-
-### Changed
-- On Deck race panel now shows 1 hero race + up to 3 upcoming (4 total) instead of 3
-- `globalRankDelta` field added to the ViewModel but always returns null (UI hides it); pg_cron rank snapshot infrastructure deferred post-launch
-- Dashboard API no longer exposes wallet balance server-side — client hydrates from Privy after mount
-- Broadcast Telemetry design system documented in `DESIGN.md` with full color tokens, typography, spacing, motion, and accessibility specs
-- `CLAUDE.md` updated with gstack skill routing rules and DESIGN.md reference
+- Per-league competitive context in the dashboard: the My Leagues panel now shows your rank, how many points separate you from P1, and your lead over P2 — so you always know where you stand without clicking in
+- On Deck race panel now shows 1 hero race + up to 3 upcoming races (4 total), giving more at-a-glance visibility into the near-term schedule
 
 ### Fixed
-- Race fallback tests updated to use the correct `usa-2026` race ID (Miami GP round 4)
-- P1 user tied with P2 was incorrectly displayed as "Sole leader" — now correctly shows "Tied"
-- Missing error handling for `league_members` fetch — gracefully degrades rank context to nulls on failure
+- P1 user tied with P2 was shown as "Sole leader" — it now correctly shows "Tied"
+- League rank context falls back to nulls gracefully when the member list is unavailable, instead of crashing
+
+### For contributors
+- `computeLeagueRankContext` added to `lib/dashboard.ts` — pure function, tie-breaks by userId lexicographic order, 100% unit test coverage
+- `globalRankDelta` field added to the ViewModel (always null until pg_cron rank snapshot infrastructure is added post-launch)
+- Dashboard API no longer populates wallet balance server-side — client hydrates from Privy after mount to avoid stale values
+- Broadcast Telemetry design system documented in `DESIGN.md` with full color tokens, typography, spacing, motion, and accessibility specs
+- `CLAUDE.md` updated with gstack skill routing rules and DESIGN.md reference
 
 ## [0.1.0.0] - 2026-03-31
 
