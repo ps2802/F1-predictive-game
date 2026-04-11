@@ -18,6 +18,7 @@ import {
   getDashboardRaceBadge,
   getDashboardRaceHref,
   groupDashboardRaces,
+  leagueSubline,
   resolveDashboardHeroAction,
   type CountdownParts,
   type DashboardLeaderboardEntry,
@@ -452,9 +453,7 @@ function MyLeaguesSection({ leagues }: { leagues: DashboardLeaguePreviewItem[] }
             <div>
               <div style={{ fontSize: "14px", fontWeight: 700 }}>{league.name}</div>
               <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.38)", marginTop: "2px" }}>
-                {league.raceName
-                  ? `Next: ${league.raceName}${league.raceRound !== null ? ` · R${league.raceRound}` : ""}`
-                  : `${league.memberCount}/${league.maxUsers} members`}
+                {leagueSubline(league)}
               </div>
             </div>
             {league.prizePool > 0 && (

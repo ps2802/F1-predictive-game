@@ -4,6 +4,7 @@ import {
   type LeaderboardEntry,
 } from "@/lib/leaderboard";
 import {
+  computeLeagueRankContext,
   getRacePresentationMeta,
   type DashboardLeaderboardEntry,
   type DashboardLeaguePreviewItem,
@@ -218,13 +219,35 @@ export async function GET() {
   let leaguePreview: DashboardLeaguePreviewItem[] = [];
 
   if (leagueIds.length > 0) {
-    const { data: leagues, error: leaguesError } = await supabase
-      .from("leagues")
-      .select("id, race_id, name, entry_fee_usdc, prize_pool, member_count, max_users")
-      .in("id", leagueIds);
+    const [
+      { data: leagues, error: leaguesError },
+      { data: leagueMemberRows, error: leagueMemberRowsError },
+    ] = await Promise.all([
+      supabase
+        .from("leagues")
+        .select("id, race_id, name, entry_fee_usdc, prize_pool, member_count, max_users")
+        .in("id", leagueIds),
+      // Fetch member user_ids for per-league rank context (scores come from totalsByUser).
+      (admin ?? supabase)
+        .from("league_members")
+        .select("league_id, user_id")
+        .in("league_id", leagueIds),
+    ]);
 
     if (leaguesError) {
       return NextResponse.json({ error: leaguesError.message }, { status: 500 });
+    }
+
+    // Build per-league member list: leagueId → userId[]
+    // We reuse totalsByUser (global race_scores) to approximate per-league scores.
+    // Good enough for MVP pressure display.
+    const leagueMembersByLeague = new Map<string, string[]>();
+    if (!leagueMemberRowsError) {
+      for (const row of (leagueMemberRows ?? []) as { league_id: string; user_id: string }[]) {
+        const members = leagueMembersByLeague.get(row.league_id) ?? [];
+        members.push(row.user_id);
+        leagueMembersByLeague.set(row.league_id, members);
+      }
     }
 
     const raceIndexById = new Map(
@@ -235,6 +258,11 @@ export async function GET() {
     leaguePreview = ((leagues ?? []) as DashboardLeagueRow[])
       .map((league) => {
         const linkedRace = league.race_id ? raceById.get(league.race_id) ?? null : null;
+        const { userRank, pointsGapToNext, pointsGapBelow } = computeLeagueRankContext(
+          user.id,
+          leagueMembersByLeague.get(league.id) ?? [],
+          totalsByUser
+        );
 
         return {
           id: league.id,
@@ -246,6 +274,9 @@ export async function GET() {
           entryFeeUsdc: Number(league.entry_fee_usdc ?? 0),
           raceName: linkedRace?.name ?? null,
           raceRound: linkedRace?.round ?? null,
+          userRank,
+          pointsGapToNext,
+          pointsGapBelow,
         };
       })
       .sort((a, b) => {
@@ -335,6 +366,7 @@ export async function GET() {
     },
     metrics: {
       globalRank,
+      globalRankDelta: null,
       seasonScore,
       leaguesJoined: leagueIds.length,
       walletBalance: profile?.balance_usdc ?? null,
