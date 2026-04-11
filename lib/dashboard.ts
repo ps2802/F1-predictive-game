@@ -166,6 +166,9 @@ export function leagueSubline(league: DashboardLeaguePreviewItem): string {
       return `P1 · Sole leader`;
     }
     if (league.pointsGapToNext !== null) {
+      if (league.pointsGapToNext === 0) {
+        return `P${league.userRank} · Tied`;
+      }
       return `P${league.userRank} · ${league.pointsGapToNext} pts behind P${league.userRank - 1}`;
     }
     return `P${league.userRank}`;

@@ -202,6 +202,10 @@ describe("leagueSubline", () => {
     expect(leagueSubline(makeLeague({ userRank: 3, pointsGapToNext: 8 }))).toBe("P3 · 8 pts behind P2");
   });
 
+  it("shows tied message for non-P1 user with zero gap to leader", () => {
+    expect(leagueSubline(makeLeague({ userRank: 2, pointsGapToNext: 0 }))).toBe("P2 · Tied");
+  });
+
   it("shows rank only when no gap data available", () => {
     expect(leagueSubline(makeLeague({ userRank: 2, pointsGapToNext: null }))).toBe("P2");
   });
