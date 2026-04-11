@@ -499,7 +499,9 @@ function JoinRow() {
           e.preventDefault();
           const form = e.currentTarget;
           const input = form.elements.namedItem("code") as HTMLInputElement;
-          const code = input.value.trim();
+          // Strip any URL prefix — only the alphanumeric code matters.
+          const raw = input.value.trim();
+          const code = raw.replace(/^.*\/join\//, "").replace(/[^a-zA-Z0-9_-]/g, "");
           if (code) window.location.href = `/join/${code}`;
         }}
       >
