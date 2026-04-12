@@ -1521,47 +1521,81 @@ h1, h2, h3 { margin-top: 0; }
 /* =============================================================
    PREDICTION FORM (3-STEP)
 ============================================================= */
-.predict-header {
-  padding: 1.5rem clamp(1rem, 5vw, 2.5rem) 0;
+/* Command Band: left race info + right timing rail */
+.predict-command-band {
   max-width: 900px; margin: 0 auto;
+  padding: 1.5rem clamp(1rem, 5vw, 2.5rem) 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.predict-band-left {
+  display: flex; flex-direction: column; gap: 0.6rem; min-width: 0;
 }
 .predict-back {
-  color: rgba(255,255,255,0.4); font-size: 0.85rem;
+  color: rgba(255,255,255,0.3); font-size: 0.68rem;
+  font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
   text-decoration: none; transition: color 0.15s;
-  display: inline-block; margin-bottom: 1rem;
 }
-.predict-back:hover { color: #fff; }
-.predict-round { font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--gl-red, #E10600); font-weight: 700; margin: 0 0 0.25rem; }
-.predict-race-name { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800;
-  color: #fff; margin: 0; line-height: 1.1; }
+.predict-back:hover { color: rgba(255,255,255,0.65); }
+.predict-round {
+  display: block; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: #E10600; margin: 0 0 0.2rem;
+}
+.predict-race-name {
+  font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 900;
+  letter-spacing: -0.02em; text-transform: uppercase;
+  color: #fff; margin: 0; line-height: 1;
+}
+.predict-timing-rail {
+  display: flex; gap: 0; flex-shrink: 0;
+}
+.predict-timing-cell {
+  display: flex; flex-direction: column; align-items: flex-end;
+  padding: 0 1.25rem; border-left: 1px solid rgba(255,255,255,0.07);
+}
+.predict-timing-cell:last-child { padding-right: 0; }
+.predict-timing-value {
+  font-size: 1.05rem; font-weight: 700; color: #fff;
+  font-variant-numeric: tabular-nums; letter-spacing: 0.02em; line-height: 1.2;
+}
+.predict-timing-label {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: rgba(255,255,255,0.35); margin-top: 0.2rem;
+}
 
 .predict-steps {
-  display: flex; gap: 0; border-bottom: 1px solid rgba(255,255,255,0.08);
-  max-width: 900px; margin: 1.5rem auto 0; padding: 0 clamp(1rem, 5vw, 2.5rem);
+  display: flex; gap: 0; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  max-width: 900px; margin: 0 auto; padding: 0 clamp(1rem, 5vw, 2.5rem);
 }
 .predict-step-tab {
-  display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.75rem 1.25rem; font-size: 0.85rem; font-weight: 600;
-  color: rgba(255,255,255,0.4); background: none; border: none;
+  display: flex; align-items: center; gap: 0.35rem;
+  padding: 0.85rem 1.1rem; font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: rgba(255,255,255,0.35); background: none; border: none;
   border-bottom: 2px solid transparent; margin-bottom: -1px;
-  cursor: pointer; transition: color 0.15s, border-color 0.15s;
+  cursor: pointer; transition: color 0.15s, border-color 0.15s; white-space: nowrap;
 }
-.predict-step-tab:hover { color: #fff; }
-.predict-step-tab.is-active { color: #fff; border-bottom-color: var(--gl-red, #E10600); }
+.predict-step-tab:hover { color: rgba(255,255,255,0.7); }
+.predict-step-tab.is-active { color: #fff; border-bottom-color: #E10600; }
 .predict-step-tab.is-done { color: #00D2AA; }
-.predict-step-icon {
-  width: 22px; height: 22px; border-radius: 50%;
-  background: rgba(255,255,255,0.1); display: flex; align-items: center;
-  justify-content: center; font-size: 0.7rem; font-weight: 700;
+.predict-step-check { font-size: 0.7rem; }
+.predict-copy-expert-btn {
+  margin-left: auto; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: rgba(255,255,255,0.3); background: none; border: none;
+  cursor: pointer; padding: 0.85rem 0; white-space: nowrap;
+  transition: color 0.15s; font-family: inherit;
 }
-.predict-step-tab.is-active .predict-step-icon { background: var(--gl-red, #E10600); }
-.predict-step-tab.is-done .predict-step-icon { background: #00D2AA; }
+.predict-copy-expert-btn:hover:not(:disabled) { color: rgba(255,255,255,0.65); }
+.predict-copy-expert-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .predict-body {
   max-width: 900px; margin: 0 auto;
-  padding: 2rem clamp(1rem, 5vw, 2.5rem) 4rem;
-  display: flex; flex-direction: column; gap: 2rem;
+  padding: 1.75rem clamp(1rem, 5vw, 2.5rem) 4rem;
+  display: flex; flex-direction: column; gap: 1.5rem;
 }
 .predict-locked-banner {
   padding: 0.75rem 1rem; border-radius: 2px;

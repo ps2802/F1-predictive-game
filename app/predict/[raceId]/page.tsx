@@ -515,58 +515,26 @@ export default function PredictPage() {
       <div className="gl-stripe" aria-hidden="true" />
       <AppNav />
 
-      {/* Header */}
-      <div className="predict-header">
-        <Link href="/dashboard" className="predict-back">
-          ← Dashboard
-        </Link>
-        <div className="predict-race-info">
-          <span className="predict-round">Round {race.round}</span>
-          <h1 className="predict-race-name">{race.name}</h1>
-        </div>
-      </div>
-
-      <div className="predict-timing-grid">
-        <div className="predict-timing-card">
-          <span className="predict-timing-value">
-            {getTimingCardValue(qualifyingWindow)}
-          </span>
-          <span className="predict-timing-label">
-            {getTimingCardLabel(qualifyingWindow, "Qualifying")}
-          </span>
-        </div>
-        <div className="predict-timing-card">
-          <span className="predict-timing-value">
-            {getTimingCardValue(raceWindow)}
-          </span>
-          <span className="predict-timing-label">
-            {getTimingCardLabel(raceWindow, "GP")}
-          </span>
-        </div>
-      </div>
-
-      {currentCategory !== "review" && (
-        <div style={{
-          background: 'rgba(0, 210, 170, 0.06)',
-          border: '1px solid rgba(0, 210, 170, 0.18)',
-          borderRadius: '2px',
-          padding: '0.75rem 1rem',
-          marginBottom: '1rem',
-          display: 'flex',
-          gap: '0.75rem',
-          alignItems: 'flex-start',
-        }}>
-          <span style={{ color: '#00D2AA', fontSize: '0.7rem', flexShrink: 0, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', paddingTop: '0.05rem' }}>INFO</span>
+      {/* Command Band: race info + timing */}
+      <div className="predict-command-band">
+        <div className="predict-band-left">
+          <Link href="/dashboard" className="predict-back">← Dashboard</Link>
           <div>
-            <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem', margin: '0 0 0.2rem', fontWeight: 600 }}>
-              Dynamic Scoring: Less popular predictions earn more points!
-            </p>
-            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem', margin: 0 }}>
-              Your predictions automatically apply to both your league and the Global League.
-            </p>
+            <span className="predict-round">Round {race.round}</span>
+            <h1 className="predict-race-name">{race.name}</h1>
           </div>
         </div>
-      )}
+        <div className="predict-timing-rail">
+          <div className="predict-timing-cell">
+            <span className="predict-timing-value">{getTimingCardValue(qualifyingWindow)}</span>
+            <span className="predict-timing-label">{getTimingCardLabel(qualifyingWindow, "Qualifying")}</span>
+          </div>
+          <div className="predict-timing-cell">
+            <span className="predict-timing-value">{getTimingCardValue(raceWindow)}</span>
+            <span className="predict-timing-label">{getTimingCardLabel(raceWindow, "GP")}</span>
+          </div>
+        </div>
+      </div>
 
       {isEditing && (
         <div className="predict-edit-banner">
@@ -601,27 +569,21 @@ export default function PredictPage() {
                     : undefined
             }
           >
-            <span className="predict-step-icon">
-              {stepComplete(s) ? "✓" : STEP_ICONS[s]}
-            </span>
+            {stepComplete(s) ? <span className="predict-step-check">✓</span> : null}
             <span>{STEP_LABELS[s]}</span>
           </button>
         ))}
-      </div>
-
-      {/* Expert copy CTA — only shown before review step */}
-      {currentCategory !== "review" && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.5rem", paddingInline: "1.5rem" }}>
+        {currentCategory !== "review" && (
           <button
             className="predict-copy-expert-btn"
             onClick={handleCopyExpert}
             disabled={copyingExpert}
             title="Copy the top player's picks as a starting point, then modify"
           >
-            {copyingExpert ? "Loading..." : expertCopied ? "✓ Copied!" : "Copy Expert Picks"}
+            {copyingExpert ? "…" : expertCopied ? "✓ Copied" : "Expert Picks"}
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Questions */}
       <div className="predict-body">
