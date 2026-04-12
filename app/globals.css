@@ -1690,7 +1690,7 @@ h1, h2, h3 { margin-top: 0; }
 }
 .league-join-input:focus { border-color: var(--gl-red, #E10600); }
 .league-join-error { color: var(--gl-red, #E10600); font-size: 0.85rem; margin-top: 0.5rem; }
-.league-join-success { color: #4caf50; font-size: 0.85rem; margin-top: 0.5rem; }
+.league-join-success { color: #00D2AA; font-size: 0.85rem; margin-top: 0.5rem; }
 
 .league-section { margin-bottom: 2.5rem; }
 .league-section-title {
@@ -1716,14 +1716,14 @@ h1, h2, h3 { margin-top: 0; }
   letter-spacing: 0.08em; padding: 2px 7px; border-radius: 4px;
   white-space: nowrap;
 }
-.league-card-type.public { background: rgba(76,175,80,0.2); color: #4caf50; }
+.league-card-type.public { background: rgba(0,210,170,0.12); color: #00D2AA; }
 .league-card-type.private { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
 .league-card-type.global { background: rgba(225,6,0,0.2); color: #ff6b6b; }
 .league-card-stats { display: flex; gap: 0.75rem; font-size: 0.8rem; color: rgba(255,255,255,0.5); flex-wrap: wrap; }
 .league-card-fee { color: #ffd700; font-weight: 600; }
-.league-card-pool { color: #4caf50; font-weight: 600; }
+.league-card-pool { color: #00D2AA; font-weight: 600; }
 .league-card-member-badge {
-  font-size: 0.75rem; color: #4caf50; font-weight: 600;
+  font-size: 0.75rem; color: #00D2AA; font-weight: 600;
 }
 
 .league-type-toggle { display: flex; gap: 0.5rem; margin-top: 0.25rem; }
@@ -2194,7 +2194,7 @@ h1, h2, h3 { margin-top: 0; }
 .gl-login-error {
   margin-top: 0.75rem;
   font-size: 0.74rem;
-  color: #f87171;
+  color: #FF1A17;
   letter-spacing: 0.02em;
 }
 
