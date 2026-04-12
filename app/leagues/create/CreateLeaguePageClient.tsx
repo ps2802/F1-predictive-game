@@ -346,7 +346,7 @@ export default function CreateLeaguePageClient({
                 />
               </label>
               {Number(creatorStake) < minimumStake && (
-                <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: "0.35rem" }}>
+                <p style={{ fontSize: "0.75rem", color: "#FF1A17", marginTop: "0.35rem" }}>
                   Minimum entry fee is ${minimumStake} USDC
                 </p>
               )}

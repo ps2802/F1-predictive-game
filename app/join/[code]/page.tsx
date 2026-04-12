@@ -226,7 +226,7 @@ export default function JoinPage() {
                 className="gla-page-sub"
                 style={{
                   marginTop: "0.75rem",
-                  color: status === "done" ? "#4caf50" : "var(--gl-red)",
+                  color: status === "done" ? "#00D2AA" : "var(--gl-red)",
                 }}
                 data-testid={status === "done" ? "league-join-success" : undefined}
               >
