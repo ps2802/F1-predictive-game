@@ -518,11 +518,8 @@ export default function PredictPage() {
       {/* Command Band: race info + timing */}
       <div className="predict-command-band">
         <div className="predict-band-left">
-          <Link href="/dashboard" className="predict-back">← Dashboard</Link>
-          <div>
-            <span className="predict-round">Round {race.round}</span>
-            <h1 className="predict-race-name">{race.name}</h1>
-          </div>
+          <span className="predict-round">Round {race.round}</span>
+          <h1 className="predict-race-name">{race.name}</h1>
         </div>
         <div className="predict-timing-rail">
           <div className="predict-timing-cell">
