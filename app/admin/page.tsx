@@ -420,7 +420,7 @@ export default function AdminPage() {
             {/* Action message */}
             {(raceActionMsg || createMsg) && (
               <p style={{
-                color: (raceActionMsg || createMsg).startsWith("✓") ? "#4caf50" : "var(--gl-red)",
+                color: (raceActionMsg || createMsg).startsWith("✓") ? "#00D2AA" : "var(--gl-red)",
                 fontSize: "0.9rem",
               }}>
                 {raceActionMsg || createMsg}
@@ -522,7 +522,7 @@ export default function AdminPage() {
                       {creating ? "Creating..." : "Create Race"}
                     </button>
                     {createMsg && (
-                      <span style={{ fontSize: "0.85rem", color: createMsg.startsWith("✓") ? "#4caf50" : "var(--gl-red)" }}>
+                      <span style={{ fontSize: "0.85rem", color: createMsg.startsWith("✓") ? "#00D2AA" : "var(--gl-red)" }}>
                         {createMsg}
                       </span>
                     )}
@@ -584,7 +584,7 @@ export default function AdminPage() {
                         padding: "0.2rem 0.5rem",
                         borderRadius: "4px",
                         background: r.question_count > 0 ? "rgba(76,175,80,0.15)" : "rgba(255,255,255,0.07)",
-                        color: r.question_count > 0 ? "#4caf50" : "rgba(255,255,255,0.35)",
+                        color: r.question_count > 0 ? "#00D2AA" : "rgba(255,255,255,0.35)",
                         whiteSpace: "nowrap",
                       }}>
                         {r.question_count > 0 ? `${r.question_count} questions` : "not seeded"}
@@ -690,7 +690,7 @@ export default function AdminPage() {
             </p>
 
             {walletMsg && (
-              <p style={{ fontSize: "0.9rem", color: walletMsg.startsWith("✓") ? "#4caf50" : "var(--gl-red)", marginBottom: "1rem" }}>
+              <p style={{ fontSize: "0.9rem", color: walletMsg.startsWith("✓") ? "#00D2AA" : "var(--gl-red)", marginBottom: "1rem" }}>
                 {walletMsg}
               </p>
             )}
@@ -735,7 +735,7 @@ export default function AdminPage() {
                       padding: "0.2rem 0.5rem",
                       borderRadius: "4px",
                       background: w.watched ? "rgba(76,175,80,0.15)" : "rgba(255,165,0,0.12)",
-                      color: w.watched ? "#4caf50" : "#ffa500",
+                      color: w.watched ? "#00D2AA" : "#FFD23C",
                     }}>
                       {w.watched ? "Watching" : "Not enrolled"}
                     </span>
@@ -841,7 +841,7 @@ export default function AdminPage() {
                 </div>
 
                 {message && (
-                  <p style={{ marginBottom: "1rem", color: message.startsWith("✓") ? "#4caf50" : "var(--gl-red)" }}>
+                  <p style={{ marginBottom: "1rem", color: message.startsWith("✓") ? "#00D2AA" : "var(--gl-red)" }}>
                     {message}
                   </p>
                 )}
