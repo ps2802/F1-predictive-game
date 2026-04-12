@@ -11,6 +11,9 @@ export interface DashboardProfile {
 
 export interface DashboardMetricState {
   globalRank: number | null;
+  // Always null until post-launch pg_cron infrastructure is added.
+  // UI hides the indicator when null. Add rank_delta col + cron job post-launch.
+  globalRankDelta: number | null;
   seasonScore: number;
   leaguesJoined: number;
   walletBalance: number | null;
@@ -55,6 +58,12 @@ export interface DashboardLeaguePreviewItem {
   raceId: string | null;
   raceName: string | null;
   raceRound: number | null;
+  // Per-league competitive context. Null if data unavailable.
+  userRank: number | null;
+  // Points gap to the person above the user. Null if user is P1.
+  pointsGapToNext: number | null;
+  // Points gap from user to P2 below. Populated when user is P1 in the league.
+  pointsGapBelow: number | null;
 }
 
 export interface DashboardSeasonState {
@@ -108,6 +117,76 @@ export function getRacePresentationMeta(raceId: string) {
   return raceFlagsById.get(raceId) ?? null;
 }
 
+// Strips URL prefixes (e.g. https://joingridlock.com/join/CODE) and sanitizes
+// to alphanumeric + _ - only. Returns empty string for invalid/empty input.
+// Prevents open redirect: the result is always safe to use as a /join/ path segment.
+export function extractInviteCode(raw: string): string {
+  return raw.trim().replace(/^.*\/join\//, "").replace(/[^a-zA-Z0-9_-]/g, "");
+}
+
+export interface LeagueRankContext {
+  userRank: number | null;
+  pointsGapToNext: number | null;
+  pointsGapBelow: number | null;
+}
+
+export function computeLeagueRankContext(
+  currentUserId: string,
+  memberUserIds: string[],
+  scoreByUserId: Map<string, number>
+): LeagueRankContext {
+  if (memberUserIds.length === 0) {
+    return { userRank: null, pointsGapToNext: null, pointsGapBelow: null };
+  }
+
+  const sorted = memberUserIds
+    .map((uid) => ({ uid, score: scoreByUserId.get(uid) ?? 0 }))
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.uid.localeCompare(b.uid);
+    });
+
+  const userIndex = sorted.findIndex((m) => m.uid === currentUserId);
+  if (userIndex === -1) {
+    return { userRank: null, pointsGapToNext: null, pointsGapBelow: null };
+  }
+
+  const userRank = userIndex + 1;
+  const userScore = sorted[userIndex].score;
+  const pointsGapToNext = userRank > 1 ? sorted[userIndex - 1].score - userScore : null;
+  const pointsGapBelow =
+    userRank === 1 && sorted.length > 1 ? userScore - sorted[1].score : null;
+
+  return { userRank, pointsGapToNext, pointsGapBelow };
+}
+
+export function leagueSubline(league: DashboardLeaguePreviewItem): string {
+  if (league.userRank !== null) {
+    if (league.userRank === 1) {
+      if (league.pointsGapBelow !== null && league.pointsGapBelow > 0) {
+        return `P1 · Leading by ${league.pointsGapBelow} pts`;
+      }
+      // pointsGapBelow === 0 means tied for P1, not sole leader
+      if (league.pointsGapBelow === 0) {
+        return `P1 · Tied`;
+      }
+      return `P1 · Sole leader`;
+    }
+    if (league.pointsGapToNext !== null) {
+      if (league.pointsGapToNext === 0) {
+        return `P${league.userRank} · Tied`;
+      }
+      return `P${league.userRank} · ${league.pointsGapToNext} pts behind P${league.userRank - 1}`;
+    }
+    return `P${league.userRank}`;
+  }
+  if (league.raceName) {
+    return `Next: ${league.raceName}${league.raceRound !== null ? ` · R${league.raceRound}` : ""}`;
+  }
+  const cap = league.maxUsers > 0 ? `/${league.maxUsers}` : "";
+  return `${league.memberCount}${cap} members`;
+}
+
 export function resolveDashboardHeroAction(
   nextRace: DashboardRaceRow | null
 ): DashboardHeroAction {
@@ -146,14 +225,17 @@ export function resolveDashboardHeroAction(
   };
 }
 
+// 1 hero race + 3 upcoming rows = 4 total races shown above the fold in On Deck
+const ON_DECK_LIMIT = 4;
+
 export function groupDashboardRaces(races: DashboardRaceRow[]): DashboardRaceGroups {
   const sorted = [...races].sort((a, b) => a.round - b.round);
   const open = sorted.filter((race) => race.raceStatus === "open");
   const settled = sorted.filter((race) => race.raceStatus === "locked");
 
   return {
-    onDeck: open.slice(0, 3),
-    seasonRun: open.slice(3),
+    onDeck: open.slice(0, ON_DECK_LIMIT),
+    seasonRun: open.slice(ON_DECK_LIMIT),
     settled,
   };
 }

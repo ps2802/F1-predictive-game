@@ -2,6 +2,23 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.1.1.0] - 2026-04-11
+
+### Added
+- Per-league competitive context in the dashboard: the My Leagues panel now shows your rank, how many points separate you from P1, and your lead over P2 — so you always know where you stand without clicking in
+- On Deck race panel now shows 1 hero race + up to 3 upcoming races (4 total), giving more at-a-glance visibility into the near-term schedule
+
+### Fixed
+- P1 user tied with P2 was shown as "Sole leader" — it now correctly shows "Tied"
+- League rank context falls back to nulls gracefully when the member list is unavailable, instead of crashing
+
+### For contributors
+- `computeLeagueRankContext` added to `lib/dashboard.ts` — pure function, tie-breaks by userId lexicographic order, 100% unit test coverage
+- `globalRankDelta` field added to the ViewModel (always null until pg_cron rank snapshot infrastructure is added post-launch)
+- Dashboard API no longer populates wallet balance server-side — client hydrates from Privy after mount to avoid stale values
+- Broadcast Telemetry design system documented in `DESIGN.md` with full color tokens, typography, spacing, motion, and accessibility specs
+- `CLAUDE.md` updated with gstack skill routing rules and DESIGN.md reference
+
 ## [0.1.0.0] - 2026-03-31
 
 ### Added
