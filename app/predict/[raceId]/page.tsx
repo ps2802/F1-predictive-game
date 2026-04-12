@@ -484,7 +484,7 @@ export default function PredictPage() {
 
           {/* Primary CTA: league join */}
           {allQuestionsComplete && (
-            <div style={{ marginTop: "2rem", padding: "1.25rem", background: "rgba(0,210,170,0.07)", border: "1px solid rgba(0,210,170,0.2)", borderRadius: "12px", maxWidth: "400px", marginInline: "auto" }}>
+            <div style={{ marginTop: "2rem", padding: "1.25rem", background: "rgba(0,210,170,0.07)", border: "1px solid rgba(0,210,170,0.2)", borderRadius: "2px", maxWidth: "400px", marginInline: "auto" }}>
               <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(0,210,170,0.7)", marginBottom: "0.5rem" }}>
                 Next Step
               </p>
@@ -547,21 +547,21 @@ export default function PredictPage() {
 
       {currentCategory !== "review" && (
         <div style={{
-          background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(124, 58, 237, 0.1) 100%)',
-          border: '1px solid rgba(37, 99, 235, 0.3)',
-          borderRadius: '10px',
-          padding: '0.875rem 1rem',
+          background: 'rgba(0, 210, 170, 0.06)',
+          border: '1px solid rgba(0, 210, 170, 0.18)',
+          borderRadius: '2px',
+          padding: '0.75rem 1rem',
           marginBottom: '1rem',
           display: 'flex',
           gap: '0.75rem',
           alignItems: 'flex-start',
         }}>
-          <span style={{ color: '#60a5fa', fontSize: '1rem', flexShrink: 0 }}>ℹ</span>
+          <span style={{ color: '#00D2AA', fontSize: '0.7rem', flexShrink: 0, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', paddingTop: '0.05rem' }}>INFO</span>
           <div>
-            <p style={{ color: '#bfdbfe', fontSize: '0.82rem', margin: '0 0 0.25rem', fontWeight: 600 }}>
+            <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem', margin: '0 0 0.2rem', fontWeight: 600 }}>
               Dynamic Scoring: Less popular predictions earn more points!
             </p>
-            <p style={{ color: '#93c5fd', fontSize: '0.75rem', margin: 0 }}>
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem', margin: 0 }}>
               Your predictions automatically apply to both your league and the Global League.
             </p>
           </div>
@@ -656,7 +656,7 @@ export default function PredictPage() {
               <div key={q.id} className="predict-question" style={{
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '12px',
+                borderRadius: '0',
                 padding: '1.25rem',
                 marginBottom: '1rem',
               }}>
