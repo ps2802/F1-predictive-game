@@ -117,6 +117,13 @@ export function getRacePresentationMeta(raceId: string) {
   return raceFlagsById.get(raceId) ?? null;
 }
 
+// Strips URL prefixes (e.g. https://joingridlock.com/join/CODE) and sanitizes
+// to alphanumeric + _ - only. Returns empty string for invalid/empty input.
+// Prevents open redirect: the result is always safe to use as a /join/ path segment.
+export function extractInviteCode(raw: string): string {
+  return raw.trim().replace(/^.*\/join\//, "").replace(/[^a-zA-Z0-9_-]/g, "");
+}
+
 export interface LeagueRankContext {
   userRank: number | null;
   pointsGapToNext: number | null;
@@ -176,7 +183,8 @@ export function leagueSubline(league: DashboardLeaguePreviewItem): string {
   if (league.raceName) {
     return `Next: ${league.raceName}${league.raceRound !== null ? ` · R${league.raceRound}` : ""}`;
   }
-  return `${league.memberCount}/${league.maxUsers} members`;
+  const cap = league.maxUsers > 0 ? `/${league.maxUsers}` : "";
+  return `${league.memberCount}${cap} members`;
 }
 
 export function resolveDashboardHeroAction(

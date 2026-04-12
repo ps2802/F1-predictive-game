@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   computeLeagueRankContext,
+  extractInviteCode,
   getCountdownParts,
   groupDashboardRaces,
   leagueSubline,
@@ -62,6 +63,23 @@ describe("groupDashboardRaces", () => {
     expect(grouped.onDeck.map((race) => race.id)).toEqual(["b", "c", "d", "e"]);
     expect(grouped.seasonRun.map((race) => race.id)).toEqual([]);
     expect(grouped.settled.map((race) => race.id)).toEqual(["a"]);
+  });
+
+  it("returns empty groups when no races exist", () => {
+    const grouped = groupDashboardRaces([]);
+    expect(grouped.onDeck).toEqual([]);
+    expect(grouped.seasonRun).toEqual([]);
+    expect(grouped.settled).toEqual([]);
+  });
+
+  it("routes all races to settled when every race is locked", () => {
+    const grouped = groupDashboardRaces([
+      makeRace({ id: "a", round: 1, raceStatus: "locked", isNext: false }),
+      makeRace({ id: "b", round: 2, raceStatus: "locked", isNext: false }),
+    ]);
+    expect(grouped.onDeck).toEqual([]);
+    expect(grouped.seasonRun).toEqual([]);
+    expect(grouped.settled).toHaveLength(2);
   });
 
   it("overflows to seasonRun when more than 4 open races exist", () => {
@@ -164,6 +182,18 @@ describe("computeLeagueRankContext", () => {
     expect(result.userRank).toBe(2);
     expect(result.pointsGapToNext).toBe(0);
   });
+
+  it("produces stable full ranking across a 3-way tie", () => {
+    const tiedScores = new Map([["alpha", 10], ["beta", 10], ["gamma", 10]]);
+    // lexicographic order: alpha < beta < gamma → P1/P2/P3
+    const asAlpha = computeLeagueRankContext("alpha", ["gamma", "alpha", "beta"], tiedScores);
+    const asBeta = computeLeagueRankContext("beta", ["gamma", "alpha", "beta"], tiedScores);
+    const asGamma = computeLeagueRankContext("gamma", ["gamma", "alpha", "beta"], tiedScores);
+    expect(asAlpha.userRank).toBe(1);
+    expect(asBeta.userRank).toBe(2);
+    expect(asGamma.userRank).toBe(3);
+    expect(asBeta.pointsGapToNext).toBe(0); // tied
+  });
 });
 
 function makeLeague(overrides: Partial<DashboardLeaguePreviewItem> = {}): DashboardLeaguePreviewItem {
@@ -222,6 +252,12 @@ describe("leagueSubline", () => {
     );
   });
 
+  it("omits capacity when maxUsers is zero (unconfigured league)", () => {
+    expect(leagueSubline(makeLeague({ userRank: null, raceName: null, memberCount: 2, maxUsers: 0 }))).toBe(
+      "2 members"
+    );
+  });
+
   it("rank context takes priority over raceName when both are present", () => {
     // userRank wins — competitive tension shown over upcoming race info
     expect(leagueSubline(makeLeague({ userRank: 1, pointsGapBelow: 5, raceName: "Bahrain Grand Prix" }))).toBe(
@@ -233,5 +269,36 @@ describe("leagueSubline", () => {
     expect(leagueSubline(makeLeague({ userRank: null, raceName: "Bahrain Grand Prix", raceRound: null }))).toBe(
       "Next: Bahrain Grand Prix"
     );
+  });
+});
+
+describe("extractInviteCode", () => {
+  it("returns bare code unchanged", () => {
+    expect(extractInviteCode("ABC123")).toBe("ABC123");
+  });
+
+  it("strips full joingridlock.com URL prefix", () => {
+    expect(extractInviteCode("https://joingridlock.com/join/XYZ789")).toBe("XYZ789");
+  });
+
+  it("strips external domain URL prefix — only the code after /join/ is kept", () => {
+    expect(extractInviteCode("https://evil.com/join/MYCODE")).toBe("MYCODE");
+  });
+
+  it("removes non-alphanumeric characters from a bare external URL (no /join/ path)", () => {
+    // Without a /join/ segment the URL is treated as the raw input and stripped
+    const result = extractInviteCode("https://evil.com");
+    expect(result).toMatch(/^[a-zA-Z0-9_-]*$/);
+    // Critically: no slash → cannot be used to navigate to an external origin
+    expect(result).not.toContain("/");
+    expect(result).not.toContain(":");
+  });
+
+  it("returns empty string when input is empty", () => {
+    expect(extractInviteCode("")).toBe("");
+  });
+
+  it("returns empty string when input contains only illegal characters", () => {
+    expect(extractInviteCode("!!!@@@###")).toBe("");
   });
 });

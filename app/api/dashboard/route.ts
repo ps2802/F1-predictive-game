@@ -228,20 +228,31 @@ export async function GET() {
         .select("id, race_id, name, entry_fee_usdc, prize_pool, member_count, max_users")
         .in("id", leagueIds),
       // Fetch member user_ids for per-league rank context (scores come from totalsByUser).
-      (admin ?? supabase)
+      // Uses admin client to read all league members regardless of RLS.
+      // If admin is null (missing SUPABASE_SERVICE_ROLE_KEY), falls back to user-scoped
+      // client — RLS may restrict results to the current user's own row, causing rank
+      // context to compute incorrectly (always P1). Log a warning so it's visible.
+      (admin
+        ? admin
+        : (console.warn("[dashboard] SUPABASE_SERVICE_ROLE_KEY missing — league rank context may be incorrect"),
+           supabase))
         .from("league_members")
         .select("league_id, user_id")
         .in("league_id", leagueIds),
     ]);
 
     if (leaguesError) {
-      return NextResponse.json({ error: leaguesError.message }, { status: 500 });
+      console.error("[dashboard] leagues fetch error:", leaguesError.message);
+      return NextResponse.json({ error: "Failed to load league data" }, { status: 500 });
     }
 
     // Build per-league member list: leagueId → userId[]
     // We reuse totalsByUser (global race_scores) to approximate per-league scores.
     // Good enough for MVP pressure display.
     const leagueMembersByLeague = new Map<string, string[]>();
+    if (leagueMemberRowsError) {
+      console.error("[dashboard] league_members fetch error (rank context degraded):", leagueMemberRowsError.message);
+    }
     if (!leagueMemberRowsError) {
       for (const row of (leagueMemberRows ?? []) as { league_id: string; user_id: string }[]) {
         const members = leagueMembersByLeague.get(row.league_id) ?? [];

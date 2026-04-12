@@ -15,6 +15,7 @@ import {
   getCountdownParts,
   getDashboardPredictionBadge,
   getDashboardRaceActionLabel,
+  extractInviteCode,
   getDashboardRaceBadge,
   getDashboardRaceHref,
   groupDashboardRaces,
@@ -499,9 +500,7 @@ function JoinRow() {
           e.preventDefault();
           const form = e.currentTarget;
           const input = form.elements.namedItem("code") as HTMLInputElement;
-          // Strip any URL prefix — only the alphanumeric code matters.
-          const raw = input.value.trim();
-          const code = raw.replace(/^.*\/join\//, "").replace(/[^a-zA-Z0-9_-]/g, "");
+          const code = extractInviteCode(input.value);
           if (code) window.location.href = `/join/${code}`;
         }}
       >
