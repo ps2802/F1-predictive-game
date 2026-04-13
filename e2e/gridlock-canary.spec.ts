@@ -172,7 +172,7 @@ test("gridlock synthetic canary", async ({ browser }, testInfo) => {
 
       await recordStep(report, "dashboard.signup_smoke", async () => {
         await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
-        await expect(page.getByTestId("dashboard-next-race-card")).toBeVisible();
+        await expect(page.getByTestId("dashboard-open-predict-button")).toBeVisible();
       });
 
       report.status = "passed";
