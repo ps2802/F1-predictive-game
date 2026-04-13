@@ -36,6 +36,10 @@ type DashboardScoreRow = {
   total_score: number | null;
 };
 
+type DashboardTransactionRow = {
+  amount: number | string | null;
+};
+
 type DashboardLeagueRow = {
   id: string;
   race_id: string | null;
@@ -137,6 +141,8 @@ export async function GET() {
     { data: predictions, error: predictionsError },
     { data: scoreRows, error: scoresError },
     { data: memberships, error: membershipsError },
+    { count: leaguesCreatedCount, error: leaguesCreatedError },
+    { data: entryTransactions, error: entryTransactionsError },
   ] = await Promise.all([
     supabase
       .from("profiles")
@@ -158,6 +164,15 @@ export async function GET() {
       .from("league_members")
       .select("league_id")
       .eq("user_id", user.id),
+    supabase
+      .from("leagues")
+      .select("id", { count: "exact", head: true })
+      .eq("creator_id", user.id),
+    supabase
+      .from("transactions")
+      .select("amount")
+      .eq("user_id", user.id)
+      .eq("type", "entry_fee"),
   ]);
 
   const firstError =
@@ -165,7 +180,9 @@ export async function GET() {
     racesError ??
     predictionsError ??
     scoresError ??
-    membershipsError;
+    membershipsError ??
+    leaguesCreatedError ??
+    entryTransactionsError;
 
   if (firstError) {
     return NextResponse.json({ error: firstError.message }, { status: 500 });
@@ -214,6 +231,10 @@ export async function GET() {
   );
   const seasonScore = Number(totalsByUser.get(user.id) ?? 0);
   let globalRank = ranksByUser.get(user.id) ?? null;
+  const totalStakedUsdc = ((entryTransactions ?? []) as DashboardTransactionRow[]).reduce(
+    (sum, transaction) => sum + Math.abs(Number(transaction.amount ?? 0)),
+    0
+  );
 
   const leagueIds = (memberships ?? []).map((membership) => membership.league_id);
   let leaguePreview: DashboardLeaguePreviewItem[] = [];
@@ -380,6 +401,8 @@ export async function GET() {
       globalRankDelta: null,
       seasonScore,
       leaguesJoined: leagueIds.length,
+      leaguesCreated: leaguesCreatedCount ?? 0,
+      totalStakedUsdc,
       walletBalance: profile?.balance_usdc ?? null,
     },
     leaderboardPreview: {

@@ -139,6 +139,7 @@ export default function DashboardClient() {
       {/* narrow viewport matches preview-b */}
       <div className={styles.viewport} style={{ maxWidth: "min(960px, calc(100% - 40px))", padding: "36px 0 100px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <DashboardSummaryBand metrics={vm.metrics} />
 
           {/* ① Hero — next race */}
           <HeroCard race={vm.nextRace} nowMs={countdownNow} draftCount={vm.draftCount} />
@@ -166,6 +167,272 @@ export default function DashboardClient() {
     </div>
   );
 }
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Summary band                                                                */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+function DashboardSummaryBand({
+  metrics,
+}: {
+  metrics: DashboardViewModel["metrics"];
+}) {
+  const joinedLabel =
+    metrics.leaguesJoined === 1 ? "League joined" : "Leagues joined";
+  const createdLabel =
+    metrics.leaguesCreated === 1 ? "1 created" : `${metrics.leaguesCreated} created`;
+  const exposureContext =
+    metrics.globalRank !== null
+      ? `${formatDashboardRank(metrics.globalRank)} on the global board`
+      : metrics.seasonScore > 0
+        ? `${formatDashboardScore(metrics.seasonScore)} pts on the season`
+        : "Build your edge before the next lock";
+
+  return (
+    <section
+      aria-label="Dashboard summary"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+        gap: "10px",
+      }}
+    >
+      <SummaryMetricCard
+        eyebrow="League footprint"
+        value={String(metrics.leaguesJoined)}
+        title={joinedLabel}
+        detail={createdLabel}
+        accent={TEAL}
+      />
+      <SummaryMetricCard
+        eyebrow="Exposure"
+        value={formatDashboardCurrency(metrics.totalStakedUsdc)}
+        title="Amount staked"
+        detail={exposureContext}
+        accent={R}
+      />
+      <FundingActionCard walletBalance={metrics.walletBalance} />
+    </section>
+  );
+}
+
+function SummaryMetricCard({
+  accent,
+  detail,
+  eyebrow,
+  title,
+  value,
+}: {
+  accent: string;
+  detail: string;
+  eyebrow: string;
+  title: string;
+  value: string;
+}) {
+  return (
+    <div
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        minHeight: "132px",
+        padding: "18px 18px 16px",
+        border: `1px solid ${BORDER}`,
+        background: PANEL,
+      }}
+    >
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: "0 auto auto 0",
+          width: "100%",
+          height: "1px",
+          background: `linear-gradient(90deg, ${accent} 0%, rgba(255,255,255,0) 85%)`,
+        }}
+      />
+      <p style={{ ...sectionLabel, color: "rgba(255,255,255,0.4)", margin: 0 }}>{eyebrow}</p>
+      <div
+        style={{
+          marginTop: "18px",
+          fontSize: "clamp(32px, 5vw, 48px)",
+          fontWeight: 900,
+          lineHeight: 0.9,
+          letterSpacing: "-0.07em",
+          color: "#fff",
+        }}
+      >
+        {value}
+      </div>
+      <div style={{ marginTop: "18px", display: "flex", flexDirection: "column", gap: "4px" }}>
+        <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>{title}</span>
+        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)" }}>{detail}</span>
+      </div>
+    </div>
+  );
+}
+
+function FundingActionCard({
+  walletBalance,
+}: {
+  walletBalance: DashboardViewModel["metrics"]["walletBalance"];
+}) {
+  const hasPrivy = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        minHeight: "132px",
+        padding: "18px 18px 16px",
+        border: `1px solid rgba(225,6,0,0.24)`,
+        background:
+          "linear-gradient(135deg, rgba(225,6,0,0.12) 0%, rgba(255,255,255,0.02) 100%)",
+      }}
+    >
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: "0 auto auto 0",
+          width: "100%",
+          height: "1px",
+          background: "linear-gradient(90deg, #E10600 0%, rgba(255,255,255,0) 85%)",
+        }}
+      />
+      <p style={{ ...sectionLabel, color: "rgba(255,255,255,0.4)", margin: 0 }}>Wallet rail</p>
+      <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "8px" }}>
+        <span
+          style={{
+            fontSize: "22px",
+            fontWeight: 900,
+            letterSpacing: "-0.04em",
+            textTransform: "uppercase",
+            color: "#fff",
+          }}
+        >
+          Add money
+        </span>
+        <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.46)", lineHeight: 1.5 }}>
+          Open your embedded wallet funding flow and top up before the next league stake.
+        </span>
+      </div>
+
+      <div
+        style={{
+          marginTop: "16px",
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "space-between",
+          gap: "12px",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.32)", textTransform: "uppercase", letterSpacing: "0.18em" }}>
+            Wallet balance
+          </span>
+          <span style={{ fontSize: "20px", fontWeight: 900, letterSpacing: "-0.05em", color: "#fff" }}>
+            {formatDashboardCurrency(walletBalance)}
+          </span>
+        </div>
+        {hasPrivy ? <PrivyAddMoneyButton /> : <WalletFallbackLink />}
+      </div>
+    </div>
+  );
+}
+
+function WalletFallbackLink() {
+  return (
+    <Link href="/wallet" style={summaryCtaButton}>
+      Add money
+    </Link>
+  );
+}
+
+function PrivyAddMoneyButton() {
+  type PrivyWalletRecord = {
+    address?: string;
+    chainType?: string;
+    walletClientType?: string;
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { useFundWallet, useWallets } = require("@privy-io/react-auth") as {
+    useFundWallet: () => {
+      fundWallet: (params: {
+        address: string;
+        options?: {
+          asset?: string;
+          chain?: string;
+        };
+      }) => Promise<unknown>;
+    };
+    useWallets: () => {
+      ready: boolean;
+      wallets: PrivyWalletRecord[];
+    };
+  };
+
+  const { fundWallet } = useFundWallet();
+  const { ready, wallets } = useWallets();
+  const router = useRouter();
+  const [isFunding, setIsFunding] = useState(false);
+
+  const embeddedSolanaWallet =
+    wallets.find((wallet) => wallet.walletClientType === "privy" && wallet.chainType === "solana") ??
+    wallets.find((wallet) => wallet.walletClientType === "privy");
+
+  async function handleAddMoney() {
+    if (!ready || !embeddedSolanaWallet?.address) {
+      router.push("/wallet");
+      return;
+    }
+
+    setIsFunding(true);
+
+    try {
+      await fundWallet({
+        address: embeddedSolanaWallet.address,
+        options: {
+          chain: "solana:mainnet",
+          asset: "USDC",
+        },
+      });
+    } catch (error) {
+      console.error("[dashboard] failed to open Privy funding flow:", error);
+      router.push("/wallet");
+    } finally {
+      setIsFunding(false);
+    }
+  }
+
+  return (
+    <button type="button" onClick={handleAddMoney} style={summaryCtaButton}>
+      {isFunding ? "Opening..." : "Add money"}
+    </button>
+  );
+}
+
+const summaryCtaButton: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minWidth: "144px",
+  height: "42px",
+  padding: "0 18px",
+  border: "1px solid rgba(225,6,0,0.45)",
+  background: R,
+  boxShadow: "0 10px 24px rgba(225,6,0,0.22)",
+  color: "#fff",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  fontSize: "11px",
+  fontWeight: 900,
+  letterSpacing: "0.18em",
+  textDecoration: "none",
+  textTransform: "uppercase",
+};
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /* Hero card                                                                    */
@@ -778,6 +1045,11 @@ function DashboardSkeleton() {
   return (
     <div style={{ maxWidth: "min(960px, calc(100% - 40px))", margin: "0 auto", padding: "36px 0 100px" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "10px" }}>
+          <div style={{ ...shimmer, height: "132px" }} />
+          <div style={{ ...shimmer, height: "132px" }} />
+          <div style={{ ...shimmer, height: "132px" }} />
+        </div>
         <div style={{ ...shimmer, height: "180px" }} />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "10px" }}>
           <div style={{ ...shimmer, height: "72px" }} />

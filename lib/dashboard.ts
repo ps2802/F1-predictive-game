@@ -16,6 +16,8 @@ export interface DashboardMetricState {
   globalRankDelta: number | null;
   seasonScore: number;
   leaguesJoined: number;
+  leaguesCreated: number;
+  totalStakedUsdc: number;
   walletBalance: number | null;
 }
 
