@@ -138,7 +138,7 @@ export default function DashboardClient() {
 
       {/* narrow viewport matches preview-b */}
       <div className={styles.viewport} style={{ maxWidth: "min(960px, calc(100% - 40px))", padding: "36px 0 100px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <DashboardSummaryBand metrics={vm.metrics} />
 
           {/* ① Hero — next race */}
@@ -151,7 +151,7 @@ export default function DashboardClient() {
           <MyLeaguesSection leagues={vm.leaguePreview} />
 
           {/* ④ Standings + Race schedule side by side */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
             <StandingsWidget leaderboard={vm.leaderboardPreview} metrics={vm.metrics} />
             <OnDeckWidget
               groups={grouped}
@@ -193,8 +193,8 @@ function DashboardSummaryBand({
       aria-label="Dashboard summary"
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        gap: "10px",
+        gridTemplateColumns: "repeat(2, 1fr)",
+        gap: "14px",
       }}
     >
       <SummaryMetricCard
@@ -205,13 +205,12 @@ function DashboardSummaryBand({
         accent={TEAL}
       />
       <SummaryMetricCard
-        eyebrow="Exposure"
+        eyebrow="Season exposure"
         value={formatDashboardCurrency(metrics.totalStakedUsdc)}
         title="Amount staked"
         detail={exposureContext}
         accent={R}
       />
-      <FundingActionCard walletBalance={metrics.walletBalance} />
     </section>
   );
 }
@@ -234,8 +233,8 @@ function SummaryMetricCard({
       style={{
         position: "relative",
         overflow: "hidden",
-        minHeight: "132px",
-        padding: "18px 18px 16px",
+        minHeight: "120px",
+        padding: "20px 24px 18px",
         border: `1px solid ${BORDER}`,
         background: PANEL,
       }}
@@ -264,175 +263,13 @@ function SummaryMetricCard({
         {value}
       </div>
       <div style={{ marginTop: "18px", display: "flex", flexDirection: "column", gap: "4px" }}>
-        <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff", letterSpacing: "-0.01em" }}>{title}</span>
-        <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.52)" }}>{detail}</span>
+        <span style={{ fontSize: "14px", fontWeight: 700, color: "#fff", letterSpacing: "-0.01em" }}>{title}</span>
+        <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.58)" }}>{detail}</span>
       </div>
     </div>
   );
 }
 
-function FundingActionCard({
-  walletBalance,
-}: {
-  walletBalance: DashboardViewModel["metrics"]["walletBalance"];
-}) {
-  const hasPrivy = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
-
-  return (
-    <div
-      style={{
-        position: "relative",
-        overflow: "hidden",
-        minHeight: "132px",
-        padding: "18px 18px 16px",
-        border: `1px solid rgba(225,6,0,0.24)`,
-        background:
-          "linear-gradient(135deg, rgba(225,6,0,0.12) 0%, rgba(255,255,255,0.02) 100%)",
-      }}
-    >
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          inset: "0 auto auto 0",
-          width: "100%",
-          height: "1px",
-          background: "linear-gradient(90deg, #E10600 0%, rgba(255,255,255,0) 85%)",
-        }}
-      />
-      <p style={{ ...sectionLabel, color: "rgba(255,255,255,0.5)", margin: 0 }}>Wallet rail</p>
-      <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "8px" }}>
-        <span
-          style={{
-            fontSize: "22px",
-            fontWeight: 900,
-            letterSpacing: "-0.04em",
-            textTransform: "uppercase",
-            color: "#fff",
-          }}
-        >
-          Add money
-        </span>
-        <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.55)", lineHeight: 1.55 }}>
-          Open your embedded wallet funding flow and top up before the next league stake.
-        </span>
-      </div>
-
-      <div
-        style={{
-          marginTop: "16px",
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "space-between",
-          gap: "12px",
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.18em" }}>
-            Wallet balance
-          </span>
-          <span style={{ fontSize: "20px", fontWeight: 900, letterSpacing: "-0.05em", color: "#fff" }}>
-            {formatDashboardCurrency(walletBalance)}
-          </span>
-        </div>
-        {hasPrivy ? <PrivyAddMoneyButton /> : <WalletFallbackLink />}
-      </div>
-    </div>
-  );
-}
-
-function WalletFallbackLink() {
-  return (
-    <Link href="/wallet" style={summaryCtaButton}>
-      Add money
-    </Link>
-  );
-}
-
-function PrivyAddMoneyButton() {
-  type PrivyWalletRecord = {
-    address?: string;
-    chainType?: string;
-    walletClientType?: string;
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { useFundWallet, useWallets } = require("@privy-io/react-auth") as {
-    useFundWallet: () => {
-      fundWallet: (params: {
-        address: string;
-        options?: {
-          asset?: string;
-          chain?: string;
-        };
-      }) => Promise<unknown>;
-    };
-    useWallets: () => {
-      ready: boolean;
-      wallets: PrivyWalletRecord[];
-    };
-  };
-
-  const { fundWallet } = useFundWallet();
-  const { ready, wallets } = useWallets();
-  const router = useRouter();
-  const [isFunding, setIsFunding] = useState(false);
-
-  const embeddedSolanaWallet =
-    wallets.find((wallet) => wallet.walletClientType === "privy" && wallet.chainType === "solana") ??
-    wallets.find((wallet) => wallet.walletClientType === "privy");
-
-  async function handleAddMoney() {
-    if (!ready || !embeddedSolanaWallet?.address) {
-      router.push("/wallet");
-      return;
-    }
-
-    setIsFunding(true);
-
-    try {
-      await fundWallet({
-        address: embeddedSolanaWallet.address,
-        options: {
-          chain: "solana:mainnet",
-          asset: "USDC",
-        },
-      });
-    } catch (error) {
-      console.error("[dashboard] failed to open Privy funding flow:", error);
-      router.push("/wallet");
-    } finally {
-      setIsFunding(false);
-    }
-  }
-
-  return (
-    <button type="button" onClick={handleAddMoney} style={summaryCtaButton}>
-      {isFunding ? "Opening..." : "Add money"}
-    </button>
-  );
-}
-
-const summaryCtaButton: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minWidth: "144px",
-  height: "42px",
-  padding: "0 18px",
-  border: "1px solid rgba(225,6,0,0.45)",
-  background: R,
-  boxShadow: "0 10px 24px rgba(225,6,0,0.22)",
-  color: "#fff",
-  cursor: "pointer",
-  fontFamily: "inherit",
-  fontSize: "11px",
-  fontWeight: 900,
-  letterSpacing: "0.18em",
-  textDecoration: "none",
-  textTransform: "uppercase",
-};
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /* Hero card                                                                    */
@@ -511,9 +348,6 @@ function HeroCard({
           >
             {action.label}
           </Link>
-          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", textAlign: "center", letterSpacing: "0.08em" }}>
-            One prediction · Every league
-          </span>
           {draftCount > 0 && (
             <span style={{ fontSize: "10px", color: TEAL, textAlign: "center" }}>
               {draftCount} draft{draftCount > 1 ? "s" : ""} pending
@@ -538,7 +372,7 @@ function CountdownRow({ countdown }: { countdown: CountdownParts }) {
       {parts.map((p, i) => (
         <span key={p.label} style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
           {i > 0 && (
-            <span style={{ fontSize: "28px", fontWeight: 200, color: "rgba(255,255,255,0.14)", paddingBottom: "4px" }}>:</span>
+            <span style={{ fontSize: "28px", fontWeight: 200, color: "rgba(255,255,255,0.28)", paddingBottom: "4px" }}>:</span>
           )}
           <span style={{
             fontSize: "clamp(28px,4vw,42px)",
@@ -662,7 +496,7 @@ function ActionStrip({
   ];
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "10px" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px" }}>
       {tiles.map((t) => (
         <Link key={t.href} href={t.href} style={{
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
@@ -705,7 +539,7 @@ function MyLeaguesSection({ leagues }: { leagues: DashboardLeaguePreviewItem[] }
       {/* Header */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "16px 20px",
+        padding: "18px 24px",
         borderBottom: "1px solid rgba(255,255,255,0.07)",
         borderLeft: `3px solid ${TEAL}`,
       }}>
@@ -720,7 +554,7 @@ function MyLeaguesSection({ leagues }: { leagues: DashboardLeaguePreviewItem[] }
 
       {/* League rows */}
       {leagues.length === 0 ? (
-        <div style={{ padding: "24px 20px", textAlign: "center" }}>
+        <div style={{ padding: "28px 24px", textAlign: "center" }}>
           <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", margin: "0 0 12px" }}>
             No leagues yet — join or create one.
           </p>
@@ -737,7 +571,7 @@ function MyLeaguesSection({ leagues }: { leagues: DashboardLeaguePreviewItem[] }
           <Link key={league.id} href={`/leagues/${league.id}`} style={{
             display: "grid", gridTemplateColumns: "1fr auto auto",
             alignItems: "center", gap: "16px",
-            padding: "14px 20px",
+            padding: "16px 24px",
             borderBottom: "1px solid rgba(255,255,255,0.04)",
             textDecoration: "none", color: "inherit",
           }}>
@@ -773,8 +607,8 @@ function MyLeaguesSection({ leagues }: { leagues: DashboardLeaguePreviewItem[] }
 function JoinRow() {
   return (
     <div style={{
-      display: "flex", alignItems: "center", gap: "10px",
-      padding: "14px 20px",
+      display: "flex", alignItems: "center", gap: "12px",
+      padding: "16px 24px",
       borderTop: "1px solid rgba(255,255,255,0.05)",
       background: "rgba(255,255,255,0.015)",
     }}>
@@ -801,7 +635,7 @@ function JoinRow() {
             flex: 1, height: "34px", padding: "0 12px",
             background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
             color: "#fff", fontFamily: "inherit", fontSize: "12px",
-            letterSpacing: "0.06em", textTransform: "uppercase",
+            letterSpacing: "0.04em",
             outline: "none",
           }}
         />
@@ -892,8 +726,8 @@ function PodiumRow({ entry, isYou }: { entry: DashboardLeaderboardEntry; isYou: 
   return (
     <div style={{
       display: "grid", gridTemplateColumns: "40px 1fr auto",
-      alignItems: "center", gap: "10px",
-      padding: "12px 16px",
+      alignItems: "center", gap: "12px",
+      padding: "14px 20px",
       borderBottom: "1px solid rgba(255,255,255,0.05)",
       borderLeft: isYou ? `3px solid ${R}` : `3px solid transparent`,
       background: isYou ? `rgba(225,6,0,0.07)` : undefined,
@@ -982,7 +816,7 @@ function OnDeckWidget({
         <Link key={race.id} href={getDashboardRaceHref(race)} style={{
           display: "grid", gridTemplateColumns: "32px 1fr auto",
           alignItems: "center", gap: "12px",
-          padding: "12px 16px",
+          padding: "14px 20px",
           borderBottom: "1px solid rgba(255,255,255,0.05)",
           borderLeft: race.isNext ? `3px solid ${R}` : `3px solid transparent`,
           background: race.isNext ? `rgba(225,6,0,0.04)` : undefined,
@@ -1088,7 +922,7 @@ function DashboardSkeleton() {
           <div style={{ ...shimmer, height: "72px" }} />
         </div>
         <div style={{ ...shimmer, height: "180px" }} />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
           <div style={{ ...shimmer, height: "220px" }} />
           <div style={{ ...shimmer, height: "220px" }} />
         </div>

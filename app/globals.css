@@ -42,7 +42,8 @@ h1, h2, h3 { margin-top: 0; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 3rem;
+  /* Dynamic padding: aligns logo/right items with 960px-centered page content */
+  padding: 0 max(1.25rem, calc((100% - 960px) / 2));
   height: 60px;
   background: rgba(0,0,0,.88);
   backdrop-filter: blur(12px);
@@ -63,11 +64,11 @@ h1, h2, h3 { margin-top: 0; }
 }
 
 .gla-nav-link {
-  font-size: .7rem;
+  font-size: .75rem;
   font-weight: 700;
-  letter-spacing: .14em;
+  letter-spacing: .12em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.38);
+  color: rgba(255,255,255,.5);
   transition: color .18s;
   cursor: pointer;
   background: none;
