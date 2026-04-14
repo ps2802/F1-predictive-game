@@ -90,7 +90,7 @@ h1, h2, h3 { margin-top: 0; }
 .gla-page-title {
   font-size: clamp(1.6rem, 2.8vw, 2.4rem);
   font-weight: 900;
-  letter-spacing: -.02em;
+  letter-spacing: -0.03em;
   text-transform: uppercase;
   line-height: 1;
   margin: 0 0 .4rem;
@@ -98,7 +98,7 @@ h1, h2, h3 { margin-top: 0; }
 .gla-page-sub {
   font-size: .82rem;
   color: rgba(255,255,255,.38);
-  letter-spacing: .04em;
+  letter-spacing: 0.02em;
   margin: 0 0 2rem;
 }
 
@@ -136,7 +136,7 @@ h1, h2, h3 { margin-top: 0; }
 .gla-race-round {
   font-size: .58rem;
   font-weight: 700;
-  letter-spacing: .18em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: #E10600;
 }
@@ -144,7 +144,7 @@ h1, h2, h3 { margin-top: 0; }
 .gla-race-name {
   font-size: 1rem;
   font-weight: 700;
-  letter-spacing: -.01em;
+  letter-spacing: -0.03em;
   line-height: 1.2;
   margin: 0;
 }
@@ -152,7 +152,7 @@ h1, h2, h3 { margin-top: 0; }
 .gla-race-meta {
   font-size: .72rem;
   color: rgba(255,255,255,.32);
-  letter-spacing: .06em;
+  letter-spacing: 0.02em;
   display: flex;
   align-items: center;
   gap: .5rem;
