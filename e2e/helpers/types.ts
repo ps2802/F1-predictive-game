@@ -34,11 +34,6 @@ export interface SyntheticPersona {
   reusable: boolean;
 }
 
-export interface SyntheticArtifactRef {
-  label: string;
-  path: string;
-}
-
 export interface SyntheticStepResult {
   step: string;
   status: "passed" | "failed" | "blocked";

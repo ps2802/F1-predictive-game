@@ -3,9 +3,9 @@ import {
   PRE_LOCK_BUFFER_MINUTES,
 } from "./gameRules";
 
-export type PredictionSession = "qualifying" | "race";
+type PredictionSession = "qualifying" | "race";
 
-export type PredictionWindowState = {
+type PredictionWindowState = {
   session: PredictionSession;
   editable: boolean;
   paidEdit: boolean;
