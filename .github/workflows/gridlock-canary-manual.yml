@@ -29,6 +29,16 @@ jobs:
   canary:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      GRIDLOCK_CANARY_BASE_URL_LOCAL: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_LOCAL }}
+      GRIDLOCK_CANARY_BASE_URL_PREVIEW: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_PREVIEW }}
+      GRIDLOCK_CANARY_BASE_URL_PROD: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_PROD }}
+      GRIDLOCK_CANARY_MAIL_PROVIDER: agentmail
+      GRIDLOCK_CANARY_MAIL_API_KEY: ${{ secrets.GRIDLOCK_CANARY_MAIL_API_KEY }}
+      GRIDLOCK_CANARY_MAIL_DOMAIN: ${{ secrets.GRIDLOCK_CANARY_MAIL_DOMAIN }}
+      GRIDLOCK_CANARY_PERSONA_A_EMAIL: ${{ secrets.GRIDLOCK_CANARY_PERSONA_A_EMAIL }}
+      GRIDLOCK_CANARY_PERSONA_B_EMAIL: ${{ secrets.GRIDLOCK_CANARY_PERSONA_B_EMAIL }}
+      GRIDLOCK_CANARY_ALERT_WEBHOOK: ${{ secrets.GRIDLOCK_CANARY_ALERT_WEBHOOK }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,23 +47,50 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - id: canary-config
+        name: Check canary config
+        run: |
+          missing=()
+
+          if [ -z "${{ inputs.base_url }}" ]; then
+            case "${{ inputs.env }}" in
+              local)
+                [ -n "$GRIDLOCK_CANARY_BASE_URL_LOCAL" ] || missing+=("GRIDLOCK_CANARY_BASE_URL_LOCAL or inputs.base_url")
+                ;;
+              preview)
+                [ -n "$GRIDLOCK_CANARY_BASE_URL_PREVIEW" ] || missing+=("GRIDLOCK_CANARY_BASE_URL_PREVIEW or inputs.base_url")
+                ;;
+              prod)
+                [ -n "$GRIDLOCK_CANARY_BASE_URL_PROD" ] || missing+=("GRIDLOCK_CANARY_BASE_URL_PROD or inputs.base_url")
+                ;;
+            esac
+          fi
+
+          [ -n "$GRIDLOCK_CANARY_MAIL_API_KEY" ] || missing+=("GRIDLOCK_CANARY_MAIL_API_KEY")
+          [ -n "$GRIDLOCK_CANARY_MAIL_DOMAIN" ] || missing+=("GRIDLOCK_CANARY_MAIL_DOMAIN")
+          [ -n "$GRIDLOCK_CANARY_PERSONA_A_EMAIL" ] || missing+=("GRIDLOCK_CANARY_PERSONA_A_EMAIL")
+          [ -n "$GRIDLOCK_CANARY_PERSONA_B_EMAIL" ] || missing+=("GRIDLOCK_CANARY_PERSONA_B_EMAIL")
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Canary skipped::Missing required config: ${missing[*]}"
+            {
+              echo "## Gridlock Canary Skipped"
+              echo
+              echo "Missing required config: ${missing[*]}"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
       - name: Run canary
+        if: steps.canary-config.outputs.enabled == 'true'
         run: |
           CMD=(npm run canary:gridlock -- --env "${{ inputs.env }}" --scenario "${{ inputs.scenario }}")
           if [ -n "${{ inputs.base_url }}" ]; then
             CMD+=(--base-url "${{ inputs.base_url }}")
           fi
           "${CMD[@]}"
-        env:
-          GRIDLOCK_CANARY_BASE_URL_LOCAL: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_LOCAL }}
-          GRIDLOCK_CANARY_BASE_URL_PREVIEW: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_PREVIEW }}
-          GRIDLOCK_CANARY_BASE_URL_PROD: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_PROD }}
-          GRIDLOCK_CANARY_MAIL_PROVIDER: agentmail
-          GRIDLOCK_CANARY_MAIL_API_KEY: ${{ secrets.GRIDLOCK_CANARY_MAIL_API_KEY }}
-          GRIDLOCK_CANARY_MAIL_DOMAIN: ${{ secrets.GRIDLOCK_CANARY_MAIL_DOMAIN }}
-          GRIDLOCK_CANARY_PERSONA_A_EMAIL: ${{ secrets.GRIDLOCK_CANARY_PERSONA_A_EMAIL }}
-          GRIDLOCK_CANARY_PERSONA_B_EMAIL: ${{ secrets.GRIDLOCK_CANARY_PERSONA_B_EMAIL }}
-          GRIDLOCK_CANARY_ALERT_WEBHOOK: ${{ secrets.GRIDLOCK_CANARY_ALERT_WEBHOOK }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:

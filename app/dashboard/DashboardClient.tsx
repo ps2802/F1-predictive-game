@@ -193,7 +193,7 @@ function DashboardSummaryBand({
       aria-label="Dashboard summary"
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(2, 1fr)",
+        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
         gap: "14px",
       }}
     >
@@ -211,6 +211,7 @@ function DashboardSummaryBand({
         detail={exposureContext}
         accent={R}
       />
+      <FundingActionCard walletBalance={metrics.walletBalance} />
     </section>
   );
 }
@@ -269,6 +270,169 @@ function SummaryMetricCard({
     </div>
   );
 }
+
+function FundingActionCard({
+  walletBalance,
+}: {
+  walletBalance: DashboardViewModel["metrics"]["walletBalance"];
+}) {
+  const hasPrivy = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        minHeight: "120px",
+        padding: "20px 24px 18px",
+        border: `1px solid rgba(225,6,0,0.24)`,
+        background:
+          "linear-gradient(135deg, rgba(225,6,0,0.12) 0%, rgba(255,255,255,0.02) 100%)",
+      }}
+    >
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: "0 auto auto 0",
+          width: "100%",
+          height: "1px",
+          background: "linear-gradient(90deg, #E10600 0%, rgba(255,255,255,0) 85%)",
+        }}
+      />
+      <p style={{ ...sectionLabel, color: "rgba(255,255,255,0.5)", margin: 0 }}>Wallet rail</p>
+      <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "8px" }}>
+        <span
+          style={{
+            fontSize: "22px",
+            fontWeight: 900,
+            letterSpacing: "-0.04em",
+            textTransform: "uppercase",
+            color: "#fff",
+          }}
+        >
+          Add money
+        </span>
+        <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.46)", lineHeight: 1.5 }}>
+          Open your wallet funding flow and top up before the next league stake.
+        </span>
+      </div>
+
+      <div
+        style={{
+          marginTop: "16px",
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "space-between",
+          gap: "12px",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.32)", textTransform: "uppercase", letterSpacing: "0.18em" }}>
+            Wallet balance
+          </span>
+          <span style={{ fontSize: "20px", fontWeight: 900, letterSpacing: "-0.05em", color: "#fff" }}>
+            {formatDashboardCurrency(walletBalance)}
+          </span>
+        </div>
+        {hasPrivy ? <PrivyAddMoneyButton /> : <WalletFallbackLink />}
+      </div>
+    </div>
+  );
+}
+
+function WalletFallbackLink() {
+  return (
+    <Link href="/wallet" style={summaryCtaButton}>
+      Add money
+    </Link>
+  );
+}
+
+function PrivyAddMoneyButton() {
+  type PrivyWalletRecord = {
+    address?: string;
+    chainType?: string;
+    walletClientType?: string;
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { useFundWallet, useWallets } = require("@privy-io/react-auth") as {
+    useFundWallet: () => {
+      fundWallet: (params: {
+        address: string;
+        options?: {
+          asset?: string;
+          chain?: string;
+        };
+      }) => Promise<unknown>;
+    };
+    useWallets: () => {
+      ready: boolean;
+      wallets: PrivyWalletRecord[];
+    };
+  };
+
+  const { fundWallet } = useFundWallet();
+  const { ready, wallets } = useWallets();
+  const router = useRouter();
+  const [isFunding, setIsFunding] = useState(false);
+
+  const embeddedSolanaWallet =
+    wallets.find((wallet) => wallet.walletClientType === "privy" && wallet.chainType === "solana") ??
+    wallets.find((wallet) => wallet.walletClientType === "privy");
+
+  async function handleAddMoney() {
+    if (!ready || !embeddedSolanaWallet?.address) {
+      router.push("/wallet");
+      return;
+    }
+
+    setIsFunding(true);
+
+    try {
+      await fundWallet({
+        address: embeddedSolanaWallet.address,
+        options: {
+          chain: "solana:mainnet",
+          asset: "USDC",
+        },
+      });
+    } catch (error) {
+      console.error("[dashboard] failed to open Privy funding flow:", error);
+      router.push("/wallet");
+    } finally {
+      setIsFunding(false);
+    }
+  }
+
+  return (
+    <button type="button" onClick={handleAddMoney} style={summaryCtaButton}>
+      {isFunding ? "Opening..." : "Add money"}
+    </button>
+  );
+}
+
+const summaryCtaButton: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minWidth: "144px",
+  height: "42px",
+  padding: "0 18px",
+  border: "1px solid rgba(225,6,0,0.45)",
+  background: R,
+  boxShadow: "0 10px 24px rgba(225,6,0,0.22)",
+  color: "#fff",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  fontSize: "11px",
+  fontWeight: 900,
+  letterSpacing: "0.18em",
+  textDecoration: "none",
+  textTransform: "uppercase",
+};
 
 
 /* ─────────────────────────────────────────────────────────────────────────── */

@@ -14,6 +14,8 @@ create or replace function public.join_league_with_stake(
   p_stake_amount_usdc numeric
 )
 returns table(
+  league_id           uuid,
+  league_name         text,
   charged_amount_usdc numeric,
   rake_amount_usdc    numeric,
   net_to_pool_usdc    numeric
@@ -32,6 +34,10 @@ declare
   v_net          numeric(18, 6);
   v_league_name  text;
 begin
+  if auth.uid() is distinct from p_user_id then
+    raise exception 'Forbidden';
+  end if;
+
   -- Lock the league row to prevent concurrent joins racing on member_count / prize_pool
   select
     l.is_active,
@@ -128,6 +134,6 @@ begin
     values (v_rake, p_league_id, 'Platform rake from league join stake');
   end;
 
-  return query select p_stake_amount_usdc, v_rake, v_net;
+  return query select p_league_id, v_league_name, p_stake_amount_usdc, v_rake, v_net;
 end;
 $$;

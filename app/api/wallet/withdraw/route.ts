@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { trackServer } from "@/lib/analytics.server";
@@ -24,6 +25,10 @@ export async function POST(request: NextRequest) {
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const admin = createSupabaseAdminClient();
+  if (!admin)
+    return NextResponse.json({ error: "Service role key missing." }, { status: 503 });
+
   const parsed = WithdrawBody.safeParse(await request.json());
   if (!parsed.success)
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid request." }, { status: 400 });
@@ -31,7 +36,7 @@ export async function POST(request: NextRequest) {
   const { amount_usdc, destination_address } = parsed.data;
 
   // Check available balance
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from("profiles")
     .select("balance_usdc")
     .eq("id", user.id)
@@ -44,7 +49,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Insufficient balance." }, { status: 402 });
 
   // Deduct balance atomically
-  const { error: deductErr } = await supabase.rpc("atomic_deduct_balance", {
+  const { error: deductErr } = await admin.rpc("atomic_deduct_balance", {
     p_user_id: user.id,
     p_amount: amount_usdc,
   });
@@ -53,21 +58,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: deductErr.message }, { status: 400 });
 
   // Record withdrawal transaction
-  const { error: txErr } = await supabase.from("transactions").insert({
+  const maskedAddress = `${destination_address.slice(0, 8)}...${destination_address.slice(-4)}`;
+  const txPayload = {
     user_id: user.id,
-    type: "withdrawal",
+    type: "withdrawal" as const,
     amount: -amount_usdc,
     currency: "USDC",
-    description: `Withdrawal to ${destination_address.slice(0, 8)}...${destination_address.slice(-4)}`,
-  });
+    description: `Withdrawal to ${maskedAddress}`,
+  };
+  const { data: insertedTx, error: txErr } = await admin
+    .from("transactions")
+    .insert(txPayload)
+    .select("id")
+    .single();
 
-  if (txErr)
+  if (txErr) {
+    await admin.rpc("credit_user_balance", {
+      p_user_id: user.id,
+      p_amount: amount_usdc,
+    });
     return NextResponse.json({ error: txErr.message }, { status: 400 });
+  }
 
-  // Record payout hold with 24h admin review window
+  // Record withdrawal hold with 24h admin review window
   const availableAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-  const { error: holdErr } = await supabase.from("payout_holds").insert({
+  const { error: holdErr } = await admin.from("withdrawal_holds").insert({
     user_id: user.id,
     amount: amount_usdc,
     reason: "withdrawal_review",
@@ -76,11 +92,14 @@ export async function POST(request: NextRequest) {
     released: false,
   });
 
-  if (holdErr)
+  if (holdErr) {
+    await admin.from("transactions").delete().eq("id", insertedTx.id);
+    await admin.rpc("credit_user_balance", {
+      p_user_id: user.id,
+      p_amount: amount_usdc,
+    });
     return NextResponse.json({ error: holdErr.message }, { status: 400 });
-
-  // Return masked address — the full address is stored in payout_holds, not needed by the client
-  const maskedAddress = `${destination_address.slice(0, 8)}...${destination_address.slice(-4)}`;
+  }
 
   await trackServer(
     "withdrawal_requested",

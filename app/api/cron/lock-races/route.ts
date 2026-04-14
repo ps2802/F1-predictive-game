@@ -52,22 +52,24 @@ export async function GET(request: NextRequest) {
   if (!racesToLock || racesToLock.length === 0)
     return NextResponse.json({ locked: [] });
 
-  const ids = racesToLock.map((r) => r.id);
-
-  const { error: updateErr } = await admin
-    .from("races")
-    .update({ race_locked: true })
-    .in("id", ids);
-
-  if (updateErr)
-    return NextResponse.json({ error: updateErr.message }, { status: 500 });
-
-  // Snapshot pick popularity at lock time so settlement uses deterministic data
+  const locked: string[] = [];
   const snapshotErrors: { raceId: string; error: string }[] = [];
-  for (const raceId of ids) {
+
+  for (const raceId of racesToLock.map((race) => race.id)) {
     const { error: snapshotErr } = await admin.rpc("freeze_pick_popularity", { p_race_id: raceId });
     if (snapshotErr) {
       snapshotErrors.push({ raceId, error: snapshotErr.message });
+      continue;
+    }
+
+    const { error: updateErr } = await admin
+      .from("races")
+      .update({ race_locked: true })
+      .eq("id", raceId);
+
+    if (updateErr) {
+      snapshotErrors.push({ raceId, error: updateErr.message });
+      continue;
     }
 
     // Void draft predictions — they were never paid/entered so should not score
@@ -76,16 +78,18 @@ export async function GET(request: NextRequest) {
       .update({ status: "locked" })
       .eq("race_id", raceId)
       .eq("status", "draft");
+
+    locked.push(raceId);
   }
 
   if (snapshotErrors.length > 0) {
     return NextResponse.json(
       {
-        error: "Some races were locked, but popularity snapshots were not frozen. Apply the missing Supabase migrations and retry before settlement.",
-        locked: ids,
-        count: ids.length,
+        error: "Some races could not be locked because popularity snapshots were not frozen.",
+        locked,
+        count: locked.length,
         lockedAt: now,
-        snapshotsFrozen: ids.length - snapshotErrors.length,
+        snapshotsFrozen: locked.length,
         snapshotErrors,
       },
       { status: 500 }
@@ -93,7 +97,7 @@ export async function GET(request: NextRequest) {
   }
 
   await Promise.all(
-    ids.map((raceId) =>
+    locked.map((raceId) =>
       trackServer("race_locked", {
         race_id: raceId,
       })
@@ -101,9 +105,9 @@ export async function GET(request: NextRequest) {
   );
 
   return NextResponse.json({
-    locked: ids,
-    count: ids.length,
+    locked,
+    count: locked.length,
     lockedAt: now,
-    snapshotsFrozen: ids.length,
+    snapshotsFrozen: locked.length,
   });
 }
