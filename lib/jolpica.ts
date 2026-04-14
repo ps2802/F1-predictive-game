@@ -28,7 +28,7 @@ type JolpicaScheduleResponse = {
   };
 };
 
-type RaceSeedRow = {
+export type RaceSeedRow = {
   id: string;
   season: number;
   round: number;

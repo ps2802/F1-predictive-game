@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard B — Gridlock</title>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red: #E10600;
+    --teal: #00D2AA;
+    --gold: #FFD23C;
+    --bg: #060606;
+    --panel: #0D0D0D;
+    --border: rgba(255,255,255,0.07);
+  }
+
+  body {
+    font-family: 'Titillium Web', sans-serif;
+    background: var(--bg);
+    color: #fff;
+    min-height: 100vh;
+  }
+
+  /* ── Nav ── */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 36px;
+    height: 52px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(6,6,6,0.98);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-logo-link { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
+  .nav-logo-img { height: 34px; width: auto; display: block; }
+
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+
+  .nav-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 12px 5px 5px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .nav-avatar {
+    width: 26px; height: 26px;
+    background: linear-gradient(135deg, var(--red), #800);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 900;
+  }
+
+  .nav-name { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.7); }
+  .nav-bal { font-size: 13px; font-weight: 900; color: var(--teal); margin-left: 4px; }
+
+  .stripe { height: 2px; background: linear-gradient(90deg, var(--red) 0%, rgba(225,6,0,0.2) 60%, transparent 100%); }
+
+  /* ── Layout ── */
+  .viewport {
+    width: min(960px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 36px 0 100px;
+  }
+
+  .stack { display: flex; flex-direction: column; gap: 12px; }
+
+  /* ══════════════════════════════════════════════════════════
+     HERO — the ONE thing to do right now
+     Full-width, impossible to miss
+  ══════════════════════════════════════════════════════════ */
+
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: 36px 40px 32px;
+    border: 1px solid rgba(225,6,0,0.3);
+    background: linear-gradient(135deg, rgba(225,6,0,0.12) 0%, rgba(255,255,255,0.02) 60%);
+  }
+
+  /* Hard left stripe */
+  .hero::before {
+    content: "";
+    position: absolute; top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: var(--red);
+    box-shadow: 0 0 24px rgba(225,6,0,0.6);
+  }
+
+  /* Faint slash */
+  .hero::after {
+    content: "";
+    position: absolute; right: -60px; top: -60px;
+    width: 260px; height: 260px;
+    background: rgba(225,6,0,0.05);
+    transform: rotate(22deg);
+    pointer-events: none;
+  }
+
+  .hero-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+  }
+
+  .hero-left { display: flex; flex-direction: column; gap: 10px; }
+
+  .hero-step {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.3em; text-transform: uppercase;
+    color: rgba(225,6,0,0.7);
+  }
+
+  .hero-race {
+    display: flex; align-items: center; gap: 14px;
+  }
+
+  .hero-flag { font-size: 42px; line-height: 1; }
+
+  .hero-name {
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .hero-meta {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    color: rgba(255,255,255,0.38);
+    margin-top: 6px;
+  }
+
+  /* Countdown — compact, inline */
+  .hero-countdown {
+    display: flex; align-items: baseline; gap: 2px;
+    margin-top: 8px;
+  }
+
+  .cd-num {
+    font-size: 42px; font-weight: 900; line-height: 1;
+    letter-spacing: -0.06em; font-variant-numeric: tabular-nums;
+  }
+
+  .cd-num.days { color: var(--red); text-shadow: 0 0 20px rgba(225,6,0,0.4); }
+
+  .cd-unit {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.32); margin: 0 8px 0 3px; align-self: flex-end; padding-bottom: 6px;
+  }
+
+  .cd-sep { font-size: 28px; font-weight: 200; color: rgba(255,255,255,0.14); padding-bottom: 4px; }
+
+  .hero-lock { font-size: 11px; color: rgba(255,255,255,0.36); margin-top: 6px; }
+
+  /* THE button */
+  .hero-cta {
+    flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+
+  .btn-hero {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 200px; height: 56px;
+    font-size: 13px; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase;
+    color: #fff; background: var(--red); border: none; font-family: inherit; cursor: pointer;
+    position: relative; overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(225,6,0,0.7), 0 6px 32px rgba(225,6,0,0.45);
+    transition: box-shadow 160ms, transform 120ms;
+  }
+
+  .btn-hero:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 1px rgba(225,6,0,0.9), 0 10px 44px rgba(225,6,0,0.6);
+  }
+
+  .btn-hero::after {
+    content: "";
+    position: absolute; inset: 0;
+    transform: translateX(-140%);
+    background: linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.18) 50%, transparent 80%);
+    transition: transform 500ms ease;
+  }
+
+  .btn-hero:hover::after { transform: translateX(130%); }
+
+  .hero-helper { font-size: 11px; color: rgba(255,255,255,0.3); text-align: center; }
+
+  /* ══════════════════════════════════════════════════════════
+     Secondary action strip — 3 equal tiles
+  ══════════════════════════════════════════════════════════ */
+
+  .action-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .action-tile {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    cursor: pointer; text-decoration: none; color: inherit;
+    transition: border-color 160ms, background 160ms;
+    font-family: inherit;
+  }
+
+  .action-tile:hover { border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); }
+  .action-tile.money:hover { border-color: rgba(0,210,170,0.3); background: rgba(0,210,170,0.05); }
+
+  .tile-left { display: flex; flex-direction: column; gap: 6px; }
+
+  .tile-label {
+    font-size: 14px; font-weight: 800; letter-spacing: -0.02em;
+  }
+
+  .tile-label.teal { color: var(--teal); }
+
+  .tile-sub { font-size: 11px; color: rgba(255,255,255,0.42); }
+
+  .tile-arrow {
+    font-size: 18px; color: rgba(255,255,255,0.24);
+    flex-shrink: 0;
+  }
+
+  .tile-arrow.teal { color: rgba(0,210,170,0.5); }
+
+  /* ══════════════════════════════════════════════════════════
+     My Leagues — ultra compact
+  ══════════════════════════════════════════════════════════ */
+
+  .section {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    overflow: hidden;
+  }
+
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .section-label {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.26em; text-transform: uppercase;
+    color: rgba(255,255,255,0.32);
+  }
+
+  .section-title {
+    font-size: 16px; font-weight: 900; letter-spacing: -0.03em; text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .section-action {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(0,210,170,0.6); text-decoration: none; cursor: pointer;
+    background: none; border: none; font-family: inherit;
+  }
+
+  .section-action:hover { color: var(--teal); }
+
+  /* League rows */
+  .league-row {
+    display: grid; grid-template-columns: 1fr auto auto;
+    align-items: center; gap: 16px;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    text-decoration: none; color: inherit;
+    transition: background 140ms;
+  }
+
+  .league-row:last-child { border-bottom: none; }
+  .league-row:hover { background: rgba(255,255,255,0.03); }
+
+  .lr-name { font-size: 14px; font-weight: 700; }
+  .lr-next { font-size: 11px; color: rgba(255,255,255,0.38); margin-top: 2px; }
+
+  .lr-prize {
+    font-size: 13px; font-weight: 900; color: var(--teal);
+    letter-spacing: -0.02em;
+  }
+
+  .lr-btn {
+    display: inline-flex; align-items: center; height: 28px; padding: 0 12px;
+    border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04);
+    font-size: 9px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+    color: rgba(255,255,255,0.6); font-family: inherit; cursor: pointer;
+    transition: border-color 140ms, color 140ms;
+  }
+
+  .lr-btn:hover { border-color: rgba(225,6,0,0.3); color: #fff; }
+
+  /* Join path — single row at the bottom of leagues */
+  .join-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.015);
+  }
+
+  .join-input {
+    flex: 1; height: 34px; padding: 0 12px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+    color: #fff; font-family: inherit; font-size: 12px; letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .join-input::placeholder { color: rgba(255,255,255,0.24); }
+
+  .join-label { font-size: 10px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.36); white-space: nowrap; }
+
+  .join-btn {
+    height: 34px; padding: 0 16px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    font-size: 10px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.7); font-family: inherit; cursor: pointer;
+    transition: background 140ms;
+  }
+
+  .join-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+  /* ══════════════════════════════════════════════════════════
+     Standings — compact table
+  ══════════════════════════════════════════════════════════ */
+
+  .standings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .podium-row {
+    display: grid; grid-template-columns: 36px 1fr auto;
+    align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .podium-row:last-child { border-bottom: none; }
+  .podium-row.you { border-left: 2px solid var(--red); background: rgba(225,6,0,0.06); }
+
+  .rank { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
+  .rank.p1 { color: #ffd700; }
+  .rank.p2 { color: #c0c8d0; }
+  .rank.p3 { color: #c87533; }
+
+  .pname { font-size: 13px; font-weight: 700; }
+  .psub { font-size: 10px; color: rgba(255,255,255,0.36); margin-top: 1px; }
+  .pscore { font-size: 18px; font-weight: 900; letter-spacing: -0.05em; }
+
+  .you-sep { font-size: 9px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.24); padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+
+  /* ══════════════════════════════════════════════════════════
+     F1 standings (bottom, compact)
+  ══════════════════════════════════════════════════════════ */
+
+  .f1-row {
+    display: grid; grid-template-columns: 28px 1fr auto;
+    align-items: center; gap: 10px;
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .f1-row:last-child { border-bottom: none; }
+
+  .f1pos { font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.3); }
+  .f1name { font-size: 13px; font-weight: 700; }
+  .f1team { font-size: 10px; color: rgba(255,255,255,0.38); margin-top: 1px; }
+  .f1pts { font-size: 15px; font-weight: 900; letter-spacing: -0.04em; }
+
+  .dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+
+  /* Preview badge */
+  .badge {
+    position: fixed; bottom: 20px; right: 20px;
+    padding: 7px 12px; background: rgba(0,210,170,0.9);
+    font-size: 9px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
+    color: #003; z-index: 9999; box-shadow: 0 4px 16px rgba(0,210,170,0.3);
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/dashboard" class="nav-logo-link">
+    <img src="/gridlock logo - transparent.png" alt="Gridlock" class="nav-logo-img" />
+  </a>
+  <div class="nav-right">
+    <div class="nav-chip">
+      <div class="nav-avatar">PS</div>
+      <span class="nav-name">ps2802</span>
+      <span class="nav-bal">$30</span>
+    </div>
+  </div>
+</nav>
+<div class="stripe"></div>
+
+<div class="viewport">
+  <div class="stack">
+
+    <!-- ① THE HERO — one clear next step -->
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="hero-left">
+          <span class="hero-step">Your next move</span>
+          <div class="hero-race">
+            <span class="hero-flag">🇺🇸</span>
+            <h1 class="hero-name">Miami Grand Prix</h1>
+          </div>
+          <p class="hero-meta">Round 4 · Sat 3 May 2026 · No prediction yet</p>
+
+          <div class="hero-countdown">
+            <span class="cd-num days" id="days">27</span>
+            <span class="cd-unit">d</span>
+            <span class="cd-sep">:</span>
+            <span class="cd-num" id="hrs">21</span>
+            <span class="cd-unit">h</span>
+            <span class="cd-sep">:</span>
+            <span class="cd-num" id="min">02</span>
+            <span class="cd-unit">m</span>
+            <span class="cd-sep">:</span>
+            <span class="cd-num" id="sec">00</span>
+            <span class="cd-unit">s</span>
+          </div>
+          <p class="hero-lock">Qualifying locks Sat 2 May · 18:00 UTC</p>
+        </div>
+
+        <div class="hero-cta">
+          <button class="btn-hero">Pick Podium →</button>
+          <span class="hero-helper">One prediction · Every league</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② Secondary actions — 3 tiles -->
+    <div class="action-strip">
+      <a class="action-tile money" href="#">
+        <div class="tile-left">
+          <span class="tile-label teal">Add Money</span>
+          <span class="tile-sub">$30.00 in wallet · Deposit USDC</span>
+        </div>
+        <span class="tile-arrow teal">→</span>
+      </a>
+      <a class="action-tile" href="#">
+        <div class="tile-left">
+          <span class="tile-label">Create League</span>
+          <span class="tile-sub">Set rules, entry fee, invite friends</span>
+        </div>
+        <span class="tile-arrow">→</span>
+      </a>
+      <a class="action-tile" href="#">
+        <div class="tile-left">
+          <span class="tile-label">Global Standings</span>
+          <span class="tile-sub">You're #12 · 24 pts this season</span>
+        </div>
+        <span class="tile-arrow">→</span>
+      </a>
+    </div>
+
+    <!-- ③ My Leagues — minimal rows + join input -->
+    <div class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-label">Competition</div>
+          <div class="section-title">My Leagues</div>
+        </div>
+        <button class="section-action">Browse All →</button>
+      </div>
+
+      <a class="league-row" href="#">
+        <div>
+          <div class="lr-name">F1 Global Championship</div>
+          <div class="lr-next">Next: Miami GP · R4</div>
+        </div>
+        <span class="lr-prize">$500</span>
+        <button class="lr-btn">View</button>
+      </a>
+      <a class="league-row" href="#">
+        <div>
+          <div class="lr-name">kj</div>
+          <div class="lr-next">Next: Miami GP · R4</div>
+        </div>
+        <span class="lr-prize">$10</span>
+        <button class="lr-btn">View</button>
+      </a>
+
+      <div class="join-row">
+        <span class="join-label">Have a code?</span>
+        <input class="join-input" placeholder="Paste invite link or enter code" />
+        <button class="join-btn">Join</button>
+      </div>
+    </div>
+
+    <!-- ④ Standings — gridlock + F1 side by side -->
+    <div class="standings-grid">
+
+      <div class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-label">Gridlock</div>
+            <div class="section-title">Standings</div>
+          </div>
+          <a class="section-action" href="#">Full board →</a>
+        </div>
+        <div class="podium-row">
+          <span class="rank p1">P1</span>
+          <div><div class="pname">vmax33</div><div class="psub">3 races</div></div>
+          <span class="pscore">36</span>
+        </div>
+        <div class="podium-row">
+          <span class="rank p2">P2</span>
+          <div><div class="pname">norris4fan</div><div class="psub">3 races</div></div>
+          <span class="pscore">31</span>
+        </div>
+        <div class="podium-row">
+          <span class="rank p3">P3</span>
+          <div><div class="pname">lectric16</div><div class="psub">3 races</div></div>
+          <span class="pscore">28</span>
+        </div>
+        <div class="you-sep">Your position</div>
+        <div class="podium-row you">
+          <span class="rank">P12</span>
+          <div><div class="pname">You</div><div class="psub">3 races</div></div>
+          <span class="pscore">24</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-label">F1 2026 · After R3</div>
+            <div class="section-title">Drivers</div>
+          </div>
+          <div class="section-label" style="cursor:pointer">Constructors ↓</div>
+        </div>
+        <div class="f1-row">
+          <span class="f1pos">1</span>
+          <div><div class="f1name">M. Verstappen</div><div class="f1team"><span class="dot" style="background:#3671c6"></span>Red Bull</div></div>
+          <span class="f1pts">75</span>
+        </div>
+        <div class="f1-row">
+          <span class="f1pos">2</span>
+          <div><div class="f1name">L. Norris</div><div class="f1team"><span class="dot" style="background:#ff8000"></span>McLaren</div></div>
+          <span class="f1pts">64</span>
+        </div>
+        <div class="f1-row">
+          <span class="f1pos">3</span>
+          <div><div class="f1name">C. Leclerc</div><div class="f1team"><span class="dot" style="background:#e8002d"></span>Ferrari</div></div>
+          <span class="f1pts">58</span>
+        </div>
+        <div class="f1-row">
+          <span class="f1pos">4</span>
+          <div><div class="f1name">G. Russell</div><div class="f1team"><span class="dot" style="background:#27f4d2"></span>Mercedes</div></div>
+          <span class="f1pts">49</span>
+        </div>
+        <div class="f1-row">
+          <span class="f1pos">5</span>
+          <div><div class="f1name">O. Piastri</div><div class="f1team"><span class="dot" style="background:#ff8000"></span>McLaren</div></div>
+          <span class="f1pts">44</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<div class="badge">Variation B</div>
+
+<script>
+  const lock = new Date('2026-05-02T18:00:00Z').getTime();
+  function tick() {
+    const diff = Math.max(0, lock - Date.now());
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('days').textContent = pad(Math.floor(diff/86400000));
+    document.getElementById('hrs').textContent = pad(Math.floor((diff%86400000)/3600000));
+    document.getElementById('min').textContent = pad(Math.floor((diff%3600000)/60000));
+    document.getElementById('sec').textContent = pad(Math.floor((diff%60000)/1000));
+  }
+  tick(); setInterval(tick, 1000);
+</script>
+</body>
+</html>

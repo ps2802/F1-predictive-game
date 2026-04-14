@@ -64,6 +64,7 @@ export default function PredictPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savedStatus, setSavedStatus] = useState<"draft" | "active" | null>(null);
   const [error, setError] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -162,7 +163,7 @@ export default function PredictPage() {
       .from("races")
       .select("qualifying_starts_at, race_starts_at, quali_locked, race_locked")
       .eq("id", raceId)
-      .single();
+      .maybeSingle();
 
     if (raceRow) {
       setRaceTiming({
@@ -199,7 +200,7 @@ export default function PredictPage() {
         .select("id")
         .eq("race_id", raceId)
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (pred) {
         const { data: ansData } = await supabase
@@ -383,6 +384,7 @@ export default function PredictPage() {
       );
       localStorage.removeItem(`picks_${raceId}`);
       setChargedEditFee(Boolean(data.chargedEditFee));
+      setSavedStatus(data.status === "active" ? "active" : "draft");
       setSaved(true);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Something went wrong";
@@ -446,13 +448,22 @@ export default function PredictPage() {
         <div className="gl-stripe" aria-hidden="true" />
         <AppNav />
         <div className="gla-content" style={{ textAlign: "center", paddingTop: "6rem" }}>
-          <div className="predict-success-icon">✓</div>
+          <div className="predict-success-icon" data-testid="prediction-success-panel">✓</div>
           <h1 className="gla-page-title" style={{ marginTop: "1.5rem" }}>
             {allQuestionsComplete ? "Predictions Locked In" : "Progress Saved"}
           </h1>
           <p className="gla-page-sub">
             {race.name} · Round {race.round}
           </p>
+          {savedStatus && (
+            <p
+              className="league-entry-note"
+              data-testid="prediction-status-badge"
+              style={{ marginTop: "0.85rem" }}
+            >
+              Status: {savedStatus === "active" ? "Active" : "Draft"}
+            </p>
+          )}
           {!allQuestionsComplete && (
             <p style={{
               color: "rgba(0, 210, 170, 1)",
@@ -473,7 +484,7 @@ export default function PredictPage() {
 
           {/* Primary CTA: league join */}
           {allQuestionsComplete && (
-            <div style={{ marginTop: "2rem", padding: "1.25rem", background: "rgba(0,210,170,0.07)", border: "1px solid rgba(0,210,170,0.2)", borderRadius: "12px", maxWidth: "400px", marginInline: "auto" }}>
+            <div style={{ marginTop: "2rem", padding: "1.25rem", background: "rgba(0,210,170,0.07)", border: "1px solid rgba(0,210,170,0.2)", borderRadius: "2px", maxWidth: "400px", marginInline: "auto" }}>
               <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(0,210,170,0.7)", marginBottom: "0.5rem" }}>
                 Next Step
               </p>
@@ -504,33 +515,21 @@ export default function PredictPage() {
       <div className="gl-stripe" aria-hidden="true" />
       <AppNav />
 
-      {/* Header */}
-      <div className="predict-header">
-        <Link href="/dashboard" className="predict-back">
-          ← Dashboard
-        </Link>
-        <div className="predict-race-info">
+      {/* Command Band: race info + timing */}
+      <div className="predict-command-band">
+        <div className="predict-band-left">
           <span className="predict-round">Round {race.round}</span>
           <h1 className="predict-race-name">{race.name}</h1>
         </div>
-      </div>
-
-      <div className="predict-timing-grid">
-        <div className="predict-timing-card">
-          <span className="predict-timing-value">
-            {getTimingCardValue(qualifyingWindow)}
-          </span>
-          <span className="predict-timing-label">
-            {getTimingCardLabel(qualifyingWindow, "Qualifying")}
-          </span>
-        </div>
-        <div className="predict-timing-card">
-          <span className="predict-timing-value">
-            {getTimingCardValue(raceWindow)}
-          </span>
-          <span className="predict-timing-label">
-            {getTimingCardLabel(raceWindow, "GP")}
-          </span>
+        <div className="predict-timing-rail">
+          <div className="predict-timing-cell">
+            <span className="predict-timing-value">{getTimingCardValue(qualifyingWindow)}</span>
+            <span className="predict-timing-label">{getTimingCardLabel(qualifyingWindow, "Qualifying")}</span>
+          </div>
+          <div className="predict-timing-cell">
+            <span className="predict-timing-value">{getTimingCardValue(raceWindow)}</span>
+            <span className="predict-timing-label">{getTimingCardLabel(raceWindow, "GP")}</span>
+          </div>
         </div>
       </div>
 
@@ -557,28 +556,31 @@ export default function PredictPage() {
               }
               setStep(i);
             }}
+            data-testid={
+              s === "qualifying"
+                ? "prediction-step-qualifying"
+                : s === "race"
+                  ? "prediction-step-race"
+                  : s === "chaos"
+                    ? "prediction-step-chaos"
+                    : undefined
+            }
           >
-            <span className="predict-step-icon">
-              {stepComplete(s) ? "✓" : STEP_ICONS[s]}
-            </span>
+            {stepComplete(s) ? <span className="predict-step-check">✓</span> : null}
             <span>{STEP_LABELS[s]}</span>
           </button>
         ))}
-      </div>
-
-      {/* Expert copy CTA — only shown before review step */}
-      {currentCategory !== "review" && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.5rem", paddingInline: "1.5rem" }}>
+        {currentCategory !== "review" && (
           <button
             className="predict-copy-expert-btn"
             onClick={handleCopyExpert}
             disabled={copyingExpert}
             title="Copy the top player's picks as a starting point, then modify"
           >
-            {copyingExpert ? "Loading..." : expertCopied ? "✓ Copied!" : "Copy Expert Picks"}
+            {copyingExpert ? "…" : expertCopied ? "✓ Copied" : "Expert Picks"}
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Questions */}
       <div className="predict-body">
@@ -610,7 +612,13 @@ export default function PredictPage() {
             const picks = (answers[q.id] ?? []).filter(Boolean);
             const isFull = picks.length >= q.multi_select;
             return (
-              <div key={q.id} className="predict-question">
+              <div key={q.id} className="predict-question" style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '0',
+                padding: '1.25rem',
+                marginBottom: '1rem',
+              }}>
                 <div className="predict-q-header">
                   <h3 className="predict-q-label">{q.label}</h3>
                   <span className="predict-q-meta">
@@ -703,6 +711,7 @@ export default function PredictPage() {
               className="predict-nav-btn primary"
               onClick={handleSubmit}
               disabled={saving}
+              data-testid="prediction-submit-button"
             >
               {saving
                 ? "Saving..."
@@ -732,6 +741,7 @@ export default function PredictPage() {
                 }
                 setStep(step + 1);
               }}
+              data-testid="prediction-next-button"
             >
               Next: {STEP_LABELS[STEPS[step + 1]]} →
             </button>

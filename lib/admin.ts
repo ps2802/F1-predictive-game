@@ -1,5 +1,5 @@
 /** Emails (from Privy) that are permitted to access the admin dashboard. */
-const ADMIN_EMAILS = [
+export const ADMIN_EMAILS = [
   "praneet.sinha28@gmail.com",
   "debashritapanicker@gmail.com",
 ] as const;

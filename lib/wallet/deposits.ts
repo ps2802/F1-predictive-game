@@ -1,4 +1,4 @@
-type NormalizeDepositInput = {
+export type NormalizeDepositInput = {
   amount?: number;
   source_amount?: number;
   source_token?: string;
@@ -7,7 +7,7 @@ type NormalizeDepositInput = {
   fee_amount_usdc?: number;
 };
 
-type NormalizedDeposit = {
+export type NormalizedDeposit = {
   sourceAmount: number;
   sourceToken: string;
   swappedAmountUsdc: number;

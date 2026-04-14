@@ -12,6 +12,7 @@ import {
 export {
   getPageGroup,
   getRaceIdFromPath,
+  sanitizeAnalyticsProperties,
   type AnalyticsUserTraits,
   type GridlockEventName,
   type GridlockEventProperties,
@@ -47,7 +48,7 @@ const CLARITY_MILESTONES = new Set<GridlockEventName>([
   "prediction_submitted",
   "withdrawal_requested",
 ]);
-function isAnalyticsEnabled(): boolean {
+export function isAnalyticsEnabled(): boolean {
   return (
     process.env.NODE_ENV === "production" &&
     process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === ANALYTICS_FLAG
@@ -117,7 +118,7 @@ function registerAcquisitionContext(context: AcquisitionContext): void {
   window.posthog.register_once(payload);
 }
 
-function setAcquisitionContext(
+export function setAcquisitionContext(
   properties?: GridlockEventProperties | null
 ): void {
   if (typeof window === "undefined") {

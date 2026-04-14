@@ -12,7 +12,7 @@ interface AppNavProfile {
   is_admin?: boolean | null;
 }
 
-interface AppNavProps {
+export interface AppNavProps {
   profile?: AppNavProfile | null;
   isAdmin?: boolean;
   profileLabel?: string | null;
@@ -173,6 +173,15 @@ export function AppNav({
               key={item.href}
               className={`gla-nav-link${active ? " is-active" : ""}`}
               href={item.href}
+              data-testid={
+                item.href === "/dashboard"
+                  ? "nav-dashboard"
+                  : item.href === "/leagues"
+                    ? "nav-leagues"
+                    : item.href === "/wallet"
+                      ? "nav-wallet"
+                      : undefined
+              }
             >
               {label}
             </Link>

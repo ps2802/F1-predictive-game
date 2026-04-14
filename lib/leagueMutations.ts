@@ -177,7 +177,6 @@ async function refundBalanceBestEffort(admin: AdminClient, userId: string, amoun
     return;
   }
 
-  console.log("[Gridlock] Refund succeeded", { userId, amount });
 }
 
 async function insertLeague(

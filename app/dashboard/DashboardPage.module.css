@@ -1,0 +1,1278 @@
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* Design tokens                                                                */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* red:    #E10600                                                              */
+/* teal:   #00D2AA                                                              */
+/* gold:   #FFD23C                                                              */
+/* bg:     #060606                                                              */
+/* panel:  #0D0D0D                                                              */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Layout                                                                       */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.viewport {
+  width: min(1300px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 32px 0 100px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Shared                                                                       */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.panelEyebrow {
+  margin: 0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.32);
+}
+
+.sectionTitle {
+  margin: 6px 0 0;
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Stats strip — telemetry HUD                                                  */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.statsStrip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0d0d0d;
+  animation: riseIn 300ms ease-out both;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Speed-line accent across the top */
+.statsStrip::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, #e10600 0%, rgba(225, 6, 0, 0.4) 40%, transparent 100%);
+}
+
+.statCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 18px 22px;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  animation: riseIn 400ms ease-out both;
+  position: relative;
+}
+
+.statCell:last-child {
+  border-right: none;
+}
+
+.statLabel {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.36);
+}
+
+.statValue {
+  font-size: clamp(28px, 3.2vw, 42px);
+  line-height: 0.88;
+  letter-spacing: -0.07em;
+  color: #fff;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.statSub {
+  margin-top: 4px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Race + board row                                                             */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.raceAndBoard {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.72fr);
+  gap: 14px;
+  animation: riseIn 400ms ease-out both;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Next race card — primary action zone                                         */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.nextRaceCard {
+  position: relative;
+  overflow: hidden;
+  padding: 28px 30px 26px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: #0d0d0d;
+}
+
+/* Hard red left-edge stripe */
+.nextRaceCard::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: #e10600;
+  box-shadow: 0 0 20px rgba(225, 6, 0, 0.5);
+}
+
+/* Diagonal speed slash — decorative */
+.nextRaceCard::after {
+  content: "";
+  position: absolute;
+  right: -60px;
+  top: -40px;
+  width: 200px;
+  height: 200px;
+  background: rgba(225, 6, 0, 0.04);
+  transform: rotate(22deg);
+  pointer-events: none;
+}
+
+.nextRaceCardEmpty {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.nextRaceTopRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.nextRaceMeta {
+  display: grid;
+  gap: 6px;
+}
+
+.nextRaceNameRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.nextRaceFlag {
+  font-size: 40px;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(0,0,0,0.6));
+}
+
+.nextRaceTitle {
+  margin: 0;
+  font-size: clamp(32px, 5.5vw, 62px);
+  line-height: 0.88;
+  font-weight: 900;
+  letter-spacing: -0.055em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.nextRaceSub {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.racePill {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.racePillStatus {
+  border-color: rgba(225, 6, 0, 0.35);
+  background: rgba(225, 6, 0, 0.12);
+  color: #e10600;
+}
+
+.racePillPrimary {
+  border-color: rgba(225, 6, 0, 0.4);
+  background: rgba(225, 6, 0, 0.16);
+  color: #ff3020;
+}
+
+/* ── Countdown — big, urgent, telemetry digits ────────────────────────────── */
+
+.countdownStrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 24px;
+  padding: 18px 0 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.countdownParts {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.countdownPart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 64px;
+}
+
+.countdownPart strong {
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 900;
+  line-height: 0.85;
+  letter-spacing: -0.08em;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Days digit glows red when ≤ 2 — achieved by targeting first child */
+.countdownParts .countdownPart:first-child strong {
+  color: #e10600;
+  text-shadow: 0 0 30px rgba(225, 6, 0, 0.35);
+}
+
+.countdownPart span {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.32);
+}
+
+.countdownSep {
+  font-size: clamp(28px, 3.5vw, 44px) !important;
+  font-weight: 200 !important;
+  letter-spacing: 0 !important;
+  color: rgba(255, 255, 255, 0.14) !important;
+  text-transform: none !important;
+  margin-bottom: 14px;
+  align-self: flex-end;
+}
+
+.countdownNote {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.36);
+  text-align: right;
+  line-height: 1.4;
+}
+
+/* ── Primary action — the ONE thing to do ────────────────────────────────── */
+
+.nextRaceActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+.nextRaceHelper {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+/* ── Draft banner ─────────────────────────────────────────────────────────── */
+
+.draftBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 210, 60, 0.2);
+  background: rgba(255, 210, 60, 0.05);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.draftBanner strong { color: #ffd23c; }
+
+.draftBannerDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffd23c;
+  flex-shrink: 0;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.draftBannerCta {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #ffd23c;
+}
+
+.draftBannerCta:hover { text-decoration: underline; }
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* CTAs — strict hierarchy                                                      */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+/* PRIMARY — Dominant, glowing, unmissable */
+.primaryCta,
+.errorButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  padding: 0 28px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #fff;
+  cursor: pointer;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  background: #e10600;
+  box-shadow:
+    0 0 0 1px rgba(225, 6, 0, 0.7),
+    0 4px 24px rgba(225, 6, 0, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  transition: box-shadow 180ms ease, transform 120ms ease;
+}
+
+.primaryCta:hover,
+.errorButton:hover {
+  box-shadow:
+    0 0 0 1px rgba(225, 6, 0, 0.9),
+    0 6px 36px rgba(225, 6, 0, 0.6),
+    0 1px 0 rgba(255, 255, 255, 0.1) inset;
+  transform: translateY(-1px);
+}
+
+.primaryCta:active,
+.errorButton:active {
+  transform: translateY(0);
+  box-shadow:
+    0 0 0 1px rgba(225, 6, 0, 0.7),
+    0 2px 12px rgba(225, 6, 0, 0.4);
+}
+
+/* Shimmer sweep */
+.primaryCta::after,
+.errorButton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-140%);
+  background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.2) 50%, transparent 80%);
+  transition: transform 500ms ease;
+}
+.primaryCta:hover::after,
+.errorButton:hover::after { transform: translateX(130%); }
+
+.primaryCtaDraft {
+  background: #ffd23c !important;
+  color: #100a00 !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 210, 60, 0.7),
+    0 4px 24px rgba(255, 210, 60, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.1) inset !important;
+}
+.primaryCtaDraft:hover {
+  box-shadow:
+    0 0 0 1px rgba(255, 210, 60, 0.9),
+    0 6px 36px rgba(255, 210, 60, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.1) inset !important;
+}
+
+/* SECONDARY — Ghost, clearly lower priority */
+.ghostCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  padding: 0 22px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+}
+.ghostCta:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* TERTIARY — Text link */
+.textCta {
+  display: inline-flex;
+  align-items: center;
+  height: 46px;
+  padding: 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.38);
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+.textCta:hover { color: rgba(255, 255, 255, 0.72); }
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Leaderboard widget                                                           */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.leaderboardWidget {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0d0d0d;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Teal top accent — standings feel like a positive/achievement space */
+.leaderboardWidget::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, #00d2aa 0%, rgba(0, 210, 170, 0.2) 60%, transparent 100%);
+}
+
+.widgetHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.widgetTitle {
+  margin: 6px 0 0;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.widgetLink {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: rgba(0, 210, 170, 0.6);
+  white-space: nowrap;
+  padding-top: 3px;
+  transition: color 160ms ease;
+}
+.widgetLink:hover { color: #00d2aa; }
+
+.widgetEmpty {
+  color: rgba(255, 255, 255, 0.36);
+  font-size: 13px;
+}
+
+.podiumList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.podiumRow {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.025);
+  transition: background-color 160ms ease;
+}
+.podiumRow:hover { background: rgba(255, 255, 255, 0.04); }
+
+.podiumRowYou {
+  border-left: 2px solid #e10600;
+  background: rgba(225, 6, 0, 0.07) !important;
+}
+
+.rankBadge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Medal positions */
+.rankP1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
+.rankP2 { color: #c0c8d0; }
+.rankP3 { color: #c87533; }
+
+.podiumBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.podiumBody strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+.podiumBody span {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.podiumScore {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  color: #fff;
+}
+
+.pinnedYou {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pinnedLabel {
+  margin: 0 0 6px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* League section                                                               */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.leagueSection {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0d0d0d;
+  animation: riseIn 500ms ease-out both;
+  position: relative;
+  overflow: hidden;
+}
+
+.leagueSectionHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.leagueHeaderActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* 3-col card grid */
+.leagueGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* League card — prize is the hero */
+.leagueCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.025);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 200ms ease, background-color 200ms ease, transform 180ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.leagueCard::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: transparent;
+  transition: background 200ms ease;
+}
+
+.leagueCard:hover {
+  border-color: rgba(0, 210, 170, 0.22);
+  background: rgba(0, 210, 170, 0.04);
+  transform: translateY(-2px);
+}
+
+.leagueCard:hover::after {
+  background: linear-gradient(90deg, #00d2aa, transparent);
+}
+
+.leagueCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.leagueCardName {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* Prize — teal, prominent */
+.leaguePrizePill {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #00d2aa;
+  border: 1px solid rgba(0, 210, 170, 0.28);
+  background: rgba(0, 210, 170, 0.08);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.leagueCardMeta {
+  flex: 1;
+}
+
+.leagueCardRace {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.42);
+  letter-spacing: 0.04em;
+}
+
+.leagueCardFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.leagueFillBar {
+  height: 2px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.leagueFillBarFill {
+  height: 100%;
+  background: #e10600;
+  transition: width 700ms ease;
+}
+
+.leagueMemberCount {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.36);
+}
+
+/* Empty state */
+.leagueEmptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.emptyHeading {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: -0.03em;
+}
+
+.emptySub {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.emptyActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Season progress                                                              */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.seasonSection {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0d0d0d;
+  animation: riseIn 580ms ease-out both;
+}
+
+.seasonHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.seasonStat {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.seasonBarTrack {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.seasonBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #e10600, rgba(225, 6, 0, 0.5));
+  transition: width 900ms ease;
+  box-shadow: 0 0 8px rgba(225, 6, 0, 0.3);
+}
+
+.markerRail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(24px, 1fr);
+  gap: 3px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.markerItem {
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+}
+
+.markerDot {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.markerDotSettled { background: rgba(255, 255, 255, 0.2); }
+
+.markerDotNext {
+  background: #e10600;
+  box-shadow: 0 0 8px rgba(225, 6, 0, 0.5);
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+.markerDotUpcoming { background: rgba(255, 255, 255, 0.07); }
+
+.markerLabel {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.24);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Race schedule                                                                */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.scheduleSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0d0d0d;
+  animation: riseIn 660ms ease-out both;
+}
+
+.scheduleHeader { margin-bottom: 0; }
+
+.onDeckGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* Race card */
+.raceCard {
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 180ms ease, transform 160ms ease;
+  cursor: default;
+}
+.raceCard:hover {
+  border-color: rgba(255, 255, 255, 0.13);
+  transform: translateY(-1px);
+}
+
+.raceCardPrimary {
+  border-color: rgba(225, 6, 0, 0.3);
+  background: linear-gradient(160deg, rgba(225, 6, 0, 0.08) 0%, rgba(255, 255, 255, 0.02) 70%);
+  box-shadow: inset 0 0 0 1px rgba(225, 6, 0, 0.1);
+}
+.raceCardPrimary:hover { border-color: rgba(225, 6, 0, 0.5); }
+
+.raceCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.raceRoundTag {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.34);
+}
+
+.raceCardBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.raceCardFlag {
+  font-size: 30px;
+  line-height: 1;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.raceCardTitle {
+  margin: 0 0 6px;
+  font-size: clamp(18px, 2.2vw, 26px);
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.raceCardCountry {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.raceCardDate {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.raceCardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.raceCardLock {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.34);
+  letter-spacing: 0.04em;
+}
+
+/* Card CTA — clear, but secondary to the hero CTA */
+.raceCardAction {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.7);
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.raceCardAction:hover {
+  background: rgba(225, 6, 0, 0.14);
+  border-color: rgba(225, 6, 0, 0.35);
+  color: #fff;
+}
+
+/* Season run rows */
+.upcomingBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.upcomingLabel {
+  margin: 0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.26);
+}
+
+.runList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.raceRow {
+  display: grid;
+  grid-template-columns: 40px 22px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 160ms ease;
+}
+.raceRow:hover { background: rgba(255, 255, 255, 0.04); }
+
+.raceRowRound {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.raceRowFlag { font-size: 15px; }
+
+.raceRowBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.raceRowBody strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.raceRowBody span {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.raceRowStatus {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(225, 6, 0, 0.7);
+}
+
+.raceRowAction {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+/* Settled toggle */
+.settledBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.settledToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 0;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.chevron {
+  font-size: 16px;
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.3);
+  display: inline-block;
+  transform: rotate(0deg);
+  transition: transform 220ms ease;
+}
+.chevronOpen { transform: rotate(90deg); }
+
+.settledShell {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 300ms ease;
+}
+.settledShellOpen {
+  max-height: 1600px;
+  margin-top: 10px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Error                                                                        */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.errorPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0d0d0d;
+}
+
+.errorTitle {
+  margin: 4px 0 0;
+  font-size: clamp(24px, 3.5vw, 36px);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.04em;
+  color: #fff;
+}
+
+.errorCopy {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.errorButton {
+  margin-top: 18px;
+  cursor: pointer;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Skeletons                                                                    */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.skeletonStrip,
+.skeletonNextRace,
+.skeletonBoard,
+.skeletonLeagueCard,
+.skeletonProgress,
+.skeletonCard {
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background:
+    linear-gradient(
+      110deg,
+      rgba(255, 255, 255, 0.02) 10%,
+      rgba(255, 255, 255, 0.05) 18%,
+      rgba(255, 255, 255, 0.02) 33%
+    );
+  background-size: 220% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+.skeletonStrip { height: 82px; }
+
+.skeletonMainRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.72fr);
+  gap: 14px;
+}
+
+.skeletonNextRace { min-height: 360px; }
+.skeletonBoard { min-height: 360px; }
+
+.skeletonLeagueRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.skeletonLeagueCard { min-height: 140px; }
+.skeletonProgress { height: 76px; }
+
+.skeletonCardRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.skeletonCard { min-height: 200px; }
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Animations                                                                   */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -40% 0; }
+}
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Responsive                                                                   */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+/* prefers-reduced-motion handled in globals.css */
+
+@media (max-width: 1100px) {
+  .raceAndBoard,
+  .skeletonMainRow {
+    grid-template-columns: 1fr;
+  }
+  .leagueGrid,
+  .onDeckGrid,
+  .skeletonLeagueRow,
+  .skeletonCardRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .statsStrip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .statCell:nth-child(2) { border-right: none; }
+  .statCell:nth-child(1),
+  .statCell:nth-child(2) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+}
+
+@media (max-width: 700px) {
+  .viewport {
+    width: min(100%, calc(100% - 24px));
+    padding-top: 20px;
+  }
+  .statsStrip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .leagueGrid,
+  .onDeckGrid,
+  .skeletonLeagueRow,
+  .skeletonCardRow {
+    grid-template-columns: 1fr;
+  }
+  .countdownStrip {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .raceRow {
+    grid-template-columns: 32px 18px minmax(0, 1fr);
+  }
+  .raceRowStatus,
+  .raceRowAction { display: none; }
+  .leagueSectionHeader,
+  .seasonHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .nextRaceTitle {
+    font-size: clamp(28px, 10vw, 44px);
+  }
+  .nextRaceFlag { font-size: 32px; }
+}

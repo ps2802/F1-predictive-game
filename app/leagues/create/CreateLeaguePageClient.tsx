@@ -141,15 +141,49 @@ export default function CreateLeaguePageClient({
         <p className="gla-page-sub">Set up your F1 prediction league</p>
 
         {/* Wizard progress */}
-        <div className="wizard-steps">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: '2rem' }}>
           {[1, 2, 3, 4].map((n) => (
-            <div key={n} className={`wizard-step${step === n ? " is-active" : step > n ? " is-done" : ""}`}>
-              <div className="wizard-step-dot">
-                {step > n ? "✓" : n}
+            <div key={n} style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                background: step > n ? '#E10600' : step === n ? '#E10600' : 'rgba(255,255,255,0.1)',
+                color: '#fff',
+                border: step === n ? '2px solid rgba(255,255,255,0.3)' : 'none',
+                transition: 'all 0.2s',
+                position: 'relative' as const,
+                zIndex: 1,
+              }}>
+                {step > n ? '✓' : n}
               </div>
-              <span className="wizard-step-label">
-                {n === 1 ? "Setup" : n === 2 ? "Payout" : n === 3 ? "Entry" : "Review"}
-              </span>
+              {n < 4 && (
+                <div style={{
+                  width: '48px',
+                  height: '2px',
+                  background: step > n ? '#E10600' : 'rgba(255,255,255,0.1)',
+                  transition: 'background 0.2s',
+                }} />
+              )}
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 0, marginBottom: '1.5rem' }}>
+          {(['Setup', 'Payout', 'Entry', 'Review'] as const).map((label, i) => (
+            <div key={label} style={{
+              width: '36px',
+              textAlign: 'center',
+              fontSize: '0.6rem',
+              color: step === i + 1 ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.35)',
+              marginRight: i < 3 ? '48px' : '0',
+              fontWeight: step === i + 1 ? 700 : 400,
+            }}>
+              {label}
             </div>
           ))}
         </div>
@@ -167,6 +201,7 @@ export default function CreateLeaguePageClient({
                   onChange={(e) => setName(e.target.value)}
                   maxLength={50}
                   autoFocus
+                  data-testid="league-create-name-input"
                 />
               </label>
 
@@ -185,6 +220,7 @@ export default function CreateLeaguePageClient({
                   type="button"
                   className={`league-type-card${type === "private" ? " is-selected" : ""}`}
                   onClick={() => setType("private")}
+                  data-testid="league-create-type-private"
                 >
                   <span className="league-type-card-icon">🔒</span>
                   <strong className="league-type-card-title">Private</strong>
@@ -306,10 +342,11 @@ export default function CreateLeaguePageClient({
                   value={customFee}
                   placeholder={`Min $${minimumStake}`}
                   onChange={(e) => handleCustomFee(e.target.value)}
+                  data-testid="league-create-stake-input"
                 />
               </label>
               {Number(creatorStake) < minimumStake && (
-                <p style={{ fontSize: "0.75rem", color: "#f87171", marginTop: "0.35rem" }}>
+                <p style={{ fontSize: "0.75rem", color: "#FF1A17", marginTop: "0.35rem" }}>
                   Minimum entry fee is ${minimumStake} USDC
                 </p>
               )}
@@ -334,6 +371,7 @@ export default function CreateLeaguePageClient({
                     value={effectiveRaceId}
                     onChange={(e) => setRaceId(e.target.value)}
                     style={{ width: "100%" }}
+                    data-testid="league-create-race-select"
                   >
                     {selectableRaces.map((r) => (
                       <option key={r.id} value={r.id}>{r.name} · Round {r.round}</option>
@@ -407,6 +445,7 @@ export default function CreateLeaguePageClient({
                 className="gla-predict-submit"
                 disabled={loading || racesLoading || !name.trim() || !effectiveRaceId}
                 onClick={handleSubmit}
+                data-testid="league-create-submit-button"
               >
                 {loading ? "Creating..." : "Create League →"}
               </button>

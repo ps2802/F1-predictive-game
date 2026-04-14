@@ -197,12 +197,14 @@ export default function JoinPage() {
                   value={stake}
                   onChange={(e) => setStake(e.target.value)}
                   placeholder="Stake in USDC"
+                  data-testid="league-join-stake-input"
                 />
                 <button
                   type="button"
                   className="gla-race-btn"
                   disabled={Number(stake) < minimumStake}
                   onClick={handleJoin}
+                  data-testid="league-join-submit-button"
                 >
                   Join League
                 </button>
@@ -224,8 +226,9 @@ export default function JoinPage() {
                 className="gla-page-sub"
                 style={{
                   marginTop: "0.75rem",
-                  color: status === "done" ? "#4caf50" : "var(--gl-red)",
+                  color: status === "done" ? "#00D2AA" : "var(--gl-red)",
                 }}
+                data-testid={status === "done" ? "league-join-success" : undefined}
               >
                 {message}
               </p>
