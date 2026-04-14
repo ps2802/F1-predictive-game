@@ -1,4 +1,4 @@
-export type Race = {
+type Race = {
   id: string;
   round: number;
   name: string;
@@ -33,7 +33,7 @@ export const races: Race[] = [
   { id: "abu-dhabi-2026",   round: 22, name: "Abu Dhabi Grand Prix",             country: "United Arab Emirates",  date: "2026-12-06", status: "upcoming", flag: "🇦🇪" },
 ];
 
-export type FallbackRaceRecord = {
+type FallbackRaceRecord = {
   id: string;
   season: number;
   round: number;
@@ -49,14 +49,14 @@ export type FallbackRaceRecord = {
   quali_locked: boolean;
 };
 
-export type FallbackRaceTiming = {
+type FallbackRaceTiming = {
   qualifying_starts_at: string | null;
   race_starts_at: string | null;
   quali_locked: boolean;
   race_locked: boolean;
 };
 
-export type NextRaceSummary = {
+type NextRaceSummary = {
   id: string;
   round: number;
   grand_prix_name: string;
@@ -124,56 +124,3 @@ export function buildFallbackNextRace(now: Date = new Date()): NextRaceSummary |
     race_starts_at: `${fallbackRace.date}T00:00:00.000Z`,
   };
 }
-
-export const drivers = [
-  "Max Verstappen",
-  "Liam Lawson",
-  "Lando Norris",
-  "Oscar Piastri",
-  "Charles Leclerc",
-  "Lewis Hamilton",
-  "George Russell",
-  "Kimi Antonelli",
-  "Fernando Alonso",
-  "Lance Stroll",
-  "Alexander Albon",
-  "Carlos Sainz",
-  "Oliver Bearman",
-  "Esteban Ocon",
-  "Nico Hulkenberg",
-  "Gabriel Bortoleto",
-  "Yuki Tsunoda",
-  "Isack Hadjar",
-  "Pierre Gasly",
-  "Franco Colapinto",
-];
-
-export type DriverInfo = {
-  name: string;
-  number: number;
-  team: string;
-  teamColor: string;
-};
-
-export const driverInfo: DriverInfo[] = [
-  { name: "Max Verstappen",   number:  1, team: "Red Bull Racing", teamColor: "#3671C6" },
-  { name: "Liam Lawson",      number: 30, team: "Red Bull Racing", teamColor: "#3671C6" },
-  { name: "Lando Norris",     number:  4, team: "McLaren",         teamColor: "#FF8000" },
-  { name: "Oscar Piastri",    number: 81, team: "McLaren",         teamColor: "#FF8000" },
-  { name: "Charles Leclerc",  number: 16, team: "Ferrari",         teamColor: "#E8002D" },
-  { name: "Lewis Hamilton",   number: 44, team: "Ferrari",         teamColor: "#E8002D" },
-  { name: "George Russell",   number: 63, team: "Mercedes",        teamColor: "#27F4D2" },
-  { name: "Kimi Antonelli",   number: 12, team: "Mercedes",        teamColor: "#27F4D2" },
-  { name: "Fernando Alonso",  number: 14, team: "Aston Martin",    teamColor: "#229971" },
-  { name: "Lance Stroll",     number: 18, team: "Aston Martin",    teamColor: "#229971" },
-  { name: "Alexander Albon",  number: 23, team: "Williams",        teamColor: "#64C4FF" },
-  { name: "Carlos Sainz",     number: 55, team: "Williams",        teamColor: "#64C4FF" },
-  { name: "Oliver Bearman",   number: 87, team: "Haas F1 Team",    teamColor: "#B6BABD" },
-  { name: "Esteban Ocon",     number: 31, team: "Haas F1 Team",    teamColor: "#B6BABD" },
-  { name: "Nico Hulkenberg",  number: 27, team: "Audi",            teamColor: "#52E252" },
-  { name: "Gabriel Bortoleto",number:  5, team: "Audi",            teamColor: "#52E252" },
-  { name: "Yuki Tsunoda",     number: 22, team: "Racing Bulls",    teamColor: "#6692FF" },
-  { name: "Isack Hadjar",     number:  6, team: "Racing Bulls",    teamColor: "#6692FF" },
-  { name: "Pierre Gasly",     number: 10, team: "Alpine",          teamColor: "#FF87BC" },
-  { name: "Franco Colapinto", number: 43, team: "Alpine",          teamColor: "#FF87BC" },
-];

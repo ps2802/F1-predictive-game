@@ -4,7 +4,7 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 const FROM = process.env.RESEND_FROM_EMAIL ?? "results@joingridlock.com";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://joingridlock.com";
 
-export interface RaceResultEmailParams {
+interface RaceResultEmailParams {
   to: string;
   raceName: string;
   raceId: string;

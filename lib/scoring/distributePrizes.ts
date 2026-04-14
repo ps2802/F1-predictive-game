@@ -11,8 +11,8 @@
 
 import { MINIMUM_LEAGUE_SIZE_FOR_PAYOUT } from "@/lib/gameRules";
 
-export const PLATFORM_RAKE_PERCENT = 0.10;
-export const MIN_RAKE_USDC = 0;
+const PLATFORM_RAKE_PERCENT = 0.10;
+const MIN_RAKE_USDC = 0;
 export const MINIMUM_PAID_ENTRANTS = 5;
 
 export type PayoutModel = "manual" | "skill_weighted";
@@ -28,7 +28,7 @@ export interface LeaguePayoutConfig {
   top_half_only?: boolean;
 }
 
-export interface RankInput {
+interface RankInput {
   userId: string;
   score: number;
   difficultyScore?: number;
@@ -38,7 +38,7 @@ export interface RankInput {
   payoutFrozen?: boolean;
 }
 
-export interface RankedUser {
+interface RankedUser {
   userId: string;
   rank: number;
   score: number;
@@ -49,7 +49,7 @@ export interface RankedUser {
   payoutFrozen: boolean;
 }
 
-export interface PayoutAllocation {
+interface PayoutAllocation {
   userId: string;
   rank: number;
   amount: number;
@@ -57,7 +57,7 @@ export interface PayoutAllocation {
   is_refund?: boolean;
 }
 
-export interface DistributionResult {
+interface DistributionResult {
   leagueId: string;
   model: PayoutModel;
   prizePool: number;

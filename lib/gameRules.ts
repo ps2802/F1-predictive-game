@@ -1,4 +1,4 @@
-export const PLATFORM_RAKE_PERCENT = 0.1;
+const PLATFORM_RAKE_PERCENT = 0.1;
 
 /** Solana wallet address that receives all platform fee withdrawals. */
 export const PLATFORM_FEE_WALLET_ADDRESS = "AM2GUxA79YU2MwfhhHaFJsi5ch8cxq5PQXq8XbPZb71z";
