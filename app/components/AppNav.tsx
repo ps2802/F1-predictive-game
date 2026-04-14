@@ -6,7 +6,7 @@ import { useState } from "react";
 import { resetAnalytics } from "@/lib/analytics";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-export interface AppNavProfile {
+interface AppNavProfile {
   username?: string | null;
   balance_usdc?: number | null;
   is_admin?: boolean | null;
