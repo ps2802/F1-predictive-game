@@ -34,21 +34,12 @@ export async function PATCH(request: Request) {
 
   const { raceId, locked } = parsed.data;
 
-  const { error } = await admin
-    .from("races")
-    .update({ race_locked: locked })
-    .eq("id", raceId);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-
-  // Freeze popularity snapshot when locking; a no-op when unlocking
   if (locked) {
     const { error: snapshotErr } = await admin.rpc("freeze_pick_popularity", { p_race_id: raceId });
     if (snapshotErr) {
       return NextResponse.json(
         {
-          error: `Race was locked, but popularity snapshots were not frozen: ${snapshotErr.message}. Apply the missing Supabase migrations and retry freezing before settlement.`,
-          partial: true,
+          error: `Popularity snapshots could not be frozen: ${snapshotErr.message}. The race was left unlocked.`,
           raceId,
           locked,
         },
@@ -56,6 +47,13 @@ export async function PATCH(request: Request) {
       );
     }
   }
+
+  const { error } = await admin
+    .from("races")
+    .update({ race_locked: locked })
+    .eq("id", raceId);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
   return NextResponse.json({ success: true, raceId, locked });
 }

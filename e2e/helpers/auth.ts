@@ -15,7 +15,7 @@ function firstOtpCode(text: string): string | null {
   return text.match(/\b(\d{6})\b/)?.[1] ?? null;
 }
 
-async function firstVisibleLocator(page: Page, locators: Locator[]): Promise<Locator | null> {
+async function firstVisibleLocator(locators: Locator[]): Promise<Locator | null> {
   for (const locator of locators) {
     if (await locator.first().isVisible().catch(() => false)) {
       return locator.first();
@@ -26,7 +26,7 @@ async function firstVisibleLocator(page: Page, locators: Locator[]): Promise<Loc
 }
 
 async function openEmailMethod(page: Page): Promise<void> {
-  const emailMethod = await firstVisibleLocator(page, [
+  const emailMethod = await firstVisibleLocator([
     page.getByRole("button", { name: /email/i }),
     page.getByRole("link", { name: /email/i }),
     page.locator("button").filter({ hasText: /email/i }),
@@ -42,7 +42,7 @@ async function fillEmailAndSubmit(page: Page, email: string): Promise<void> {
   let emailInput: Locator | null = null;
 
   while (Date.now() < deadline && !emailInput) {
-    emailInput = await firstVisibleLocator(page, [
+    emailInput = await firstVisibleLocator([
       page.locator('input[type="email"]'),
       page.locator('input[autocomplete="email"]'),
       page.getByRole("textbox", { name: /email/i }),
@@ -58,7 +58,7 @@ async function fillEmailAndSubmit(page: Page, email: string): Promise<void> {
       throw new Error("Privy modal errored before email auth rendered.");
     }
 
-    const nonEmailMethods = await firstVisibleLocator(page, [
+    const nonEmailMethods = await firstVisibleLocator([
       page.getByRole("button", { name: /google|wallet|passkey/i }),
       page.getByText(/continue with a wallet|i have a passkey/i).first(),
     ]);
@@ -86,7 +86,7 @@ async function fillEmailAndSubmit(page: Page, email: string): Promise<void> {
     )
     .catch(() => null);
 
-  const submit = await firstVisibleLocator(page, [
+  const submit = await firstVisibleLocator([
     page.getByRole("button", { name: /continue|submit|send code|email me|next/i }),
     page.locator("button[type='submit']"),
   ]);
@@ -137,7 +137,7 @@ async function applyOtpCode(page: Page, code: string): Promise<void> {
     }
   }
 
-  const confirm = await firstVisibleLocator(page, [
+  const confirm = await firstVisibleLocator([
     page.getByRole("button", { name: /verify|continue|submit/i }),
     page.locator("button[type='submit']"),
   ]);

@@ -1,0 +1,1 @@
+/Users/praneetsinha/conductor/workspaces/f1-predictive-game/san-francisco/.claude/skills/gstack/pair-agent/SKILL.md

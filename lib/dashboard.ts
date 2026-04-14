@@ -85,20 +85,20 @@ export interface DashboardViewModel {
   draftCount: number;
 }
 
-export interface DashboardHeroAction {
+interface DashboardHeroAction {
   href: string;
   label: string;
   helper: string;
   tone: "primary" | "draft" | "quiet";
 }
 
-export interface DashboardRaceGroups {
+interface DashboardRaceGroups {
   onDeck: DashboardRaceRow[];
   seasonRun: DashboardRaceRow[];
   settled: DashboardRaceRow[];
 }
 
-export interface DashboardSeasonMarker {
+interface DashboardSeasonMarker {
   id: string;
   round: number;
   status: "settled" | "next" | "upcoming";
@@ -126,7 +126,7 @@ export function extractInviteCode(raw: string): string {
   return raw.trim().replace(/^.*\/join\//, "").replace(/[^a-zA-Z0-9_-]/g, "");
 }
 
-export interface LeagueRankContext {
+interface LeagueRankContext {
   userRank: number | null;
   pointsGapToNext: number | null;
   pointsGapBelow: number | null;

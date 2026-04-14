@@ -2,6 +2,18 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.1.2.0] - 2026-04-13
+
+### Changed
+- Dashboard text contrast improved across all panels — label opacity lifted from 0.32–0.38 to 0.45–0.55 so metadata is actually readable in dim environments
+- Font sizes bumped throughout: section labels 9px → 10px, body/subline text 11px → 12–13px, PodiumRow scores 18px → 20px
+- Hero card gets a thick red left border stripe (marshal flag) and horizontal telemetry grid lines in the right panel — makes the next-race section feel like an F1 timing screen
+- Qualifying lock line now shows an amber **QUALI** label before the timestamp
+- Action strip tiles each get a colored left accent border: teal for Wallet, red for Create League, white for Standings — plus an eyebrow category label so the purpose of each tile is immediately clear
+- Section headers (My Leagues, Standings, Race Calendar) get left accent borders in teal, gold, and white respectively
+- Active/next race rows in the calendar get a red left border and a subtle red background tint to stand out from upcoming races
+- Season progress percentage label now reads "2026 Season · X% Complete" for clarity
+
 ## [0.1.1.0] - 2026-04-11
 
 ### Added

@@ -138,7 +138,7 @@ export default function DashboardClient() {
 
       {/* narrow viewport matches preview-b */}
       <div className={styles.viewport} style={{ maxWidth: "min(960px, calc(100% - 40px))", padding: "36px 0 100px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <DashboardSummaryBand metrics={vm.metrics} />
 
           {/* ① Hero — next race */}
@@ -151,7 +151,7 @@ export default function DashboardClient() {
           <MyLeaguesSection leagues={vm.leaguePreview} />
 
           {/* ④ Standings + Race schedule side by side */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
             <StandingsWidget leaderboard={vm.leaderboardPreview} metrics={vm.metrics} />
             <OnDeckWidget
               groups={grouped}
@@ -194,7 +194,7 @@ function DashboardSummaryBand({
       style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        gap: "10px",
+        gap: "14px",
       }}
     >
       <SummaryMetricCard
@@ -205,7 +205,7 @@ function DashboardSummaryBand({
         accent={TEAL}
       />
       <SummaryMetricCard
-        eyebrow="Exposure"
+        eyebrow="Season exposure"
         value={formatDashboardCurrency(metrics.totalStakedUsdc)}
         title="Amount staked"
         detail={exposureContext}
@@ -234,8 +234,8 @@ function SummaryMetricCard({
       style={{
         position: "relative",
         overflow: "hidden",
-        minHeight: "132px",
-        padding: "18px 18px 16px",
+        minHeight: "120px",
+        padding: "20px 24px 18px",
         border: `1px solid ${BORDER}`,
         background: PANEL,
       }}
@@ -250,7 +250,7 @@ function SummaryMetricCard({
           background: `linear-gradient(90deg, ${accent} 0%, rgba(255,255,255,0) 85%)`,
         }}
       />
-      <p style={{ ...sectionLabel, color: "rgba(255,255,255,0.4)", margin: 0 }}>{eyebrow}</p>
+      <p style={{ ...sectionLabel, color: "rgba(255,255,255,0.5)", margin: 0 }}>{eyebrow}</p>
       <div
         style={{
           marginTop: "18px",
@@ -264,8 +264,8 @@ function SummaryMetricCard({
         {value}
       </div>
       <div style={{ marginTop: "18px", display: "flex", flexDirection: "column", gap: "4px" }}>
-        <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>{title}</span>
-        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)" }}>{detail}</span>
+        <span style={{ fontSize: "14px", fontWeight: 700, color: "#fff", letterSpacing: "-0.01em" }}>{title}</span>
+        <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.58)" }}>{detail}</span>
       </div>
     </div>
   );
@@ -283,8 +283,8 @@ function FundingActionCard({
       style={{
         position: "relative",
         overflow: "hidden",
-        minHeight: "132px",
-        padding: "18px 18px 16px",
+        minHeight: "120px",
+        padding: "20px 24px 18px",
         border: `1px solid rgba(225,6,0,0.24)`,
         background:
           "linear-gradient(135deg, rgba(225,6,0,0.12) 0%, rgba(255,255,255,0.02) 100%)",
@@ -300,7 +300,7 @@ function FundingActionCard({
           background: "linear-gradient(90deg, #E10600 0%, rgba(255,255,255,0) 85%)",
         }}
       />
-      <p style={{ ...sectionLabel, color: "rgba(255,255,255,0.4)", margin: 0 }}>Wallet rail</p>
+      <p style={{ ...sectionLabel, color: "rgba(255,255,255,0.5)", margin: 0 }}>Wallet rail</p>
       <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "8px" }}>
         <span
           style={{
@@ -314,7 +314,7 @@ function FundingActionCard({
           Add money
         </span>
         <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.46)", lineHeight: 1.5 }}>
-          Open your embedded wallet funding flow and top up before the next league stake.
+          Open your wallet funding flow and top up before the next league stake.
         </span>
       </div>
 
@@ -434,6 +434,7 @@ const summaryCtaButton: React.CSSProperties = {
   textTransform: "uppercase",
 };
 
+
 /* ─────────────────────────────────────────────────────────────────────────── */
 /* Hero card                                                                    */
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -469,6 +470,13 @@ function HeroCard({
 
   return (
     <div style={heroWrap}>
+      {/* Telemetry corner decoration */}
+      <div aria-hidden="true" style={{
+        position: "absolute", top: 0, right: 0,
+        width: "160px", height: "100%",
+        backgroundImage: "repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 24px)",
+        pointerEvents: "none",
+      }} />
       <div style={heroInner}>
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           <span style={heroStep}>
@@ -489,8 +497,9 @@ function HeroCard({
           <CountdownRow countdown={countdown} />
 
           {race.qualifyingStartsAt && (
-            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.36)", marginTop: "2px" }}>
-              Qualifying locks {formatDashboardDateTime(race.qualifyingStartsAt)}
+            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginTop: "2px", letterSpacing: "0.06em" }}>
+              <span style={{ color: "rgba(255,210,0,0.7)", fontWeight: 800, marginRight: "6px" }}>QUALI</span>
+              Locks {formatDashboardDateTime(race.qualifyingStartsAt)}
             </p>
           )}
         </div>
@@ -503,9 +512,6 @@ function HeroCard({
           >
             {action.label}
           </Link>
-          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", textAlign: "center" }}>
-            One prediction · Every league
-          </span>
           {draftCount > 0 && (
             <span style={{ fontSize: "10px", color: TEAL, textAlign: "center" }}>
               {draftCount} draft{draftCount > 1 ? "s" : ""} pending
@@ -530,7 +536,7 @@ function CountdownRow({ countdown }: { countdown: CountdownParts }) {
       {parts.map((p, i) => (
         <span key={p.label} style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
           {i > 0 && (
-            <span style={{ fontSize: "28px", fontWeight: 200, color: "rgba(255,255,255,0.14)", paddingBottom: "4px" }}>:</span>
+            <span style={{ fontSize: "28px", fontWeight: 200, color: "rgba(255,255,255,0.28)", paddingBottom: "4px" }}>:</span>
           )}
           <span style={{
             fontSize: "clamp(28px,4vw,42px)",
@@ -560,8 +566,9 @@ const heroWrap: React.CSSProperties = {
   position: "relative",
   overflow: "hidden",
   padding: "36px 40px 32px",
-  border: `1px solid rgba(225,6,0,0.3)`,
-  background: "linear-gradient(135deg, rgba(225,6,0,0.12) 0%, rgba(255,255,255,0.02) 60%)",
+  border: `1px solid rgba(225,6,0,0.35)`,
+  borderLeft: `3px solid ${R}`,
+  background: "linear-gradient(135deg, rgba(225,6,0,0.1) 0%, rgba(255,255,255,0.02) 55%, rgba(0,0,0,0) 100%)",
 };
 
 const heroInner: React.CSSProperties = {
@@ -572,8 +579,8 @@ const heroInner: React.CSSProperties = {
 };
 
 const heroStep: React.CSSProperties = {
-  fontSize: "9px", fontWeight: 800, letterSpacing: "0.3em", textTransform: "uppercase",
-  color: "rgba(225,6,0,0.7)", margin: 0,
+  fontSize: "10px", fontWeight: 900, letterSpacing: "0.28em", textTransform: "uppercase",
+  color: R, margin: 0,
 };
 
 const heroName: React.CSSProperties = {
@@ -587,8 +594,8 @@ const heroName: React.CSSProperties = {
 };
 
 const heroMeta: React.CSSProperties = {
-  fontSize: "11px", fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase",
-  color: "rgba(255,255,255,0.38)", margin: 0,
+  fontSize: "11px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase",
+  color: "rgba(255,255,255,0.55)", margin: 0,
 };
 
 const heroCta: React.CSSProperties = {
@@ -625,6 +632,8 @@ function ActionStrip({
       labelTeal: true,
       sub: `${formatDashboardCurrency(metrics.walletBalance)} in wallet · Deposit USDC`,
       arrowTeal: true,
+      accentColor: TEAL,
+      eyebrow: "Wallet",
     },
     {
       href: "/leagues/create",
@@ -632,6 +641,8 @@ function ActionStrip({
       labelTeal: false,
       sub: "Set rules, entry fee, invite friends",
       arrowTeal: false,
+      accentColor: R,
+      eyebrow: "Compete",
     },
     {
       href: "/leaderboard",
@@ -643,30 +654,39 @@ function ActionStrip({
           ? `Score a race to rank · ${formatDashboardScore(metrics.seasonScore)} pts`
           : "Check the final standings",
       arrowTeal: false,
+      accentColor: "rgba(255,255,255,0.3)",
+      eyebrow: "Season",
     },
   ];
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "10px" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px" }}>
       {tiles.map((t) => (
         <Link key={t.href} href={t.href} style={{
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
           padding: "16px 18px",
           border: `1px solid ${BORDER}`,
+          borderLeft: `3px solid ${t.accentColor}`,
           background: PANEL,
           textDecoration: "none", color: "inherit",
           borderRadius: 0,
         }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
             <span style={{
-              fontSize: "14px", fontWeight: 800, letterSpacing: "-0.02em",
+              fontSize: "10px", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase",
+              color: "rgba(255,255,255,0.38)",
+            }}>
+              {t.eyebrow}
+            </span>
+            <span style={{
+              fontSize: "15px", fontWeight: 900, letterSpacing: "-0.02em",
               color: t.labelTeal ? TEAL : "#fff",
             }}>
               {t.label}
             </span>
-            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)" }}>{t.sub}</span>
+            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>{t.sub}</span>
           </div>
-          <span style={{ fontSize: "18px", color: t.arrowTeal ? `rgba(0,210,170,0.5)` : "rgba(255,255,255,0.24)", flexShrink: 0 }}>→</span>
+          <span style={{ fontSize: "18px", color: t.arrowTeal ? `rgba(0,210,170,0.55)` : "rgba(255,255,255,0.28)", flexShrink: 0 }}>→</span>
         </Link>
       ))}
     </div>
@@ -683,8 +703,9 @@ function MyLeaguesSection({ leagues }: { leagues: DashboardLeaguePreviewItem[] }
       {/* Header */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "16px 20px",
-        borderBottom: "1px solid rgba(255,255,255,0.05)",
+        padding: "18px 24px",
+        borderBottom: "1px solid rgba(255,255,255,0.07)",
+        borderLeft: `3px solid ${TEAL}`,
       }}>
         <div>
           <div style={sectionLabel}>Competition</div>
@@ -697,7 +718,7 @@ function MyLeaguesSection({ leagues }: { leagues: DashboardLeaguePreviewItem[] }
 
       {/* League rows */}
       {leagues.length === 0 ? (
-        <div style={{ padding: "24px 20px", textAlign: "center" }}>
+        <div style={{ padding: "28px 24px", textAlign: "center" }}>
           <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", margin: "0 0 12px" }}>
             No leagues yet — join or create one.
           </p>
@@ -714,13 +735,13 @@ function MyLeaguesSection({ leagues }: { leagues: DashboardLeaguePreviewItem[] }
           <Link key={league.id} href={`/leagues/${league.id}`} style={{
             display: "grid", gridTemplateColumns: "1fr auto auto",
             alignItems: "center", gap: "16px",
-            padding: "14px 20px",
+            padding: "16px 24px",
             borderBottom: "1px solid rgba(255,255,255,0.04)",
             textDecoration: "none", color: "inherit",
           }}>
             <div>
-              <div style={{ fontSize: "14px", fontWeight: 700 }}>{league.name}</div>
-              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.38)", marginTop: "2px" }}>
+              <div style={{ fontSize: "15px", fontWeight: 700, letterSpacing: "-0.01em" }}>{league.name}</div>
+              <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.52)", marginTop: "3px" }}>
                 {leagueSubline(league)}
               </div>
             </div>
@@ -750,8 +771,8 @@ function MyLeaguesSection({ leagues }: { leagues: DashboardLeaguePreviewItem[] }
 function JoinRow() {
   return (
     <div style={{
-      display: "flex", alignItems: "center", gap: "10px",
-      padding: "14px 20px",
+      display: "flex", alignItems: "center", gap: "12px",
+      padding: "16px 24px",
       borderTop: "1px solid rgba(255,255,255,0.05)",
       background: "rgba(255,255,255,0.015)",
     }}>
@@ -778,7 +799,7 @@ function JoinRow() {
             flex: 1, height: "34px", padding: "0 12px",
             background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
             color: "#fff", fontFamily: "inherit", fontSize: "12px",
-            letterSpacing: "0.06em", textTransform: "uppercase",
+            letterSpacing: "0.04em",
             outline: "none",
           }}
         />
@@ -813,7 +834,8 @@ function StandingsWidget({
     <div style={{ border: `1px solid ${BORDER}`, background: PANEL, overflow: "hidden" }}>
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.05)",
+        padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
+        borderLeft: `3px solid #FFD700`,
       }}>
         <div>
           <div style={sectionLabel}>Gridlock</div>
@@ -835,10 +857,11 @@ function StandingsWidget({
           {youEntry !== null && !topInLeaders && (
             <>
               <div style={{
-                fontSize: "9px", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase",
-                color: "rgba(255,255,255,0.24)", padding: "8px 14px",
-                borderBottom: "1px solid rgba(255,255,255,0.04)",
-                borderTop: "1px solid rgba(255,255,255,0.04)",
+                fontSize: "10px", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase",
+                color: "rgba(255,255,255,0.38)", padding: "8px 16px",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                borderTop: "1px solid rgba(255,255,255,0.06)",
+                background: "rgba(255,255,255,0.02)",
               }}>
                 Your position
               </div>
@@ -848,8 +871,8 @@ function StandingsWidget({
 
           {youEntry === null && metrics.seasonScore === 0 && (
             <div style={{
-              padding: "12px 14px", fontSize: "11px",
-              color: "rgba(255,255,255,0.35)", borderTop: "1px solid rgba(255,255,255,0.04)",
+              padding: "14px 16px", fontSize: "12px",
+              color: "rgba(255,255,255,0.48)", borderTop: "1px solid rgba(255,255,255,0.06)",
             }}>
               Score a race to appear on the board.
             </div>
@@ -866,25 +889,28 @@ function PodiumRow({ entry, isYou }: { entry: DashboardLeaderboardEntry; isYou: 
 
   return (
     <div style={{
-      display: "grid", gridTemplateColumns: "36px 1fr auto",
-      alignItems: "center", gap: "10px",
-      padding: "10px 14px",
-      borderBottom: "1px solid rgba(255,255,255,0.04)",
-      borderLeft: isYou ? `2px solid ${R}` : undefined,
-      background: isYou ? `rgba(225,6,0,0.06)` : undefined,
+      display: "grid", gridTemplateColumns: "40px 1fr auto",
+      alignItems: "center", gap: "12px",
+      padding: "14px 20px",
+      borderBottom: "1px solid rgba(255,255,255,0.05)",
+      borderLeft: isYou ? `3px solid ${R}` : `3px solid transparent`,
+      background: isYou ? `rgba(225,6,0,0.07)` : undefined,
     }}>
-      <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: rankColor }}>
+      <span style={{
+        fontSize: "11px", fontWeight: 900, letterSpacing: "0.08em", textTransform: "uppercase",
+        color: rankColor, fontVariantNumeric: "tabular-nums",
+      }}>
         P{pos}
       </span>
       <div>
-        <div style={{ fontSize: "13px", fontWeight: 700 }}>
+        <div style={{ fontSize: "14px", fontWeight: 700, letterSpacing: "-0.01em" }}>
           {isYou ? "You" : (entry.username ?? "Anonymous")}
         </div>
-        <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.36)", marginTop: "1px" }}>
+        <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginTop: "2px" }}>
           {entry.racesPlayed} race{entry.racesPlayed !== 1 ? "s" : ""}
         </div>
       </div>
-      <span style={{ fontSize: "18px", fontWeight: 900, letterSpacing: "-0.05em" }}>
+      <span style={{ fontSize: "20px", fontWeight: 900, letterSpacing: "-0.05em", fontVariantNumeric: "tabular-nums" }}>
         {formatDashboardScore(entry.totalScore)}
       </span>
     </div>
@@ -916,10 +942,11 @@ function OnDeckWidget({
     <div style={{ border: `1px solid ${BORDER}`, background: PANEL, overflow: "hidden" }}>
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.05)",
+        padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
+        borderLeft: `3px solid rgba(255,255,255,0.2)`,
       }}>
         <div>
-          <div style={sectionLabel}>2026 Season · {pct}%</div>
+          <div style={sectionLabel}>2026 Season · {pct}% Complete</div>
           <div style={sectionTitle}>Race Calendar</div>
         </div>
         <Link href="/dashboard#schedule" style={sectionAction}>Full calendar →</Link>
@@ -951,26 +978,28 @@ function OnDeckWidget({
       {/* On deck races */}
       {groups.onDeck.map((race) => (
         <Link key={race.id} href={getDashboardRaceHref(race)} style={{
-          display: "grid", gridTemplateColumns: "28px 1fr auto",
-          alignItems: "center", gap: "10px",
-          padding: "10px 14px",
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
+          display: "grid", gridTemplateColumns: "32px 1fr auto",
+          alignItems: "center", gap: "12px",
+          padding: "14px 20px",
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          borderLeft: race.isNext ? `3px solid ${R}` : `3px solid transparent`,
+          background: race.isNext ? `rgba(225,6,0,0.04)` : undefined,
           textDecoration: "none", color: "inherit",
         }}>
-          <span style={{ fontSize: "10px", fontWeight: 800, color: "rgba(255,255,255,0.3)" }}>
+          <span style={{ fontSize: "10px", fontWeight: 900, color: race.isNext ? R : "rgba(255,255,255,0.38)", letterSpacing: "0.06em" }}>
             R{race.round}
           </span>
           <div>
-            <div style={{ fontSize: "13px", fontWeight: 700 }}>
+            <div style={{ fontSize: "14px", fontWeight: 700, letterSpacing: "-0.01em" }}>
               {race.flag ?? "🏁"} {race.name}
             </div>
-            <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.38)", marginTop: "1px" }}>
+            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginTop: "2px" }}>
               {race.date ? formatDashboardRaceDate(race.date) : "Date TBD"}
             </div>
           </div>
           <span style={{
-            fontSize: "9px", fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase",
-            color: race.isNext ? R : "rgba(255,255,255,0.36)",
+            fontSize: "10px", fontWeight: 900, letterSpacing: "0.12em", textTransform: "uppercase",
+            color: race.isNext ? R : "rgba(255,255,255,0.4)",
           }}>
             {getDashboardRaceActionLabel(race)}
           </span>
@@ -984,10 +1013,10 @@ function OnDeckWidget({
           onClick={() => setSettledOpen(!settledOpen)}
           style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            width: "100%", padding: "10px 14px",
-            background: "none", border: "none", borderTop: "1px solid rgba(255,255,255,0.05)",
-            color: "rgba(255,255,255,0.32)", cursor: "pointer", fontFamily: "inherit",
-            fontSize: "9px", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase",
+            width: "100%", padding: "11px 16px",
+            background: "rgba(255,255,255,0.02)", border: "none", borderTop: "1px solid rgba(255,255,255,0.07)",
+            color: "rgba(255,255,255,0.45)", cursor: "pointer", fontFamily: "inherit",
+            fontSize: "10px", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase",
           }}
         >
           <span>Settled · {groups.settled.length} rounds</span>
@@ -1018,18 +1047,18 @@ function OnDeckWidget({
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 const sectionLabel: React.CSSProperties = {
-  fontSize: "9px", fontWeight: 800, letterSpacing: "0.26em", textTransform: "uppercase",
-  color: "rgba(255,255,255,0.32)",
+  fontSize: "10px", fontWeight: 800, letterSpacing: "0.22em", textTransform: "uppercase",
+  color: "rgba(255,255,255,0.45)",
 };
 
 const sectionTitle: React.CSSProperties = {
-  fontSize: "16px", fontWeight: 900, letterSpacing: "-0.02em", textTransform: "uppercase",
-  marginTop: "6px", color: "#fff",
+  fontSize: "18px", fontWeight: 900, letterSpacing: "-0.02em", textTransform: "uppercase",
+  marginTop: "4px", color: "#fff",
 };
 
 const sectionAction: React.CSSProperties = {
-  fontSize: "9px", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase",
-  color: "rgba(0,210,170,0.6)", textDecoration: "none",
+  fontSize: "10px", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase",
+  color: "rgba(0,210,170,0.85)", textDecoration: "none",
 };
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -1057,7 +1086,7 @@ function DashboardSkeleton() {
           <div style={{ ...shimmer, height: "72px" }} />
         </div>
         <div style={{ ...shimmer, height: "180px" }} />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
           <div style={{ ...shimmer, height: "220px" }} />
           <div style={{ ...shimmer, height: "220px" }} />
         </div>

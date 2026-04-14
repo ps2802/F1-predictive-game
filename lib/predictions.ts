@@ -11,7 +11,7 @@ export type PredictionOptionDefinition = {
   question_id: string;
 };
 
-export type PredictionAnswerRow = {
+type PredictionAnswerRow = {
   question_id: string;
   option_id: string;
   pick_order: number;

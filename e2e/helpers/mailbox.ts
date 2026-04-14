@@ -107,7 +107,7 @@ function parseEmailAddress(from: AgentMailMessageListItem["from"]): string {
   return from.email ?? "";
 }
 
-export class AgentMailProvider implements MailboxProvider {
+class AgentMailProvider implements MailboxProvider {
   private apiKey = getApiKey();
   private baseUrl = getApiBase();
 
@@ -242,7 +242,7 @@ export class AgentMailProvider implements MailboxProvider {
   }
 }
 
-export class MailTmProvider implements MailboxProvider {
+class MailTmProvider implements MailboxProvider {
   private baseUrl = process.env.GRIDLOCK_CANARY_MAIL_API_BASE ?? "https://api.mail.tm";
   private sessions = new Map<string, { token: string; password: string; email: string }>();
   private domain: string | null = null;
