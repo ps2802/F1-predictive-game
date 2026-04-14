@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
       GRIDLOCK_CANARY_BASE_URL_PREVIEW: ${{ github.event.deployment_status.target_url || secrets.GRIDLOCK_CANARY_BASE_URL_PREVIEW }}
       GRIDLOCK_CANARY_MAIL_PROVIDER: agentmail
       GRIDLOCK_CANARY_MAIL_API_KEY: ${{ secrets.GRIDLOCK_CANARY_MAIL_API_KEY }}
@@ -51,7 +52,7 @@ jobs:
       - run: npm run canary:gridlock -- --env preview --scenario full-two-user
         if: steps.canary-config.outputs.enabled == 'true'
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && hashFiles('.e2e-artifacts/**') != ''
         with:
           name: gridlock-canary-preview
           path: .e2e-artifacts/

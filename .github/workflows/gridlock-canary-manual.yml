@@ -30,6 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
       GRIDLOCK_CANARY_BASE_URL_LOCAL: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_LOCAL }}
       GRIDLOCK_CANARY_BASE_URL_PREVIEW: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_PREVIEW }}
       GRIDLOCK_CANARY_BASE_URL_PROD: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_PROD }}
@@ -92,7 +93,7 @@ jobs:
           fi
           "${CMD[@]}"
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && hashFiles('.e2e-artifacts/**') != ''
         with:
           name: gridlock-canary-manual
           path: .e2e-artifacts/
