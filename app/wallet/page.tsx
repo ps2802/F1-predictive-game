@@ -72,9 +72,9 @@ function formatDateTime(value: string): string {
 function formatTransactionLabel(type: WalletTransaction["type"]): string {
   switch (type) {
     case "entry_fee":
-      return "League entry";
+      return "League Entry";
     case "edit_fee":
-      return "Prediction edit";
+      return "Prediction Edit";
     case "withdrawal":
       return "Withdrawal";
     case "payout":
@@ -89,6 +89,10 @@ function formatTransactionLabel(type: WalletTransaction["type"]): string {
 function maskHash(hash: string): string {
   if (hash.length <= 14) return hash;
   return `${hash.slice(0, 8)}...${hash.slice(-6)}`;
+}
+
+function isPositiveTransaction(type: WalletTransaction["type"]): boolean {
+  return type === "deposit" || type === "payout" || type === "refund";
 }
 
 export default function WalletPage() {
@@ -207,7 +211,6 @@ export default function WalletPage() {
       setWithdrawAmount("");
       setWithdrawAddress("");
       setShowWithdraw(false);
-      // Reload wallet data without full page reload
       router.refresh();
     }
     setWithdrawing(false);
@@ -231,11 +234,11 @@ export default function WalletPage() {
         <div className="gla-content" style={{ maxWidth: "640px", textAlign: "center", paddingTop: "6rem" }}>
           <h1 className="gla-page-title">Wallet unavailable</h1>
           <p className="gla-page-sub" style={{ marginTop: "0.75rem" }}>{error}</p>
-          <div className="wallet-action-row" style={{ justifyContent: "center", marginTop: "2rem" }}>
-            <button className="gla-race-btn" onClick={() => { setError(""); setLoading(true); router.refresh(); }}>
+          <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", marginTop: "2rem" }}>
+            <button className="wlt-btn-primary" onClick={() => { setError(""); setLoading(true); router.refresh(); }}>
               Retry
             </button>
-            <Link href="/dashboard" className="gla-race-btn league-secondary-btn">
+            <Link href="/dashboard" className="wlt-btn-secondary">
               Back to Dashboard
             </Link>
           </div>
@@ -251,59 +254,61 @@ export default function WalletPage() {
       <div className="gl-stripe" aria-hidden="true" />
       <AppNav profile={profile} />
 
-      <div className="gla-content" style={{ maxWidth: "920px" }}>
+      <div className="gla-content" style={{ maxWidth: "960px" }}>
         <Link href="/profile" className="predict-back">← Profile</Link>
-        <p className="gla-page-title" style={{ marginTop: "1.5rem" }}>Wallet</p>
-        <p className="gla-page-sub">Live ledger view for deposits, entries, payouts, and release holds</p>
 
-        <div className="profile-stats-strip" style={{ marginTop: "1.5rem" }} data-clarity-mask="true">
-          <div className="profile-stat-block">
-            <span className="profile-stat-num">{formatUsdc(balance)}</span>
-            <span className="profile-stat-lbl">Available {ledgerCurrency}</span>
-          </div>
-          <div className="profile-stat-divider" />
-          <div className="profile-stat-block">
-            <span className="profile-stat-num">{formatUsdc(summary.pendingWithdrawalUsdc)}</span>
-            <span className="profile-stat-lbl">Pending Release</span>
-          </div>
-          <div className="profile-stat-divider" />
-          <div className="profile-stat-block">
-            <span className="profile-stat-num">{formatUsdc(summary.depositedUsdc)}</span>
-            <span className="profile-stat-lbl">Deposited</span>
-          </div>
+        <div style={{ marginTop: "1.5rem" }}>
+          <p className="gla-page-title">Wallet</p>
+          <p className="gla-page-sub">Live ledger · deposits · payouts · release holds</p>
         </div>
 
-        <div className="wallet-card" style={{ marginTop: "1.5rem", alignItems: "stretch" }} data-clarity-mask="true">
-          <div style={{ flex: 1 }}>
-            <span className="wallet-balance-label">Deposit Status</span>
-            <span className="wallet-balance" style={{ fontSize: "1.6rem", marginTop: "0.45rem" }}>
-              Ready to receive
-            </span>
-            <span style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.85rem", display: "block", marginTop: "0.6rem" }}>
-              Send USDC to your linked wallet address below. Your balance will update once the transaction is confirmed.
-            </span>
-          </div>
-          <div style={{ minWidth: "280px" }}>
-            <span className="wallet-balance-label">Linked Wallet</span>
-            <div className="profile-field-static profile-wallet-addr" style={{ marginTop: "0.75rem" }}>
-              <span className="profile-wallet-text">
-                {profile?.wallet_address ?? "No embedded wallet assigned yet"}
-              </span>
+        {/* ── Hero balance card ── */}
+        <div className="wlt-hero" data-clarity-mask="true">
+          <p className="wlt-hero-eyebrow">Available Balance</p>
+          <p className="wlt-hero-amount">{formatUsdc(balance)}</p>
+          <p className="wlt-hero-currency">{ledgerCurrency} · Solana Network</p>
+
+          <div className="wlt-stats-row">
+            <div className="wlt-stat-block">
+              <span className="wlt-stat-num">{formatUsdc(summary.pendingWithdrawalUsdc)}</span>
+              <span className="wlt-stat-lbl">Pending Release</span>
+            </div>
+            <div className="wlt-stat-block">
+              <span className="wlt-stat-num">{formatUsdc(summary.depositedUsdc)}</span>
+              <span className="wlt-stat-lbl">Total Deposited</span>
             </div>
           </div>
+
+          <div className="wlt-actions-row" style={{ marginTop: "1.5rem" }}>
+            {balance > 0 && (
+              <button
+                className="wlt-btn-primary"
+                onClick={() => { setShowWithdraw(true); window.scrollTo({ top: 9999, behavior: "smooth" }); }}
+              >
+                Withdraw
+              </button>
+            )}
+            <Link href="/leagues" className="wlt-btn-secondary">Join a League</Link>
+            <Link href="/profile" className="wlt-btn-secondary">Profile</Link>
+          </div>
         </div>
 
-        <div className="wallet-deposit-card" data-clarity-mask="true">
-          <p className="wallet-deposit-title">Deposit USDC</p>
+        {/* ── Deposit address panel ── */}
+        <div className="wlt-panel" data-clarity-mask="true">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.75rem" }}>
+            <div>
+              <p className="wlt-panel-eyebrow">Deposit</p>
+              <p className="wlt-panel-title">Your Solana Wallet Address</p>
+            </div>
+            <span className="wlt-status-pill">Ready to receive</span>
+          </div>
+
           {profile?.wallet_address ? (
             <>
-              <p className="wallet-deposit-desc">
-                Send USDC (SPL token on Solana) to your embedded wallet. Your balance updates automatically once confirmed on-chain.
-              </p>
-              <div className="wallet-address-box">
-                <span className="wallet-address-text">{profile.wallet_address}</span>
+              <div className="wlt-addr-box">
+                <span className="wlt-addr-text">{profile.wallet_address}</span>
                 <button
-                  className="league-copy-btn"
+                  className={`wlt-copy-btn${addressCopied ? " copied" : ""}`}
                   onClick={() => {
                     navigator.clipboard.writeText(profile.wallet_address!).then(() => {
                       setAddressCopied(true);
@@ -314,45 +319,45 @@ export default function WalletPage() {
                   {addressCopied ? "Copied!" : "Copy"}
                 </button>
               </div>
-              <p className="wallet-deposit-note">
-                Only send USDC on Solana. Other tokens or chains are not supported.
+              <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.4)", margin: 0, lineHeight: 1.6 }}>
+                Send USDC (SPL token on Solana) to this address. Your balance updates automatically once confirmed on-chain.
               </p>
+              <div className="wlt-addr-note">
+                <span className="wlt-addr-note-icon">!</span>
+                Only send USDC on Solana. Other tokens or chains are not supported and funds may be lost.
+              </div>
             </>
           ) : (
-            <p className="wallet-deposit-desc">
+            <p style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.45)", margin: 0, lineHeight: 1.6 }}>
               No embedded wallet linked yet. Sign out and sign back in to generate your Solana wallet, then return here to deposit.
             </p>
           )}
-          <div className="wallet-action-row" style={{ marginTop: "1rem" }}>
-            <Link href="/leagues" className="gla-race-btn">Join a League</Link>
-            <Link href="/profile" className="gla-race-btn league-secondary-btn">Back to Profile</Link>
-          </div>
         </div>
 
-        {/* Withdrawal */}
+        {/* ── Withdrawal form ── */}
         {balance > 0 && (
-          <div className="wallet-deposit-card" style={{ marginTop: "1.5rem" }} data-clarity-mask="true">
-            <p className="wallet-deposit-title">Withdraw USDC</p>
+          <div className="wlt-panel" data-clarity-mask="true">
+            <div>
+              <p className="wlt-panel-eyebrow">Withdraw</p>
+              <p className="wlt-panel-title">Request Withdrawal</p>
+            </div>
+
             {!showWithdraw ? (
-              <>
-                <p className="wallet-deposit-desc">
-                  Withdrawals are processed within 24 hours. Your available balance is {formatUsdc(balance)}.
+              <div>
+                <p style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.45)", margin: "0 0 1rem", lineHeight: 1.6 }}>
+                  Withdrawals are processed within 24 hours. Available balance: <strong style={{ color: "#fff" }}>{formatUsdc(balance)}</strong>
                 </p>
-                <button
-                  className="gla-race-btn"
-                  style={{ marginTop: "0.75rem" }}
-                  onClick={() => setShowWithdraw(true)}
-                >
+                <button className="wlt-btn-primary" onClick={() => setShowWithdraw(true)}>
                   Request Withdrawal
                 </button>
-              </>
+              </div>
             ) : (
-              <form onSubmit={handleWithdraw} style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "0.5rem" }}>
-                <div>
-                  <label className="wallet-deposit-title">Destination Wallet (Solana)</label>
+              <form onSubmit={handleWithdraw} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div className="wlt-form-row">
+                  <label className="wlt-form-label">Destination Wallet (Solana)</label>
                   <input
                     className="league-join-input"
-                    style={{ width: "100%", marginTop: "0.35rem" }}
+                    style={{ width: "100%", marginTop: "0.25rem" }}
                     placeholder="Solana wallet address"
                     value={withdrawAddress}
                     onChange={(e) => setWithdrawAddress(e.target.value)}
@@ -362,11 +367,11 @@ export default function WalletPage() {
                     required
                   />
                 </div>
-                <div>
-                  <label className="wallet-deposit-title">Amount (USDC)</label>
+                <div className="wlt-form-row">
+                  <label className="wlt-form-label">Amount (USDC)</label>
                   <input
                     className="league-join-input"
-                    style={{ width: "100%", marginTop: "0.35rem" }}
+                    style={{ width: "100%", marginTop: "0.25rem" }}
                     type="number"
                     placeholder={`Max ${balance.toFixed(2)}`}
                     min="1"
@@ -377,14 +382,16 @@ export default function WalletPage() {
                     required
                   />
                 </div>
-                {withdrawErr && <p style={{ color: "#E10600", fontSize: "0.85rem" }}>{withdrawErr}</p>}
-                <div className="wallet-action-row">
-                  <button type="submit" className="gla-race-btn" disabled={withdrawing}>
+                {withdrawErr && (
+                  <p style={{ color: "#E10600", fontSize: "0.82rem", margin: 0 }}>{withdrawErr}</p>
+                )}
+                <div style={{ display: "flex", gap: "0.75rem" }}>
+                  <button type="submit" className="wlt-btn-primary" disabled={withdrawing}>
                     {withdrawing ? "Processing..." : "Confirm Withdrawal"}
                   </button>
                   <button
                     type="button"
-                    className="gla-race-btn league-secondary-btn"
+                    className="wlt-btn-secondary"
                     onClick={() => { setShowWithdraw(false); setWithdrawErr(""); }}
                   >
                     Cancel
@@ -392,25 +399,29 @@ export default function WalletPage() {
                 </div>
               </form>
             )}
-            {withdrawMsg && <p style={{ color: "rgba(0,210,170,0.9)", fontSize: "0.85rem", marginTop: "0.75rem" }}>{withdrawMsg}</p>}
+
+            {withdrawMsg && (
+              <p style={{ color: "rgba(0,210,170,0.85)", fontSize: "0.82rem", margin: 0, lineHeight: 1.5 }}>
+                {withdrawMsg}
+              </p>
+            )}
           </div>
         )}
 
+        {/* ── Pending holds ── */}
         {withdrawalHolds.length > 0 && (
-          <div className="profile-identity-card" style={{ marginTop: "1.5rem" }} data-clarity-mask="true">
-            <h3 className="profile-card-title">Pending Release Holds</h3>
-            <div className="lb-table" style={{ marginTop: "1rem" }}>
-              <div className="lb-header" style={{ gridTemplateColumns: "160px 1fr 180px" }}>
-                <span>Amount</span>
-                <span>Reason</span>
-                <span>Available</span>
-              </div>
+          <div className="wlt-panel" data-clarity-mask="true">
+            <div>
+              <p className="wlt-panel-eyebrow">On Hold</p>
+              <p className="wlt-panel-title">Pending Release</p>
+            </div>
+            <div>
               {withdrawalHolds.map((hold) => (
-                <div key={hold.id} className="lb-row" style={{ gridTemplateColumns: "160px 1fr 180px" }}>
-                  <span className="lb-score">{formatUsdc(hold.amount)}</span>
-                  <span className="lb-name">{hold.reason}</span>
-                  <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.6)" }}>
-                    {formatDateTime(hold.available_at)}
+                <div key={hold.id} className="wlt-hold-row">
+                  <span style={{ fontWeight: 700, color: "#fff" }}>{formatUsdc(hold.amount)}</span>
+                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>{hold.reason}</span>
+                  <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", textAlign: "right" }}>
+                    Available {formatDateTime(hold.available_at)}
                   </span>
                 </div>
               ))}
@@ -418,61 +429,65 @@ export default function WalletPage() {
           </div>
         )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.5rem", marginTop: "1.5rem" }}>
-          <div className="profile-identity-card" style={{ marginTop: 0 }} data-clarity-mask="true">
-            <h3 className="profile-card-title">Recent Ledger Activity</h3>
+        {/* ── Ledger & deposits grid ── */}
+        <div className="wlt-two-col">
+          {/* Ledger activity */}
+          <div className="wlt-panel" style={{ marginTop: 0 }} data-clarity-mask="true">
+            <div>
+              <p className="wlt-panel-eyebrow">Activity</p>
+              <p className="wlt-panel-title">Ledger</p>
+            </div>
             {transactions.length === 0 ? (
-              <p className="league-empty" style={{ marginTop: "1rem" }}>
-                No wallet activity yet. Credit a balance, join a league, or settle a race to populate the ledger.
+              <p className="wlt-ledger-empty">
+                No activity yet. Join a league or make a deposit to get started.
               </p>
             ) : (
-              <div className="lb-table" style={{ marginTop: "1rem" }}>
-                <div className="lb-header" style={{ gridTemplateColumns: "140px 1fr 140px" }}>
-                  <span>Type</span>
-                  <span>Description</span>
-                  <span>Amount</span>
-                </div>
-                {transactions.map((transaction) => (
-                  <div key={transaction.id} className="lb-row" style={{ gridTemplateColumns: "140px 1fr 140px" }}>
-                    <span className="lb-races">{formatTransactionLabel(transaction.type)}</span>
-                    <span className="lb-name">
-                      {transaction.description ?? "Ledger movement"}
-                      <span className="profile-field-note" style={{ display: "block", marginTop: "0.25rem" }}>
-                        {formatDateTime(transaction.created_at)}
+              <div>
+                {transactions.map((tx) => (
+                  <div key={tx.id} className="wlt-tx-row">
+                    <div className="wlt-tx-left">
+                      <span className="wlt-tx-type">{formatTransactionLabel(tx.type)}</span>
+                      <span className="wlt-tx-meta">
+                        {tx.description ?? "Ledger movement"} · {formatDateTime(tx.created_at)}
                       </span>
+                    </div>
+                    <span className={`wlt-tx-amount ${isPositiveTransaction(tx.type) ? "positive" : "negative"}`}>
+                      {isPositiveTransaction(tx.type) ? "+" : ""}{formatUsdc(tx.amount)}
                     </span>
-                    <span className="lb-score">{formatUsdc(transaction.amount)}</span>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="profile-identity-card" style={{ marginTop: 0 }} data-clarity-mask="true">
-            <h3 className="profile-card-title">Recent Deposits</h3>
+          {/* Deposit events */}
+          <div className="wlt-panel" style={{ marginTop: 0 }} data-clarity-mask="true">
+            <div>
+              <p className="wlt-panel-eyebrow">On-chain</p>
+              <p className="wlt-panel-title">Deposits</p>
+            </div>
             {deposits.length === 0 ? (
-              <p className="league-empty" style={{ marginTop: "1rem" }}>
-                No deposit events recorded yet for this account.
+              <p className="wlt-ledger-empty">
+                No deposits recorded yet for this account.
               </p>
             ) : (
-              <div className="lb-table" style={{ marginTop: "1rem" }}>
-                <div className="lb-header" style={{ gridTemplateColumns: "1fr 110px 140px" }}>
-                  <span>Reference</span>
-                  <span>Status</span>
-                  <span>Credited</span>
-                </div>
-                {deposits.map((deposit) => (
-                  <div key={deposit.id} className="lb-row" style={{ gridTemplateColumns: "1fr 110px 140px" }}>
-                    <span className="lb-name">
-                      {maskHash(deposit.tx_hash)}
-                      <span className="profile-field-note" style={{ display: "block", marginTop: "0.25rem" }}>
-                        {deposit.token} {deposit.amount.toFixed(2)} · {formatDateTime(deposit.created_at)}
+              <div>
+                {deposits.map((dep) => (
+                  <div key={dep.id} className="wlt-tx-row">
+                    <div className="wlt-tx-left">
+                      <span className="wlt-tx-type" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        {maskHash(dep.tx_hash)}
+                        <span className={`wlt-badge ${dep.confirmed ? "wlt-badge-teal" : "wlt-badge-amber"}`}>
+                          {dep.confirmed ? "Confirmed" : "Pending"}
+                        </span>
                       </span>
+                      <span className="wlt-tx-meta">
+                        {dep.token} {dep.amount.toFixed(2)} · {formatDateTime(dep.created_at)}
+                      </span>
+                    </div>
+                    <span className="wlt-tx-amount positive">
+                      +{formatUsdc(dep.credited_amount_usdc)}
                     </span>
-                    <span className="lb-races">
-                      {deposit.confirmed ? "Confirmed" : "Pending"}
-                    </span>
-                    <span className="lb-score">{formatUsdc(deposit.credited_amount_usdc)}</span>
                   </div>
                 ))}
               </div>
