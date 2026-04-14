@@ -2,6 +2,17 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.1.2.0] - 2026-04-14
+
+### Changed
+- Wallet page fully redesigned as a financial dashboard — hero balance card with large typography and teal glow accent, deposit address panel with live status pill (ready/no-wallet), color-coded ledger rows (teal for income, amber for pending), two-column layout for Ledger and Deposits
+- Financial numbers now use `font-variant-numeric: tabular-nums` to prevent digit jitter on balance updates
+- Wallet page title changed to semantic `<h1>` for accessibility
+- Status pill conditionally shows amber "No wallet linked" when no Solana wallet is assigned, replacing the always-teal "Ready to receive"
+
+### Fixed
+- Next.js Turbopack startup crash caused by `[inviteCode]` and `[leagueId]` dynamic route segments at the same path level — merged into a single `[leagueId]` handler
+
 ## [0.1.0.0] - 2026-03-31
 
 ### Added
