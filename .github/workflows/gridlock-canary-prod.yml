@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
       GRIDLOCK_CANARY_BASE_URL_PROD: ${{ github.event.deployment_status.target_url || secrets.GRIDLOCK_CANARY_BASE_URL_PROD }}
       GRIDLOCK_CANARY_MAIL_PROVIDER: agentmail
       GRIDLOCK_CANARY_MAIL_API_KEY: ${{ secrets.GRIDLOCK_CANARY_MAIL_API_KEY }}
@@ -21,8 +20,8 @@ jobs:
       GRIDLOCK_CANARY_PERSONA_B_EMAIL: ${{ secrets.GRIDLOCK_CANARY_PERSONA_B_EMAIL }}
       GRIDLOCK_CANARY_ALERT_WEBHOOK: ${{ secrets.GRIDLOCK_CANARY_ALERT_WEBHOOK }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
@@ -56,7 +55,7 @@ jobs:
         if: steps.canary-config.outputs.enabled == 'true'
       - run: npm run canary:gridlock -- --env prod --scenario fresh-signup-smoke
         if: github.event_name == 'schedule' && steps.canary-config.outputs.enabled == 'true'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always() && hashFiles('.e2e-artifacts/**') != ''
         with:
           name: gridlock-canary-prod

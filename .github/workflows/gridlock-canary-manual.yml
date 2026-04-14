@@ -30,7 +30,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
       GRIDLOCK_CANARY_BASE_URL_LOCAL: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_LOCAL }}
       GRIDLOCK_CANARY_BASE_URL_PREVIEW: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_PREVIEW }}
       GRIDLOCK_CANARY_BASE_URL_PROD: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_PROD }}
@@ -41,8 +40,8 @@ jobs:
       GRIDLOCK_CANARY_PERSONA_B_EMAIL: ${{ secrets.GRIDLOCK_CANARY_PERSONA_B_EMAIL }}
       GRIDLOCK_CANARY_ALERT_WEBHOOK: ${{ secrets.GRIDLOCK_CANARY_ALERT_WEBHOOK }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
@@ -92,7 +91,7 @@ jobs:
             CMD+=(--base-url "${{ inputs.base_url }}")
           fi
           "${CMD[@]}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always() && hashFiles('.e2e-artifacts/**') != ''
         with:
           name: gridlock-canary-manual
