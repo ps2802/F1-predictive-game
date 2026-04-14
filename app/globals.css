@@ -1853,6 +1853,7 @@ h1, h2, h3 { margin-top: 0; }
   color: #fff;
   line-height: 1;
   margin: 0;
+  font-variant-numeric: tabular-nums;
 }
 .wlt-hero-currency {
   font-size: 0.72rem;
@@ -1877,9 +1878,9 @@ h1, h2, h3 { margin-top: 0; }
 }
 .wlt-stat-block + .wlt-stat-block {
   border-left: 1px solid rgba(255,255,255,0.07);
-  padding: 0 1.25rem;
+  padding: 0 0 0 1.25rem;
 }
-.wlt-stat-num { font-size: 1.05rem; font-weight: 700; color: #fff; }
+.wlt-stat-num { font-size: 1.05rem; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
 .wlt-stat-lbl {
   font-size: 0.62rem;
   font-weight: 600;
@@ -1986,6 +1987,15 @@ h1, h2, h3 { margin-top: 0; }
   background: rgba(0,210,170,0.85);
   box-shadow: 0 0 6px rgba(0,210,170,0.5);
   flex-shrink: 0;
+}
+.wlt-status-pill--warn {
+  background: rgba(255,180,0,0.1);
+  border-color: rgba(255,180,0,0.25);
+  color: rgba(255,180,0,0.8);
+}
+.wlt-status-pill--warn::before {
+  background: rgba(255,180,0,0.8);
+  box-shadow: 0 0 6px rgba(255,180,0,0.4);
 }
 
 .wlt-addr-box {

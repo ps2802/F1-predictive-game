@@ -258,7 +258,7 @@ export default function WalletPage() {
         <Link href="/profile" className="predict-back">← Profile</Link>
 
         <div style={{ marginTop: "1.5rem" }}>
-          <p className="gla-page-title">Wallet</p>
+          <h1 className="gla-page-title">Wallet</h1>
           <p className="gla-page-sub">Live ledger · deposits · payouts · release holds</p>
         </div>
 
@@ -300,7 +300,11 @@ export default function WalletPage() {
               <p className="wlt-panel-eyebrow">Deposit</p>
               <p className="wlt-panel-title">Your Solana Wallet Address</p>
             </div>
-            <span className="wlt-status-pill">Ready to receive</span>
+            {profile?.wallet_address ? (
+              <span className="wlt-status-pill">Ready to receive</span>
+            ) : (
+              <span className="wlt-status-pill wlt-status-pill--warn">No wallet linked</span>
+            )}
           </div>
 
           {profile?.wallet_address ? (
