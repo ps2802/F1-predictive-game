@@ -602,3 +602,17 @@ export function settleRace(input: SettlementInput): SettlementOutput {
     settledAt: new Date().toISOString(),
   };
 }
+
+/**
+ * Drop the N worst race scores for a user when computing their season total.
+ * Used on the global leaderboard, not applied to individual race scores.
+ */
+export function applyDropWorstN(raceScores: number[], dropN: number): number {
+  if (raceScores.length <= dropN) {
+    return 0;
+  }
+
+  const sorted = [...raceScores].sort((a, b) => a - b);
+  const kept = sorted.slice(dropN);
+  return kept.reduce((sum, score) => sum + score, 0);
+}

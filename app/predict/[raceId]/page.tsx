@@ -45,6 +45,12 @@ const STEP_LABELS: Record<string, string> = {
   chaos: "Chaos",
   review: "Review",
 };
+const STEP_ICONS: Record<string, string> = {
+  qualifying: "Q",
+  race: "R",
+  chaos: "⚡",
+  review: "✎",
+};
 
 export default function PredictPage() {
   const params = useParams();

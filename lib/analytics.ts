@@ -12,6 +12,10 @@ import {
 export {
   getPageGroup,
   getRaceIdFromPath,
+  type AnalyticsUserTraits,
+  type GridlockEventName,
+  type GridlockEventProperties,
+  type TrackOptions,
 };
 
 type AcquisitionContext = {
