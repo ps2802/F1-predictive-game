@@ -151,7 +151,7 @@ export default function DashboardClient() {
           <MyLeaguesSection leagues={vm.leaguePreview} />
 
           {/* ④ Standings + Race schedule side by side */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+          <div className={styles.bottomGrid}>
             <StandingsWidget leaderboard={vm.leaderboardPreview} metrics={vm.metrics} />
             <OnDeckWidget
               groups={grouped}
@@ -250,7 +250,7 @@ function SummaryMetricCard({
           background: `linear-gradient(90deg, ${accent} 0%, rgba(255,255,255,0) 85%)`,
         }}
       />
-      <p style={{ ...sectionLabel, color: "rgba(255,255,255,0.4)", margin: 0 }}>{eyebrow}</p>
+      <p style={{ ...sectionLabel, color: "rgba(255,255,255,0.58)", margin: 0 }}>{eyebrow}</p>
       <div
         style={{
           marginTop: "18px",
@@ -265,7 +265,7 @@ function SummaryMetricCard({
       </div>
       <div style={{ marginTop: "18px", display: "flex", flexDirection: "column", gap: "4px" }}>
         <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>{title}</span>
-        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)" }}>{detail}</span>
+        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.62)" }}>{detail}</span>
       </div>
     </div>
   );
@@ -300,7 +300,7 @@ function FundingActionCard({
           background: "linear-gradient(90deg, #E10600 0%, rgba(255,255,255,0) 85%)",
         }}
       />
-      <p style={{ ...sectionLabel, color: "rgba(255,255,255,0.4)", margin: 0 }}>Wallet rail</p>
+      <p style={{ ...sectionLabel, color: "rgba(255,255,255,0.58)", margin: 0 }}>Wallet rail</p>
       <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "8px" }}>
         <span
           style={{
@@ -313,7 +313,7 @@ function FundingActionCard({
         >
           Add money
         </span>
-        <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.46)", lineHeight: 1.5 }}>
+        <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>
           Open your embedded wallet funding flow and top up before the next league stake.
         </span>
       </div>
@@ -329,7 +329,10 @@ function FundingActionCard({
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.32)", textTransform: "uppercase", letterSpacing: "0.18em" }}>
+          <span
+            style={{ fontSize: "10px", color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.18em" }}
+            title="Your current USDC wallet balance available for league entries"
+          >
             Wallet balance
           </span>
           <span style={{ fontSize: "20px", fontWeight: 900, letterSpacing: "-0.05em", color: "#fff" }}>
@@ -625,6 +628,7 @@ function ActionStrip({
       labelTeal: true,
       sub: `${formatDashboardCurrency(metrics.walletBalance)} in wallet · Deposit USDC`,
       arrowTeal: true,
+      tooltip: "Add USDC to your wallet to fund league entry fees and prize pools",
     },
     {
       href: "/leagues/create",
@@ -649,7 +653,7 @@ function ActionStrip({
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "10px" }}>
       {tiles.map((t) => (
-        <Link key={t.href} href={t.href} style={{
+        <Link key={t.href} href={t.href} title={"tooltip" in t ? t.tooltip : undefined} style={{
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
           padding: "16px 18px",
           border: `1px solid ${BORDER}`,
@@ -664,9 +668,9 @@ function ActionStrip({
             }}>
               {t.label}
             </span>
-            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)" }}>{t.sub}</span>
+            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.55)" }}>{t.sub}</span>
           </div>
-          <span style={{ fontSize: "18px", color: t.arrowTeal ? `rgba(0,210,170,0.5)` : "rgba(255,255,255,0.24)", flexShrink: 0 }}>→</span>
+          <span style={{ fontSize: "18px", color: t.arrowTeal ? `rgba(0,210,170,0.72)` : "rgba(255,255,255,0.42)", flexShrink: 0 }}>→</span>
         </Link>
       ))}
     </div>
@@ -714,13 +718,13 @@ function MyLeaguesSection({ leagues }: { leagues: DashboardLeaguePreviewItem[] }
           <Link key={league.id} href={`/leagues/${league.id}`} style={{
             display: "grid", gridTemplateColumns: "1fr auto auto",
             alignItems: "center", gap: "16px",
-            padding: "14px 20px",
-            borderBottom: "1px solid rgba(255,255,255,0.04)",
+            padding: "16px 20px",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
             textDecoration: "none", color: "inherit",
           }}>
             <div>
               <div style={{ fontSize: "14px", fontWeight: 700 }}>{league.name}</div>
-              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.38)", marginTop: "2px" }}>
+              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.55)", marginTop: "3px" }}>
                 {leagueSubline(league)}
               </div>
             </div>
@@ -731,11 +735,11 @@ function MyLeaguesSection({ leagues }: { leagues: DashboardLeaguePreviewItem[] }
             )}
             <span style={{
               display: "inline-flex", alignItems: "center", height: "28px", padding: "0 12px",
-              border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.07)",
               fontSize: "9px", fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase",
-              color: "rgba(255,255,255,0.6)",
+              color: "rgba(255,255,255,0.78)",
             }}>
-              View
+              View →
             </span>
           </Link>
         ))
@@ -868,8 +872,8 @@ function PodiumRow({ entry, isYou }: { entry: DashboardLeaderboardEntry; isYou: 
     <div style={{
       display: "grid", gridTemplateColumns: "36px 1fr auto",
       alignItems: "center", gap: "10px",
-      padding: "10px 14px",
-      borderBottom: "1px solid rgba(255,255,255,0.04)",
+      padding: "12px 16px",
+      borderBottom: "1px solid rgba(255,255,255,0.05)",
       borderLeft: isYou ? `2px solid ${R}` : undefined,
       background: isYou ? `rgba(225,6,0,0.06)` : undefined,
     }}>
@@ -880,7 +884,7 @@ function PodiumRow({ entry, isYou }: { entry: DashboardLeaderboardEntry; isYou: 
         <div style={{ fontSize: "13px", fontWeight: 700 }}>
           {isYou ? "You" : (entry.username ?? "Anonymous")}
         </div>
-        <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.36)", marginTop: "1px" }}>
+        <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.52)", marginTop: "2px" }}>
           {entry.racesPlayed} race{entry.racesPlayed !== 1 ? "s" : ""}
         </div>
       </div>
@@ -1019,7 +1023,7 @@ function OnDeckWidget({
 
 const sectionLabel: React.CSSProperties = {
   fontSize: "9px", fontWeight: 800, letterSpacing: "0.26em", textTransform: "uppercase",
-  color: "rgba(255,255,255,0.32)",
+  color: "rgba(255,255,255,0.5)",
 };
 
 const sectionTitle: React.CSSProperties = {
@@ -1029,7 +1033,7 @@ const sectionTitle: React.CSSProperties = {
 
 const sectionAction: React.CSSProperties = {
   fontSize: "9px", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase",
-  color: "rgba(0,210,170,0.6)", textDecoration: "none",
+  color: "rgba(0,210,170,0.82)", textDecoration: "none",
 };
 
 /* ─────────────────────────────────────────────────────────────────────────── */
