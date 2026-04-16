@@ -2,6 +2,15 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.1.2.0] - 2026-04-16
+
+### Changed
+- Dashboard text contrast increased across the board: eyebrow labels, detail lines, section actions, and standings subtext are all more readable
+- Nav bar alignment fixed: no longer floats 3px from the viewport top; height bumped to 64px for cleaner vertical rhythm; nav links more legible at rest and hover
+- My Leagues rows have more breathing room (16px padding) and a more visible View button
+- Action strip arrows and sub-labels now carry enough contrast to read at a glance
+- Wallet balance label and Deposit USDC tile include tooltips explaining what they do
+- Standings + Race Calendar panel now collapses to a single column on mobile — was stuck in two columns due to inline style with no responsive override
 ## [0.1.1.0] - 2026-04-11
 
 ### Added
