@@ -2,6 +2,16 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.1.3.0] - 2026-04-19
+
+### Changed
+- Nav header rebuilt as a clean 3-column layout: logo left, primary nav centered, account utility right — eliminates the duplicate raw text block and unstyled hamburger that were rendering on all screen sizes
+- Sign out is now a low-emphasis utility action (barely visible, no button styling) instead of a primary nav link
+- Wallet balance now shows in teal, matching the design token for positive/financial values
+- Active nav link gets a 2px red bottom indicator instead of just color change
+- Mobile nav now has proper CSS — hamburger renders as 3 lines, mobile drawer slides down with styled touch-target rows
+- Wallet page split into a server entry component + `WalletPageClient` for cleaner SSR/hydration boundary
+
 ## [0.1.2.0] - 2026-04-16
 
 ### Changed

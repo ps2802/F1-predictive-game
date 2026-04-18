@@ -10,6 +10,7 @@ export default defineConfig({
   test: {
     exclude: [
       ".claude/**",
+      ".context/**",
       ".gstack/**",
       ".next/**",
       "e2e/**",
