@@ -39,9 +39,9 @@ h1, h2, h3 { margin-top: 0; }
   position: sticky;
   top: 0;
   z-index: 90;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   padding: 0 3rem;
   height: 64px;
   background: rgba(5,5,5,.94);
@@ -56,18 +56,86 @@ h1, h2, h3 { margin-top: 0; }
   display: block;
 }
 
-.gla-nav-right {
+/* Center: primary nav links */
+.gla-nav-center {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.15rem;
+}
+
+/* Right: utility area */
+.gla-nav-utility {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: flex-end;
 }
 
 .gla-nav-link {
-  font-size: .7rem;
+  font-size: .68rem;
   font-weight: 700;
-  letter-spacing: .14em;
+  letter-spacing: .13em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.55);
+  color: rgba(255,255,255,.42);
+  transition: color .18s;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: inherit;
+  padding: 0.2rem 0.65rem;
+  text-decoration: none;
+  display: inline-block;
+}
+.gla-nav-link:hover { color: rgba(255,255,255,.82); }
+.gla-nav-link.is-active {
+  color: #fff;
+  border-bottom-color: #E10600;
+}
+
+/* User button (opens wallet drawer) */
+.gla-nav-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 8px;
+  border-radius: 2px;
+  transition: background 0.15s;
+}
+.gla-nav-user:hover { background: rgba(255,255,255,0.06); }
+.gla-nav-username {
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.58);
+}
+.gla-nav-balance {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: #00D2AA;
+}
+.gla-nav-divider {
+  display: block;
+  width: 1px;
+  height: 14px;
+  background: rgba(255,255,255,0.12);
+  flex-shrink: 0;
+}
+
+/* Sign out — low emphasis utility action */
+.gla-nav-signout {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.22);
   transition: color .18s;
   cursor: pointer;
   background: none;
@@ -75,7 +143,66 @@ h1, h2, h3 { margin-top: 0; }
   font-family: inherit;
   padding: 0;
 }
-.gla-nav-link:hover { color: rgba(255,255,255,.88); }
+.gla-nav-signout:hover { color: rgba(255,255,255,0.55); }
+
+/* Mobile hamburger — hidden on desktop */
+.gla-nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.gla-nav-hamburger span {
+  display: block;
+  width: 20px;
+  height: 1.5px;
+  background: rgba(255,255,255,0.62);
+}
+
+/* Mobile slide-down menu */
+.gla-nav-mobile-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #0d0d0d;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: column;
+  z-index: 88;
+}
+.gla-nav-mobile-link {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.48);
+  padding: 0.9rem 1.25rem;
+  display: block;
+  transition: color 0.15s, background 0.15s;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+.gla-nav-mobile-link:hover,
+.gla-nav-mobile-link.is-active {
+  color: #fff;
+  background: rgba(255,255,255,0.04);
+}
+.gla-nav-mobile-link:last-child { border-bottom: none; }
 
 /* ── Page content ── */
 .gla-content {
@@ -499,25 +626,19 @@ h1, h2, h3 { margin-top: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Responsive ── */
-@media (max-width: 700px) {
-  /* Nav: wrap to two rows on mobile so links don't overflow */
+@media (max-width: 768px) {
+  /* Nav: collapse to logo + hamburger */
   .gla-nav {
-    padding: 0 1rem;
-    height: auto;
-    min-height: 52px;
-    flex-wrap: wrap;
-    gap: 0;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
+    grid-template-columns: 1fr auto;
+    padding: 0 1.25rem;
+    height: 52px;
   }
-  .gla-nav-logo { width: 100px; }
-  .gla-nav-right {
-    gap: 0.6rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    padding: 0.25rem 0;
-  }
-  /* Hide leaderboard + leagues on very small screens to prevent overflow */
+  .gla-nav-center,
+  .gla-nav-utility { display: none; }
+  .gla-nav-hamburger { display: flex; }
+  .gla-nav-logo { width: 104px; }
+}
+@media (max-width: 700px) {
   .gla-content { padding: 1.75rem 1rem 3rem; }
   .gla-race-grid { grid-template-columns: 1fr; }
   .gla-auth-card { padding: 1.5rem 1.25rem; }
@@ -1518,42 +1639,7 @@ h1, h2, h3 { margin-top: 0; }
 }
 .dash-balance-pill:hover { background: rgba(255,255,255,0.1); }
 
-/* ── User + balance pill ── */
-.gla-user-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0;
-  padding: 0;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
-  border-radius: 2px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s, border-color 0.15s;
-  overflow: hidden;
-}
-.gla-user-pill:hover {
-  background: rgba(255,255,255,0.09);
-  border-color: rgba(255,255,255,0.2);
-}
-.gla-user-pill-name {
-  padding: 0 10px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.65);
-  border-right: 1px solid rgba(255,255,255,0.1);
-  line-height: 34px;
-}
-.gla-user-pill-balance {
-  padding: 0 12px;
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  color: #fff;
-  line-height: 34px;
-}
+/* .gla-user-pill — replaced by .gla-nav-user / .gla-nav-username / .gla-nav-balance in AppNav */
 
 /* ── Wallet drawer ── */
 .gla-wallet-overlay {

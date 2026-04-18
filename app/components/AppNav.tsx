@@ -28,7 +28,6 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Races" },
   { href: "/leagues", label: "Leagues" },
   { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/profile", label: "Profile" },
   { href: "/admin", label: "Admin", adminOnly: true },
 ];
 
@@ -36,13 +35,11 @@ function isActivePath(pathname: string, href: string): boolean {
   if (href === "/dashboard") {
     return pathname === "/dashboard" || pathname.startsWith("/predict/");
   }
-
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 // Only rendered when NEXT_PUBLIC_PRIVY_APP_ID is set — safe to call usePrivy() here.
 function PrivySignOutButton(): React.JSX.Element {
-  // Lazy import at call-site so the bundle only pulls in Privy when actually used.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { usePrivy } = require("@privy-io/react-auth") as {
     usePrivy: () => { logout: () => Promise<void> };
@@ -61,7 +58,7 @@ function PrivySignOutButton(): React.JSX.Element {
   }
 
   return (
-    <button className="gla-nav-link" onClick={handleLogout}>
+    <button className="gla-nav-signout" onClick={handleLogout}>
       Sign out
     </button>
   );
@@ -80,7 +77,7 @@ function SimpleSignOutButton(): React.JSX.Element {
   }
 
   return (
-    <button className="gla-nav-link" onClick={handleLogout}>
+    <button className="gla-nav-signout" onClick={handleLogout}>
       Sign out
     </button>
   );
@@ -145,12 +142,13 @@ export function AppNav({
   const resolvedProfileLabel =
     profileLabel ?? (profile?.username ? `@${profile.username}` : null);
 
-  const filteredItems = NAV_ITEMS.filter((item) => !item.adminOnly || resolvedIsAdmin);
+  const navItems = NAV_ITEMS.filter((item) => !item.adminOnly || resolvedIsAdmin);
   const hasBalance = profile?.balance_usdc !== undefined && profile.balance_usdc !== null;
 
   return (
     <>
       <nav className="gla-nav">
+        {/* Left: Logo */}
         <Link href="/dashboard" aria-label="Go to dashboard">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -162,14 +160,11 @@ export function AppNav({
             draggable={false}
           />
         </Link>
-        <div className="gla-nav-right gla-nav-right--desktop" aria-label="Primary navigation">
-          {filteredItems.map((item) => {
-            const label =
-              item.href === "/profile" && resolvedProfileLabel
-                ? resolvedProfileLabel
-                : item.label;
-            const active = pathname ? isActivePath(pathname, item.href) : false;
 
+        {/* Center: Primary nav — desktop only */}
+        <div className="gla-nav-center" aria-label="Primary navigation">
+          {navItems.map((item) => {
+            const active = pathname ? isActivePath(pathname, item.href) : false;
             return (
               <Link
                 key={item.href}
@@ -183,71 +178,84 @@ export function AppNav({
                       : undefined
                 }
               >
-                {label}
+                {item.label}
               </Link>
             );
           })}
+        </div>
+
+        {/* Right: Utility area — desktop only */}
+        <div className="gla-nav-utility">
           {(resolvedProfileLabel || hasBalance) && (
             <button
               type="button"
-              className="gla-user-pill"
+              className="gla-nav-user"
               onClick={() => setWalletOpen(true)}
               title="Open wallet"
               data-testid="nav-wallet"
             >
               {resolvedProfileLabel && (
-                <span className="gla-user-pill-name">{resolvedProfileLabel}</span>
+                <span className="gla-nav-username">{resolvedProfileLabel}</span>
               )}
               {hasBalance && (
-                <span className="gla-user-pill-balance">
+                <span className="gla-nav-balance">
                   ${Number(profile!.balance_usdc).toFixed(2)}
                 </span>
               )}
             </button>
           )}
+          <span className="gla-nav-divider" aria-hidden="true" />
           {hasPrivy ? <PrivySignOutButton /> : <SimpleSignOutButton />}
         </div>
 
-      {/* Hamburger button — mobile only */}
-      <button
-        className="gla-nav-hamburger"
-        aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
-        aria-expanded={menuOpen}
-        onClick={() => setMenuOpen((prev) => !prev)}
-      >
-        <span />
-        <span />
-        <span />
-      </button>
+        {/* Hamburger — mobile only */}
+        <button
+          className="gla-nav-hamburger"
+          aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((prev) => !prev)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
 
-      {/* Mobile drawer */}
-      {menuOpen && (
-        <div className="gla-nav-mobile-menu" role="dialog" aria-label="Navigation menu">
-          {filteredItems.map((item) => {
-            const label =
-              item.href === "/profile" && resolvedProfileLabel
-                ? resolvedProfileLabel
-                : item.label;
-            const active = pathname ? isActivePath(pathname, item.href) : false;
-
-            return (
-              <Link
-                key={item.href}
-                className={`gla-nav-mobile-link${active ? " is-active" : ""}`}
-                href={item.href}
-                onClick={() => setMenuOpen(false)}
+        {/* Mobile drawer */}
+        {menuOpen && (
+          <div className="gla-nav-mobile-menu" role="dialog" aria-label="Navigation menu">
+            {navItems.map((item) => {
+              const active = pathname ? isActivePath(pathname, item.href) : false;
+              return (
+                <Link
+                  key={item.href}
+                  className={`gla-nav-mobile-link${active ? " is-active" : ""}`}
+                  href={item.href}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+            {resolvedProfileLabel && (
+              <button
+                type="button"
+                className="gla-nav-mobile-link"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setWalletOpen(true);
+                }}
               >
-                {label}
-              </Link>
-            );
-          })}
-          {hasPrivy ? (
-            <MobilePrivySignOutButton onSignOut={() => setMenuOpen(false)} />
-          ) : (
-            <MobileSimpleSignOutButton onSignOut={() => setMenuOpen(false)} />
-          )}
-        </div>
-      )}
+                {resolvedProfileLabel}
+                {hasBalance && ` · $${Number(profile!.balance_usdc).toFixed(2)}`}
+              </button>
+            )}
+            {hasPrivy ? (
+              <MobilePrivySignOutButton onSignOut={() => setMenuOpen(false)} />
+            ) : (
+              <MobileSimpleSignOutButton onSignOut={() => setMenuOpen(false)} />
+            )}
+          </div>
+        )}
       </nav>
 
       {/* Wallet drawer overlay */}
@@ -268,9 +276,10 @@ export function AppNav({
               ✕
             </button>
             <iframe
-              src="/wallet"
+              src="/wallet?embed=1"
               className="gla-wallet-iframe"
               title="Wallet"
+              loading="lazy"
             />
           </div>
         </>

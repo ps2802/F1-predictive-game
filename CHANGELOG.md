@@ -2,6 +2,18 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.1.2.1] - 2026-04-19
+
+### Changed
+- Navigation is now structured into logo, primary nav, and utility zones, with the user/balance control treated as a dedicated wallet action instead of another top-level link
+- Desktop nav no longer carries a separate Profile tab; the username now lives in the wallet trigger, and mobile exposes the same account control from the drawer
+- Wallet page rendering is split into a small server wrapper plus a client component so embedded wallet mode can be selected without breaking the production build
+
+### Fixed
+- Wallet drawer now loads an embedded wallet view without nesting the full app nav inside the iframe, which removes the wallet-in-wallet recursion path
+- Mobile users no longer lose wallet access when the top-level Wallet link is removed from the desktop nav
+- Vitest now ignores `.context/**`, so stale workspace snapshots do not pollute local test discovery
+
 ## [0.1.2.0] - 2026-04-16
 
 ### Changed
