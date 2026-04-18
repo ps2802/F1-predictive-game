@@ -28,7 +28,6 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Races" },
   { href: "/leagues", label: "Leagues" },
   { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/wallet", label: "Wallet" },
   { href: "/profile", label: "Profile" },
   { href: "/admin", label: "Admin", adminOnly: true },
 ];
@@ -140,64 +139,74 @@ export function AppNav({
 }: AppNavProps): React.JSX.Element {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [walletOpen, setWalletOpen] = useState(false);
   const hasPrivy = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
   const resolvedIsAdmin = isAdmin ?? profile?.is_admin ?? false;
   const resolvedProfileLabel =
     profileLabel ?? (profile?.username ? `@${profile.username}` : null);
 
   const filteredItems = NAV_ITEMS.filter((item) => !item.adminOnly || resolvedIsAdmin);
+  const hasBalance = profile?.balance_usdc !== undefined && profile.balance_usdc !== null;
 
   return (
-    <nav className="gla-nav">
-      <Link href="/dashboard" aria-label="Go to dashboard">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/gridlock logo - transparent.png"
-          alt="Gridlock"
-          className="gla-nav-logo"
-          width={130}
-          height={36}
-          draggable={false}
-        />
-      </Link>
-      <div className="gla-nav-right gla-nav-right--desktop" aria-label="Primary navigation">
-        {filteredItems.map((item) => {
-          const label =
-            item.href === "/profile" && resolvedProfileLabel
-              ? resolvedProfileLabel
-              : item.label;
-          const active = pathname ? isActivePath(pathname, item.href) : false;
+    <>
+      <nav className="gla-nav">
+        <Link href="/dashboard" aria-label="Go to dashboard">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/gridlock logo - transparent.png"
+            alt="Gridlock"
+            className="gla-nav-logo"
+            width={130}
+            height={36}
+            draggable={false}
+          />
+        </Link>
+        <div className="gla-nav-right gla-nav-right--desktop" aria-label="Primary navigation">
+          {filteredItems.map((item) => {
+            const label =
+              item.href === "/profile" && resolvedProfileLabel
+                ? resolvedProfileLabel
+                : item.label;
+            const active = pathname ? isActivePath(pathname, item.href) : false;
 
-          return (
-            <Link
-              key={item.href}
-              className={`gla-nav-link${active ? " is-active" : ""}`}
-              href={item.href}
-              data-testid={
-                item.href === "/dashboard"
-                  ? "nav-dashboard"
-                  : item.href === "/leagues"
-                    ? "nav-leagues"
-                    : item.href === "/wallet"
-                      ? "nav-wallet"
+            return (
+              <Link
+                key={item.href}
+                className={`gla-nav-link${active ? " is-active" : ""}`}
+                href={item.href}
+                data-testid={
+                  item.href === "/dashboard"
+                    ? "nav-dashboard"
+                    : item.href === "/leagues"
+                      ? "nav-leagues"
                       : undefined
-              }
+                }
+              >
+                {label}
+              </Link>
+            );
+          })}
+          {(resolvedProfileLabel || hasBalance) && (
+            <button
+              type="button"
+              className="gla-user-pill"
+              onClick={() => setWalletOpen(true)}
+              title="Open wallet"
+              data-testid="nav-wallet"
             >
-              {label}
-            </Link>
-          );
-        })}
-        {profile?.balance_usdc !== undefined && profile.balance_usdc !== null && (
-          <Link
-            href="/wallet"
-            className="dash-balance-pill"
-            title="Internal USDC ledger balance"
-          >
-            ${Number(profile.balance_usdc).toFixed(2)}
-          </Link>
-        )}
-        {hasPrivy ? <PrivySignOutButton /> : <SimpleSignOutButton />}
-      </div>
+              {resolvedProfileLabel && (
+                <span className="gla-user-pill-name">{resolvedProfileLabel}</span>
+              )}
+              {hasBalance && (
+                <span className="gla-user-pill-balance">
+                  ${Number(profile!.balance_usdc).toFixed(2)}
+                </span>
+              )}
+            </button>
+          )}
+          {hasPrivy ? <PrivySignOutButton /> : <SimpleSignOutButton />}
+        </div>
 
       {/* Hamburger button — mobile only */}
       <button
@@ -239,6 +248,33 @@ export function AppNav({
           )}
         </div>
       )}
-    </nav>
+      </nav>
+
+      {/* Wallet drawer overlay */}
+      {walletOpen && (
+        <>
+          <div
+            className="gla-wallet-overlay"
+            onClick={() => setWalletOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="gla-wallet-drawer" role="dialog" aria-label="Wallet">
+            <button
+              type="button"
+              className="gla-wallet-drawer-close"
+              onClick={() => setWalletOpen(false)}
+              aria-label="Close wallet"
+            >
+              ✕
+            </button>
+            <iframe
+              src="/wallet"
+              className="gla-wallet-iframe"
+              title="Wallet"
+            />
+          </div>
+        </>
+      )}
+    </>
   );
 }
