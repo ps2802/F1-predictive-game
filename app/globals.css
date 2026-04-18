@@ -37,17 +37,17 @@ h1, h2, h3 { margin-top: 0; }
 /* ── Navigation ── */
 .gla-nav {
   position: sticky;
-  top: 3px;
+  top: 0;
   z-index: 90;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 3rem;
-  height: 60px;
-  background: rgba(0,0,0,.88);
+  height: 64px;
+  background: rgba(5,5,5,.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.08);
 }
 
 .gla-nav-logo {
@@ -67,7 +67,7 @@ h1, h2, h3 { margin-top: 0; }
   font-weight: 700;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.38);
+  color: rgba(255,255,255,.55);
   transition: color .18s;
   cursor: pointer;
   background: none;
@@ -75,7 +75,7 @@ h1, h2, h3 { margin-top: 0; }
   font-family: inherit;
   padding: 0;
 }
-.gla-nav-link:hover { color: rgba(255,255,255,.75); }
+.gla-nav-link:hover { color: rgba(255,255,255,.88); }
 
 /* ── Page content ── */
 .gla-content {
