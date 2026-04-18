@@ -107,7 +107,7 @@ export default function DashboardClient() {
       <div className="gla-root">
         <div className="gl-stripe" aria-hidden="true" />
         <AppNav />
-        <div className={styles.viewport}>
+        <div className={`gla-shell-container ${styles.viewport}`}>
           <section className={styles.errorPanel}>
             <p className={styles.panelEyebrow}>Dashboard Offline</p>
             <h1 className={styles.errorTitle}>Race control failed to boot.</h1>
@@ -137,7 +137,7 @@ export default function DashboardClient() {
       />
 
       {/* narrow viewport matches preview-b */}
-      <div className={styles.viewport} style={{ maxWidth: "min(960px, calc(100% - 40px))", padding: "36px 0 100px" }}>
+      <div className={`gla-shell-container ${styles.viewport}`} style={{ padding: "36px 0 100px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           <DashboardSummaryBand metrics={vm.metrics} />
 

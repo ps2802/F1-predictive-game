@@ -2,6 +2,19 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.1.4.0] - 2026-04-19
+
+### Changed
+- Dashboard header now shares the same centered content shell as the card grid below, so the brand, navigation, and utility edges line up with the main dashboard system instead of the browser viewport
+- Desktop nav keeps the editorial 3-zone structure, while mobile now uses a dedicated toolbar system with an essentials-only top row and a separate horizontal primary tab rail
+- Mobile account access is condensed into a touch-friendly wallet/profile pill, with larger tap targets and no inline nav compression
+- Admin and Sign out were removed from the mobile top bar and moved into a right-side drawer, preventing duplicate renders, wrapping, and crowded toolbar states on small screens
+
+### Fixed
+- Toolbar layout no longer visually centers the nav against the full viewport on dashboard pages
+- Mobile header no longer relies on the desktop toolbar collapsing until it barely fits at 375px, 390px, 430px, and tablet widths
+- Wallet drawer styling now uses the refined close/header treatment from the latest wallet UI polish
+
 ## [0.1.3.0] - 2026-04-19
 
 ### Changed
