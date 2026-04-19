@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint --no-error-on-unmatched-pattern app components lib scripts tests e2e eslint.config.mjs next.config.ts playwright.config.ts postcss.config.mjs proxy.ts vitest.config.ts",
     "seed:races": "ts-node scripts/seed-races.ts",
     "canary:gridlock": "tsx scripts/run-gridlock-canary.ts",
     "test": "vitest run",
