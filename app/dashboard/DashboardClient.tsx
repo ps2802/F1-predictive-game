@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppNav } from "@/app/components/AppNav";
+import { PrivyAddMoneyButton } from "@/app/components/PrivyAddMoneyButton";
 import { track } from "@/lib/analytics";
 import {
   buildDashboardSeasonMarkers,
@@ -353,7 +354,7 @@ function FundingActionCard({
             {formatDashboardCurrency(walletBalance)}
           </span>
         </div>
-        {hasPrivy ? <PrivyAddMoneyButton /> : <WalletFallbackLink />}
+        {hasPrivy ? <PrivyAddMoneyButton style={summaryCtaButton} /> : <WalletFallbackLink />}
       </div>
     </div>
   );
@@ -364,70 +365,6 @@ function WalletFallbackLink() {
     <Link href="/wallet" style={summaryCtaButton}>
       Add money
     </Link>
-  );
-}
-
-function PrivyAddMoneyButton() {
-  type PrivyWalletRecord = {
-    address?: string;
-    chainType?: string;
-    walletClientType?: string;
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { useFundWallet, useWallets } = require("@privy-io/react-auth") as {
-    useFundWallet: () => {
-      fundWallet: (params: {
-        address: string;
-        options?: {
-          asset?: string;
-          chain?: string;
-        };
-      }) => Promise<unknown>;
-    };
-    useWallets: () => {
-      ready: boolean;
-      wallets: PrivyWalletRecord[];
-    };
-  };
-
-  const { fundWallet } = useFundWallet();
-  const { ready, wallets } = useWallets();
-  const router = useRouter();
-  const [isFunding, setIsFunding] = useState(false);
-
-  const embeddedSolanaWallet =
-    wallets.find((wallet) => wallet.walletClientType === "privy" && wallet.chainType === "solana") ??
-    wallets.find((wallet) => wallet.walletClientType === "privy");
-
-  async function handleAddMoney() {
-    if (!ready || !embeddedSolanaWallet?.address) {
-      router.push("/wallet");
-      return;
-    }
-
-    setIsFunding(true);
-
-    try {
-      await fundWallet({
-        address: embeddedSolanaWallet.address,
-        options: {
-          chain: "solana:mainnet",
-          asset: "USDC",
-        },
-      });
-    } catch (error) {
-      console.error("[dashboard] failed to open Privy funding flow:", error);
-      router.push("/wallet");
-    } finally {
-      setIsFunding(false);
-    }
-  }
-
-  return (
-    <button type="button" onClick={handleAddMoney} style={summaryCtaButton}>
-      {isFunding ? "Opening..." : "Add money"}
-    </button>
   );
 }
 

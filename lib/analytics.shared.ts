@@ -1,6 +1,9 @@
 type AnalyticsPrimitive = string | number | boolean | null | undefined;
 
 export type GridlockEventName =
+  | "add_money_onramp_completed"
+  | "add_money_onramp_failed"
+  | "add_money_started"
   | "auth_completed"
   | "auth_failed"
   | "auth_started"
