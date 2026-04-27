@@ -313,28 +313,35 @@ function LeagueCard({
   races: ReturnType<typeof useRaceCatalog>["races"];
 }) {
   const leagueRace = findRaceById(races, league.race_id);
+  const memberLabel = `${league.member_count}/${league.max_users} on grid`;
+  const stakeFloor = `$${Number(league.entry_fee_usdc).toFixed(0)}`;
+  const prizePool = `$${Number(league.prize_pool).toFixed(2)}`;
 
   return (
     <Link href={`/leagues/${league.id}`} className="league-card">
-      <div className="league-card-header">
-        <span className="league-card-name">{league.name}</span>
-        <span className={`league-card-type ${league.type}`}>{league.type}</span>
+      <div className="league-card-main">
+        <div className="league-card-header">
+          <span className="league-card-name">{league.name}</span>
+          <span className={`league-card-type ${league.type}`}>{league.type}</span>
+        </div>
+        <div className="league-card-subline">
+          <span>{leagueRace?.name ?? "Season schedule"}</span>
+          <span>{memberLabel}</span>
+        </div>
       </div>
-      <div className="league-card-stats">
-        <span>
-          {league.member_count}/{league.max_users} members
-        </span>
-        {leagueRace && <span>{leagueRace.name}</span>}
-        <span>${Number(league.entry_fee_usdc).toFixed(0)} min stake</span>
+      <div className="league-card-metrics">
+        <div className="league-card-metric">
+          <span className="league-card-metric-value">{stakeFloor}</span>
+          <span className="league-card-metric-label">Stake floor</span>
+        </div>
+        <div className="league-card-metric">
+          <span className="league-card-metric-value league-card-metric-value--teal">{prizePool}</span>
+          <span className="league-card-metric-label">Prize pool</span>
+        </div>
       </div>
-      <div className="league-card-footer">
-        <span className="league-card-pool">
-          ${Number(league.prize_pool).toFixed(2)} prize pool
-        </span>
-        <span className={`league-card-cta${isMember ? " is-member" : ""}`}>
-          {isMember ? "View League" : "Join League"}
-        </span>
-      </div>
+      <span className={`league-card-cta${isMember ? " is-member" : ""}`}>
+        {isMember ? "View League" : "Join League"} →
+      </span>
     </Link>
   );
 }

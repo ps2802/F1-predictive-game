@@ -2,6 +2,16 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.1.4.1] - 2026-04-27
+
+### Added
+- Wallet and dashboard Add money actions now open Privy's fiat onramp for USDC on Solana instead of leaving users to copy a deposit address first.
+- Added analytics events for Add money onramp starts, completions, and failures.
+
+### Changed
+- Wallet page layout is now wrapped in a reusable shell for embedded and full-page contexts, with the onramp action promoted into the hero controls.
+- League cards now surface race, grid count, stake floor, and prize pool in a denser scan-friendly layout.
+
 ## [0.1.4.0] - 2026-04-19
 
 ### Changed
