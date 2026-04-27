@@ -254,18 +254,23 @@ function SummaryMetricCard({
       <div
         style={{
           marginTop: "18px",
-          fontSize: "clamp(32px, 5vw, 48px)",
+          fontSize: "clamp(34px, 5vw, 50px)",
           fontWeight: 900,
-          lineHeight: 0.9,
-          letterSpacing: "-0.07em",
+          lineHeight: 0.94,
+          letterSpacing: "-0.025em",
           color: "#fff",
+          fontVariantNumeric: "tabular-nums",
         }}
       >
         {value}
       </div>
-      <div style={{ marginTop: "18px", display: "flex", flexDirection: "column", gap: "4px" }}>
-        <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>{title}</span>
-        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.62)" }}>{detail}</span>
+      <div style={{ marginTop: "18px", display: "flex", flexDirection: "column", gap: "6px" }}>
+        <span style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "0.01em", color: "#fff" }}>
+          {title}
+        </span>
+        <span style={{ fontSize: "12px", lineHeight: 1.45, color: "rgba(255,255,255,0.62)" }}>
+          {detail}
+        </span>
       </div>
     </div>
   );
@@ -304,9 +309,9 @@ function FundingActionCard({
       <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "8px" }}>
         <span
           style={{
-            fontSize: "22px",
+            fontSize: "24px",
             fontWeight: 900,
-            letterSpacing: "-0.04em",
+            letterSpacing: "0.01em",
             textTransform: "uppercase",
             color: "#fff",
           }}
@@ -335,7 +340,16 @@ function FundingActionCard({
           >
             Wallet balance
           </span>
-          <span style={{ fontSize: "20px", fontWeight: 900, letterSpacing: "-0.05em", color: "#fff" }}>
+          <span
+            style={{
+              fontSize: "clamp(28px,3vw,36px)",
+              fontWeight: 900,
+              letterSpacing: "-0.02em",
+              lineHeight: 0.96,
+              color: "#fff",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
             {formatDashboardCurrency(walletBalance)}
           </span>
         </div>
@@ -421,18 +435,18 @@ const summaryCtaButton: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  minWidth: "144px",
-  height: "42px",
-  padding: "0 18px",
+  minWidth: "160px",
+  height: "46px",
+  padding: "0 22px",
   border: "1px solid rgba(225,6,0,0.45)",
   background: R,
   boxShadow: "0 10px 24px rgba(225,6,0,0.22)",
   color: "#fff",
   cursor: "pointer",
   fontFamily: "inherit",
-  fontSize: "11px",
+  fontSize: "12px",
   fontWeight: 900,
-  letterSpacing: "0.18em",
+  letterSpacing: "0.16em",
   textDecoration: "none",
   textTransform: "uppercase",
 };
@@ -580,10 +594,11 @@ const heroStep: React.CSSProperties = {
 };
 
 const heroName: React.CSSProperties = {
-  fontSize: "clamp(28px,4.5vw,52px)",
+  fontSize: "clamp(30px,4.8vw,56px)",
   fontWeight: 900,
-  lineHeight: 1,
-  letterSpacing: "-0.04em",
+  lineHeight: 0.95,
+  letterSpacing: "0.005em",
+  wordSpacing: "0.05em",
   textTransform: "uppercase",
   color: "#fff",
   margin: 0,
@@ -651,26 +666,42 @@ function ActionStrip({
   ];
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "10px" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: "10px" }}>
       {tiles.map((t) => (
         <Link key={t.href} href={t.href} title={"tooltip" in t ? t.tooltip : undefined} style={{
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
-          padding: "16px 18px",
+          minHeight: "116px",
+          padding: "20px 20px",
           border: `1px solid ${BORDER}`,
-          background: PANEL,
+          background: t.labelTeal
+            ? "linear-gradient(135deg, rgba(0,210,170,0.12) 0%, rgba(255,255,255,0.02) 100%)"
+            : "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(13,13,13,1) 100%)",
           textDecoration: "none", color: "inherit",
           borderRadius: 0,
         }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <span style={{
-              fontSize: "14px", fontWeight: 800, letterSpacing: "-0.02em",
+              fontSize: "clamp(18px,2vw,22px)",
+              fontWeight: 800,
+              letterSpacing: "0.01em",
+              lineHeight: 1.05,
               color: t.labelTeal ? TEAL : "#fff",
             }}>
               {t.label}
             </span>
-            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.55)" }}>{t.sub}</span>
+            <span style={{ fontSize: "13px", lineHeight: 1.45, color: "rgba(255,255,255,0.62)" }}>
+              {t.sub}
+            </span>
           </div>
-          <span style={{ fontSize: "18px", color: t.arrowTeal ? `rgba(0,210,170,0.72)` : "rgba(255,255,255,0.42)", flexShrink: 0 }}>→</span>
+          <span
+            style={{
+              fontSize: "22px",
+              color: t.arrowTeal ? "rgba(0,210,170,0.88)" : "rgba(255,255,255,0.52)",
+              flexShrink: 0,
+            }}
+          >
+            →
+          </span>
         </Link>
       ))}
     </div>
