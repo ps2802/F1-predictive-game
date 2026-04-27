@@ -140,7 +140,7 @@ export default function DashboardClient() {
       {/* narrow viewport matches preview-b */}
       <div className={`gla-shell-container ${styles.viewport}`} style={{ padding: "36px 0 100px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <DashboardSummaryBand metrics={vm.metrics} />
+          <DashboardSummaryBand metrics={vm.metrics} walletAddress={vm.profile.walletAddress} />
 
           {/* ① Hero — next race */}
           <HeroCard race={vm.nextRace} nowMs={countdownNow} draftCount={vm.draftCount} />
@@ -175,8 +175,10 @@ export default function DashboardClient() {
 
 function DashboardSummaryBand({
   metrics,
+  walletAddress,
 }: {
   metrics: DashboardViewModel["metrics"];
+  walletAddress: DashboardViewModel["profile"]["walletAddress"];
 }) {
   const joinedLabel =
     metrics.leaguesJoined === 1 ? "League joined" : "Leagues joined";
@@ -212,7 +214,7 @@ function DashboardSummaryBand({
         detail={exposureContext}
         accent={R}
       />
-      <FundingActionCard walletBalance={metrics.walletBalance} />
+      <FundingActionCard walletBalance={metrics.walletBalance} walletAddress={walletAddress} />
     </section>
   );
 }
@@ -279,8 +281,10 @@ function SummaryMetricCard({
 
 function FundingActionCard({
   walletBalance,
+  walletAddress,
 }: {
   walletBalance: DashboardViewModel["metrics"]["walletBalance"];
+  walletAddress: DashboardViewModel["profile"]["walletAddress"];
 }) {
   const hasPrivy = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
 
@@ -354,7 +358,11 @@ function FundingActionCard({
             {formatDashboardCurrency(walletBalance)}
           </span>
         </div>
-        {hasPrivy ? <PrivyAddMoneyButton style={summaryCtaButton} /> : <WalletFallbackLink />}
+        {hasPrivy ? (
+          <PrivyAddMoneyButton style={summaryCtaButton} walletAddress={walletAddress} />
+        ) : (
+          <WalletFallbackLink />
+        )}
       </div>
     </div>
   );

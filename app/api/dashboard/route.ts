@@ -146,7 +146,7 @@ export async function GET() {
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("username, balance_usdc, is_admin")
+      .select("username, wallet_address, balance_usdc, is_admin")
       .eq("id", user.id)
       .single(),
     supabase
@@ -386,6 +386,7 @@ export async function GET() {
   const viewModel: DashboardViewModel = {
     profile: {
       username: profile?.username ?? null,
+      walletAddress: profile?.wallet_address ?? null,
       balanceUsdc: profile?.balance_usdc ?? null,
       isAdmin: profile?.is_admin === true,
     },

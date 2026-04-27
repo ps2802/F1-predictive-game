@@ -2,6 +2,12 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.1.4.2] - 2026-04-27
+
+### Fixed
+- Dashboard Add money now uses the saved profile wallet address when opening Privy's onramp, so the click no longer depends on late Privy client wallet discovery.
+- Add money clicks now route to the wallet page instead of silently doing nothing if Privy is not ready yet.
+
 ## [0.1.4.1] - 2026-04-27
 
 ### Added

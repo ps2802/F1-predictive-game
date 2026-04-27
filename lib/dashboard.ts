@@ -5,6 +5,7 @@ export type DashboardRaceStatus = "open" | "locked";
 
 export interface DashboardProfile {
   username: string | null;
+  walletAddress: string | null;
   balanceUsdc: number | null;
   isAdmin: boolean;
 }
