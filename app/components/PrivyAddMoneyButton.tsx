@@ -4,46 +4,14 @@ import { useMemo, useState } from "react";
 import type React from "react";
 import { useRouter } from "next/navigation";
 import { track } from "@/lib/analytics";
+import {
+  resolveSolanaWalletAddress,
+  type PrivyUserRecord,
+} from "@/lib/privyOnramp";
 
 type OnrampResult = {
   status?: "submitted" | "confirmed";
 };
-
-type PrivyWalletRecord = {
-  address?: string;
-  chainType?: string;
-  type?: string;
-  walletClientType?: string;
-};
-
-type PrivyUserRecord = {
-  wallet?: PrivyWalletRecord;
-  linkedAccounts?: PrivyWalletRecord[];
-};
-
-function isEmbeddedSolanaWallet(wallet: PrivyWalletRecord | undefined): wallet is PrivyWalletRecord & { address: string } {
-  return (
-    Boolean(wallet?.address) &&
-    wallet?.chainType === "solana" &&
-    (wallet.walletClientType === "privy" || wallet.walletClientType === "privy-v2")
-  );
-}
-
-function isSolanaWallet(wallet: PrivyWalletRecord | undefined): wallet is PrivyWalletRecord & { address: string } {
-  return Boolean(wallet?.address) && wallet?.chainType === "solana";
-}
-
-function resolveSolanaWalletAddress(user: PrivyUserRecord | null, walletAddress?: string | null): string | null {
-  if (walletAddress) return walletAddress;
-
-  const linkedAccounts = user?.linkedAccounts ?? [];
-  return (
-    linkedAccounts.find(isEmbeddedSolanaWallet)?.address ??
-    (isEmbeddedSolanaWallet(user?.wallet) ? user.wallet.address : null) ??
-    linkedAccounts.find(isSolanaWallet)?.address ??
-    (isSolanaWallet(user?.wallet) ? user.wallet.address : null)
-  );
-}
 
 export function PrivyAddMoneyButton({
   children = "Add money",
@@ -94,7 +62,10 @@ export function PrivyAddMoneyButton({
   );
 
   async function handleAddMoney() {
-    if (!ready) return;
+    if (!ready) {
+      router.push(fallbackHref);
+      return;
+    }
 
     if (!authenticated) {
       router.push("/login");
