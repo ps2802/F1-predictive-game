@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { resetAnalytics } from "@/lib/analytics";
+import { hasPrivyClientConfig } from "@/lib/privy";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface AppNavProfile {
@@ -38,7 +39,7 @@ function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-// Only rendered when NEXT_PUBLIC_PRIVY_APP_ID is set — safe to call usePrivy() here.
+// Only rendered when Privy client config is available — safe to call usePrivy() here.
 function PrivySignOutButton(): React.JSX.Element {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { usePrivy } = require("@privy-io/react-auth") as {
@@ -137,7 +138,7 @@ export function AppNav({
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [walletOpen, setWalletOpen] = useState(false);
-  const hasPrivy = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
+  const hasPrivy = hasPrivyClientConfig();
   const resolvedIsAdmin = isAdmin ?? profile?.is_admin ?? false;
   const hasBalance = profile?.balance_usdc !== undefined && profile.balance_usdc !== null;
   const resolvedProfileLabel =

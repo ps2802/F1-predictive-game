@@ -13,6 +13,10 @@ export function getPrivyAppId(): string | undefined {
   return process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 }
 
+export function hasPrivyClientConfig(): boolean {
+  return Boolean(getPrivyAppId());
+}
+
 export function getPrivyClientId(): string | undefined {
   if (isLocalDevEnvironment() && process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID_LOCAL) {
     return process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID_LOCAL;

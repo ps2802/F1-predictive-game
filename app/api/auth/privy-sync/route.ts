@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { addAddressToHeliusWebhook } from "@/lib/helius/addWebhookAddress";
 import { getPrivyAppId, getPrivyAppSecret } from "@/lib/privy";
+import { resolveSolanaWalletAddressFromLinkedAccounts } from "@/lib/privyOnramp";
 
 const BETA_SIGNIN_CREDIT_USDC = 100;
 const LEGACY_BETA_CREDIT_DESCRIPTION = "Beta signup — 100 Beta Credits";
@@ -207,15 +208,14 @@ export async function POST(request: NextRequest) {
         privyUser.google?.email ??
         privyUser.apple?.email;
 
-      const solanaWallet = privyUser.linkedAccounts?.find(
-        (account) =>
-          account.type === "wallet" &&
-          account.chainType === "solana" &&
-          account.walletClientType === "privy"
-      );
-      if (solanaWallet && "address" in solanaWallet) {
-        walletAddress = solanaWallet.address as string;
-      }
+      walletAddress =
+        resolveSolanaWalletAddressFromLinkedAccounts(
+          privyUser.linkedAccounts as Array<{
+            address?: string;
+            chainType?: string;
+            walletClientType?: string;
+          }> | undefined
+        ) ?? undefined;
     } catch {
       return NextResponse.json(
         { error: "Could not fetch Privy user." },

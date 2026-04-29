@@ -2,6 +2,13 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.1.4.3] - 2026-04-29
+
+### Fixed
+- Add money now stays available for Privy-enabled users even when the saved profile row has no `wallet_address`, by letting the client onramp flow resolve the live Solana wallet state.
+- Privy auth sync now persists Solana wallet addresses from both `privy` and `privy-v2` linked wallets, fixing users who could sign in but could not reliably fund their wallet.
+- Privy-enabled UI gates now use the shared environment-aware helper instead of checking only `NEXT_PUBLIC_PRIVY_APP_ID`, keeping local and production onramp behavior aligned.
+
 ## [0.1.4.2] - 2026-04-27
 
 ### Fixed
