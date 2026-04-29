@@ -28,6 +28,7 @@ import {
   type DashboardRaceRow,
   type DashboardViewModel,
 } from "@/lib/dashboard";
+import { hasPrivyClientConfig } from "@/lib/privy";
 import styles from "@/app/dashboard/DashboardPage.module.css";
 
 /* ─── CSS tokens (inline, matches preview-b palette) ─── */
@@ -286,7 +287,7 @@ function FundingActionCard({
   walletBalance: DashboardViewModel["metrics"]["walletBalance"];
   walletAddress: DashboardViewModel["profile"]["walletAddress"];
 }) {
-  const hasPrivy = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
+  const hasPrivy = hasPrivyClientConfig();
 
   return (
     <div
