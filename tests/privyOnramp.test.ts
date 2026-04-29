@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveSolanaWalletAddress } from "@/lib/privyOnramp";
+import {
+  resolveSolanaWalletAddress,
+  resolveSolanaWalletAddressFromLinkedAccounts,
+} from "@/lib/privyOnramp";
 
 describe("resolveSolanaWalletAddress", () => {
   it("uses the server profile wallet address before Privy client state", () => {
@@ -48,5 +51,28 @@ describe("resolveSolanaWalletAddress", () => {
         },
       })
     ).toBeNull();
+  });
+
+  it("accepts privy-v2 Solana wallets when resolving linked accounts", () => {
+    expect(
+      resolveSolanaWalletAddressFromLinkedAccounts([
+        {
+          address: "sol-wallet-v2",
+          chainType: "solana",
+          walletClientType: "privy-v2",
+        },
+      ])
+    ).toBe("sol-wallet-v2");
+  });
+
+  it("falls back to any Solana wallet address when embedded metadata is absent", () => {
+    expect(
+      resolveSolanaWalletAddressFromLinkedAccounts([
+        {
+          address: "sol-wallet-external",
+          chainType: "solana",
+        },
+      ])
+    ).toBe("sol-wallet-external");
   });
 });

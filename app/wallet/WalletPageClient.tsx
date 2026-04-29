@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AppNav } from "@/app/components/AppNav";
 import { PrivyAddMoneyButton } from "@/app/components/PrivyAddMoneyButton";
 import { track } from "@/lib/analytics";
+import { hasPrivyClientConfig } from "@/lib/privy";
 
 type ProfileData = {
   balance_usdc: number;
@@ -262,7 +263,7 @@ export default function WalletPageClient({
   }
 
   const balance = Number(summary.availableBalanceUsdc ?? profile?.balance_usdc ?? 0);
-  const hasPrivy = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
+  const hasPrivy = hasPrivyClientConfig();
   const shellClassName = isEmbedded ? "wlt-shell wlt-shell-embed" : "wlt-shell";
   const contentStyle = isEmbedded
     ? { maxWidth: "100%", padding: "0 0 1.25rem" }
@@ -301,15 +302,15 @@ export default function WalletPageClient({
             </div>
 
             <div className="wlt-actions-row" style={{ marginTop: "1.5rem" }}>
-              {hasPrivy && profile?.wallet_address && (
+              {hasPrivy && (
                 <PrivyAddMoneyButton
                   className="wlt-btn-primary"
-                  walletAddress={profile.wallet_address}
+                  walletAddress={profile?.wallet_address ?? null}
                 />
               )}
               {balance > 0 && (
                 <button
-                  className={hasPrivy && profile?.wallet_address ? "wlt-btn-secondary" : "wlt-btn-primary"}
+                  className={hasPrivy ? "wlt-btn-secondary" : "wlt-btn-primary"}
                   onClick={() => { setShowWithdraw(true); window.scrollTo({ top: 9999, behavior: "smooth" }); }}
                 >
                   Withdraw
