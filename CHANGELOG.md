@@ -2,6 +2,18 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.1.5.0] - 2026-05-02
+
+### Changed
+- Wallet funding entry points now open the in-app wallet overlay instead of sending users to a separate wallet page.
+- Add money now uses Privy's Solana wallet funding flow for USDC on Solana mainnet.
+- Beta sign-in credits now default to off unless explicitly enabled by environment configuration.
+
+### Fixed
+- Removed stale onboarding copy that claimed users received test USDC.
+- Updated the Privy Solana dependency path needed by the mainnet USDC funding modal.
+- Cleared the critical production dependency audit finding in the lockfile.
+
 ## [0.1.4.3] - 2026-04-29
 
 ### Fixed
