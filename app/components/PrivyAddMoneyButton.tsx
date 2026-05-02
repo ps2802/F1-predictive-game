@@ -8,9 +8,10 @@ import {
   resolveSolanaWalletAddress,
   type PrivyUserRecord,
 } from "@/lib/privyOnramp";
+import { requestWalletOverlay } from "./walletOverlay";
 
 type OnrampResult = {
-  status?: "submitted" | "confirmed";
+  status?: "completed" | "cancelled" | "submitted" | "confirmed";
 };
 
 export function PrivyAddMoneyButton({
@@ -31,28 +32,28 @@ export function PrivyAddMoneyButton({
   walletAddress?: string | null;
 }) {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { useFiatOnramp, usePrivy } = require("@privy-io/react-auth") as {
-    useFiatOnramp: () => {
-      fund: (params: {
-        source?: {
-          assets?: string[];
-          defaultAsset?: string;
-        };
-        destination: {
-          address: string;
-          asset: string;
-          chain: `${string}:${string}`;
-        };
-      }) => Promise<OnrampResult>;
-    };
+  const { usePrivy } = require("@privy-io/react-auth") as {
     usePrivy: () => {
       authenticated: boolean;
       ready: boolean;
       user: PrivyUserRecord | null;
     };
   };
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { useFundWallet } = require("@privy-io/react-auth/solana") as {
+    useFundWallet: () => {
+      fundWallet: (params: {
+        address: string;
+        options?: {
+          chain?: "solana:mainnet" | "solana:devnet" | "solana:testnet";
+          asset?: "USDC" | "native-currency";
+          amount?: string;
+        };
+      }) => Promise<OnrampResult>;
+    };
+  };
 
-  const { fund } = useFiatOnramp();
+  const { fundWallet } = useFundWallet();
   const { authenticated, ready, user } = usePrivy();
   const router = useRouter();
   const [isFunding, setIsFunding] = useState(false);
@@ -61,9 +62,15 @@ export function PrivyAddMoneyButton({
     [user, walletAddress]
   );
 
+  function openFallback() {
+    if (!requestWalletOverlay()) {
+      router.push(fallbackHref);
+    }
+  }
+
   async function handleAddMoney() {
     if (!ready) {
-      router.push(fallbackHref);
+      openFallback();
       return;
     }
 
@@ -73,7 +80,7 @@ export function PrivyAddMoneyButton({
     }
 
     if (!destinationAddress) {
-      router.push(fallbackHref);
+      openFallback();
       return;
     }
 
@@ -81,15 +88,11 @@ export function PrivyAddMoneyButton({
     track("add_money_started", { chain: "solana:mainnet", asset: "usdc" });
 
     try {
-      const result = await fund({
-        source: {
-          assets: ["usd"],
-          defaultAsset: "usd",
-        },
-        destination: {
-          address: destinationAddress,
-          asset: "usdc",
+      const result = await fundWallet({
+        address: destinationAddress,
+        options: {
           chain: "solana:mainnet",
+          asset: "USDC",
         },
       });
       track("add_money_onramp_completed", {
@@ -104,7 +107,7 @@ export function PrivyAddMoneyButton({
         chain: "solana:mainnet",
         asset: "usdc",
       });
-      router.push(fallbackHref);
+      openFallback();
     } finally {
       setIsFunding(false);
     }

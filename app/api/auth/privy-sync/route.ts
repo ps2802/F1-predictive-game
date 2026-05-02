@@ -6,9 +6,11 @@ import { addAddressToHeliusWebhook } from "@/lib/helius/addWebhookAddress";
 import { getPrivyAppId, getPrivyAppSecret } from "@/lib/privy";
 import { resolveSolanaWalletAddressFromLinkedAccounts } from "@/lib/privyOnramp";
 
-const BETA_SIGNIN_CREDIT_USDC = 100;
+const BETA_SIGNIN_CREDIT_USDC = Number(
+  process.env.BETA_SIGNIN_CREDIT_USDC ?? 0
+);
 const LEGACY_BETA_CREDIT_DESCRIPTION = "Beta signup — 100 Beta Credits";
-const BETA_SIGNIN_CREDIT_DESCRIPTION = "Beta sign-in — 100 Test USDC";
+const BETA_SIGNIN_CREDIT_DESCRIPTION = `Beta sign-in credit — ${BETA_SIGNIN_CREDIT_USDC} USDC`;
 
 function isDuplicateUserError(message?: string): boolean {
   if (!message) {
@@ -68,6 +70,10 @@ async function ensureBetaSigninCredit(
   admin: NonNullable<ReturnType<typeof createSupabaseAdminClient>>,
   userId: string
 ) {
+  if (!Number.isFinite(BETA_SIGNIN_CREDIT_USDC) || BETA_SIGNIN_CREDIT_USDC <= 0) {
+    return;
+  }
+
   const { count, error: existingCreditError } = await admin
     .from("transactions")
     .select("id", { count: "exact", head: true })

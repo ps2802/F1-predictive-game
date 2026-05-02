@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppNav } from "@/app/components/AppNav";
+import { WalletOverlayButton } from "@/app/components/walletOverlay";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { track } from "@/lib/analytics";
 import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
@@ -218,7 +219,11 @@ export default function LeaguesPageClient({
               maxLength={10}
             />
             <p className="league-join-notice">
-              You need USDC in your <Link href="/wallet" className="league-join-link">wallet</Link> before joining.
+              You need USDC in your{" "}
+              <WalletOverlayButton className="gla-wallet-inline-button league-join-link">
+                wallet
+              </WalletOverlayButton>{" "}
+              before joining.
             </p>
             <input
               className="league-join-input"
