@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppNav } from "@/app/components/AppNav";
 import { PrivyAddMoneyButton } from "@/app/components/PrivyAddMoneyButton";
+import { WalletOverlayButton } from "@/app/components/walletOverlay";
 import { track } from "@/lib/analytics";
 import {
   buildDashboardSeasonMarkers,
@@ -371,9 +372,9 @@ function FundingActionCard({
 
 function WalletFallbackLink() {
   return (
-    <Link href="/wallet" style={summaryCtaButton}>
+    <WalletOverlayButton style={summaryCtaButton}>
       Add money
-    </Link>
+    </WalletOverlayButton>
   );
 }
 
@@ -613,8 +614,8 @@ function ActionStrip({
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: "10px" }}>
-      {tiles.map((t) => (
-        <Link key={t.href} href={t.href} title={"tooltip" in t ? t.tooltip : undefined} style={{
+      {tiles.map((t) => {
+        const tileStyle: React.CSSProperties = {
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
           minHeight: "116px",
           padding: "20px 20px",
@@ -624,32 +625,58 @@ function ActionStrip({
             : "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(13,13,13,1) 100%)",
           textDecoration: "none", color: "inherit",
           borderRadius: 0,
-        }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <span style={{
-              fontSize: "clamp(18px,2vw,22px)",
-              fontWeight: 800,
-              letterSpacing: "0.01em",
-              lineHeight: 1.05,
-              color: t.labelTeal ? TEAL : "#fff",
-            }}>
-              {t.label}
+          cursor: "pointer",
+          fontFamily: "inherit",
+          textAlign: "left",
+          width: "100%",
+        };
+        const tileContent = (
+          <>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <span style={{
+                fontSize: "clamp(18px,2vw,22px)",
+                fontWeight: 800,
+                letterSpacing: "0.01em",
+                lineHeight: 1.05,
+                color: t.labelTeal ? TEAL : "#fff",
+              }}>
+                {t.label}
+              </span>
+              <span style={{ fontSize: "13px", lineHeight: 1.45, color: "rgba(255,255,255,0.62)" }}>
+                {t.sub}
+              </span>
+            </div>
+            <span
+              style={{
+                fontSize: "22px",
+                color: t.arrowTeal ? "rgba(0,210,170,0.88)" : "rgba(255,255,255,0.52)",
+                flexShrink: 0,
+              }}
+            >
+              →
             </span>
-            <span style={{ fontSize: "13px", lineHeight: 1.45, color: "rgba(255,255,255,0.62)" }}>
-              {t.sub}
-            </span>
-          </div>
-          <span
-            style={{
-              fontSize: "22px",
-              color: t.arrowTeal ? "rgba(0,210,170,0.88)" : "rgba(255,255,255,0.52)",
-              flexShrink: 0,
-            }}
+          </>
+        );
+
+        return t.href === "/wallet" ? (
+          <WalletOverlayButton
+            key={t.href}
+            title={"tooltip" in t ? t.tooltip : undefined}
+            style={tileStyle}
           >
-            →
-          </span>
-        </Link>
-      ))}
+            {tileContent}
+          </WalletOverlayButton>
+        ) : (
+          <Link
+            key={t.href}
+            href={t.href}
+            title={"tooltip" in t ? t.tooltip : undefined}
+            style={tileStyle}
+          >
+            {tileContent}
+          </Link>
+        );
+      })}
     </div>
   );
 }

@@ -2418,6 +2418,17 @@ h1, h2, h3 { margin-top: 0; }
 .wallet-notes { display: flex; flex-direction: column; gap: 0.4rem; }
 .wallet-notes p { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin: 0; }
 
+.gla-wallet-inline-button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-decoration: underline;
+}
+
 /* =============================================================
    WALLET v2 — redesigned financial dashboard
 ============================================================= */

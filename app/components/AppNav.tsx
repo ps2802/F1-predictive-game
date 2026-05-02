@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { resetAnalytics } from "@/lib/analytics";
 import { hasPrivyClientConfig } from "@/lib/privy";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { WALLET_OVERLAY_OPEN_EVENT } from "./walletOverlay";
 
 interface AppNavProfile {
   username?: string | null;
@@ -160,6 +161,20 @@ export function AppNav({
       document.body.style.overflow = originalOverflow;
     };
   }, [menuOpen, walletOpen]);
+
+  useEffect(() => {
+    function handleOpenWallet(event: Event) {
+      event.preventDefault();
+      setMenuOpen(false);
+      setWalletOpen(true);
+    }
+
+    window.addEventListener(WALLET_OVERLAY_OPEN_EVENT, handleOpenWallet);
+
+    return () => {
+      window.removeEventListener(WALLET_OVERLAY_OPEN_EVENT, handleOpenWallet);
+    };
+  }, []);
 
   return (
     <>
