@@ -416,15 +416,15 @@ function HeroCard({
 
   if (race === null) {
     return (
-      <div style={heroWrap}>
-        <div style={heroInner}>
+      <div className={styles.heroCard} style={heroWrap}>
+        <div className={styles.heroInner} style={heroInner}>
           <div>
             <p style={heroStep}>Season Status</p>
             <h1 style={heroName}>Season Complete</h1>
             <p style={heroMeta}>All rounds are done. Final standings are live.</p>
           </div>
-          <div style={heroCta}>
-            <Link href="/leaderboard" style={btnHero}>Final Standings →</Link>
+          <div className={styles.heroCta} style={heroCta}>
+            <Link href="/leaderboard" className={styles.heroButton} style={btnHero}>Final Standings →</Link>
           </div>
         </div>
       </div>
@@ -432,13 +432,13 @@ function HeroCard({
   }
 
   return (
-    <div style={heroWrap}>
-      <div style={heroInner}>
+    <div className={styles.heroCard} style={heroWrap}>
+      <div className={styles.heroInner} style={heroInner}>
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           <span style={heroStep}>
             Your next move · Round {race.round}
           </span>
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <div className={styles.heroTitleRow} style={{ display: "flex", alignItems: "center", gap: "14px" }}>
             <span style={{ fontSize: "42px", lineHeight: 1 }}>{race.flag ?? "🏁"}</span>
             <h1 style={heroName}>{race.name}</h1>
           </div>
@@ -459,9 +459,10 @@ function HeroCard({
           )}
         </div>
 
-        <div style={heroCta}>
+        <div className={styles.heroCta} style={heroCta}>
           <Link
             href={action.href}
+            className={styles.heroButton}
             style={btnHero}
             data-testid={race.isNext ? "dashboard-open-predict-button" : undefined}
           >
@@ -490,7 +491,7 @@ function CountdownRow({ countdown }: { countdown: CountdownParts }) {
   ];
 
   return (
-    <div style={{ display: "flex", alignItems: "baseline", gap: "2px", marginTop: "4px" }}>
+    <div className={styles.heroCountdown} style={{ display: "flex", alignItems: "baseline", gap: "2px", marginTop: "4px" }}>
       {parts.map((p, i) => (
         <span key={p.label} style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
           {i > 0 && (
@@ -613,7 +614,7 @@ function ActionStrip({
   ];
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: "10px" }}>
+    <div className={styles.actionStrip} style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: "10px" }}>
       {tiles.map((t) => {
         const tileStyle: React.CSSProperties = {
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",

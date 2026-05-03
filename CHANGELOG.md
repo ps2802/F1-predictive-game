@@ -2,6 +2,20 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.1.6.0] - 2026-05-03
+
+### Added
+- Race winner is now blocked from being picked again as P2 or P3, with a clear inline message and disabled options. Server-side validation enforces the same rule.
+- Qualifying picks can be saved on their own without completing the rest of the prediction, so users can lock in qualifying ahead of the GP without losing race or chaos drafts.
+- Leagues page now shows the next open race when a league is not pinned to a specific round, and lists upcoming races with quick-predict links.
+
+### Changed
+- Synced Gridlock to the official 2026 F1 grid: 22 drivers, 11 teams, Cadillac added, Yuki Tsunoda and Jack Doohan removed, Sergio Perez, Valtteri Bottas, and Arvid Lindblad added. Driver list, team colors, OpenGraph share image, and FAQ copy all updated.
+- Mobile layout polish across the predict flow, dashboard hero, leagues page, and tabs.
+
+### Fixed
+- League detail page no longer crashes when a logged-in user has no prediction yet for the next race (switched the predictions lookup to a safe single-row fetch).
+
 ## [0.1.5.0] - 2026-05-02
 
 ### Changed

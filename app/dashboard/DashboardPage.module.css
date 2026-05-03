@@ -1155,6 +1155,16 @@
   gap: 10px;
 }
 
+.heroCard,
+.heroInner,
+.heroTitleRow,
+.heroCta,
+.heroButton,
+.heroCountdown,
+.actionStrip {
+  min-width: 0;
+}
+
 @media (max-width: 700px) {
   .bottomGrid {
     grid-template-columns: 1fr;
@@ -1289,4 +1299,37 @@
     font-size: clamp(28px, 10vw, 44px);
   }
   .nextRaceFlag { font-size: 32px; }
+  .heroCard {
+    padding: 24px 20px !important;
+  }
+  .heroInner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 24px !important;
+  }
+  .heroTitleRow {
+    align-items: flex-start !important;
+  }
+  .heroTitleRow h1 {
+    overflow-wrap: anywhere;
+  }
+  .heroCta {
+    width: 100%;
+    align-items: stretch !important;
+  }
+  .heroButton {
+    width: 100% !important;
+    max-width: 100%;
+    min-height: 54px;
+    padding-inline: 16px;
+    text-align: center;
+  }
+  .heroCountdown {
+    max-width: 100%;
+    flex-wrap: wrap;
+    row-gap: 8px !important;
+  }
+  .actionStrip {
+    grid-template-columns: 1fr !important;
+  }
 }
