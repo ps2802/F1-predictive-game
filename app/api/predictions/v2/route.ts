@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     const raceQuestionIds = (allRaceQuestions ?? []).map((question) => question.id);
     const { data: questionOptions, error: optionsErr } = await supabase
       .from("prediction_options")
-      .select("id, question_id")
+      .select("id, question_id, option_value")
       .in("question_id", raceQuestionIds);
 
     if (optionsErr)
@@ -202,6 +202,7 @@ export async function POST(request: NextRequest) {
       options: (questionOptions ?? []).map((option) => ({
         id: option.id,
         question_id: option.question_id,
+        option_value: option.option_value,
       })),
     });
 
