@@ -34,6 +34,34 @@ type DbRace = {
   question_count: number;
 };
 
+// Categories Jolpica can auto-settle. Safety car is NOT in Jolpica → manual entry only.
+type SyncedCategory = "pole" | "winner" | "podium" | "fastest_lap" | "biggest_gainer";
+
+const SYNC_CATEGORY_LABELS: Record<SyncedCategory, string> = {
+  pole: "Pole",
+  winner: "Winner",
+  podium: "Podium",
+  fastest_lap: "Fastest lap",
+  biggest_gainer: "Biggest gainer",
+};
+
+const SYNCABLE_CATEGORIES: readonly SyncedCategory[] = [
+  "pole",
+  "winner",
+  "podium",
+  "fastest_lap",
+  "biggest_gainer",
+];
+
+type SyncResponse = {
+  settled?: string[];
+  questions_written?: number;
+};
+
+function isSyncedCategory(value: string): value is SyncedCategory {
+  return (SYNCABLE_CATEGORIES as readonly string[]).includes(value);
+}
+
 type Section = "races" | "results";
 
 const emptyForm = {
@@ -72,6 +100,9 @@ export default function AdminPage() {
   const [questionsLoading, setQuestionsLoading] = useState(false);
   const [resultsDirty, setResultsDirty] = useState(false);
   const [hasSavedResults, setHasSavedResults] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState("");
+  const [syncedCategories, setSyncedCategories] = useState<SyncedCategory[]>([]);
 
   // ── Race Management functions ─────────────────────────
 
@@ -182,6 +213,8 @@ export default function AdminPage() {
     setResultsDirty(false);
     setHasSavedResults(false);
     setMessage("");
+    setSyncMessage("");
+    setSyncedCategories([]);
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
 
@@ -236,6 +269,56 @@ export default function AdminPage() {
       }
       return { ...prev, [questionId]: current };
     });
+  }
+
+  async function handleSyncFromJolpica() {
+    if (!selectedRace) {
+      setSyncMessage("Error: select a race first.");
+      return;
+    }
+
+    const race = dbRaces.find((r) => r.id === selectedRace);
+    // raceId is required; season/round are derived from the race row when available.
+    const payload: { raceId: string; season?: number; round?: number } = { raceId: selectedRace };
+    if (race) {
+      if (Number.isFinite(race.season)) payload.season = race.season;
+      if (Number.isFinite(race.round)) payload.round = race.round;
+    }
+
+    setSyncing(true);
+    setSyncMessage("");
+    setSyncedCategories([]);
+
+    try {
+      const res = await fetch("/api/admin/results/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json()) as SyncResponse & { error?: string };
+
+      if (!res.ok) {
+        setSyncMessage(`Error: ${data.error ?? "Sync failed."}`);
+        return;
+      }
+
+      const settled = (data.settled ?? []).filter(isSyncedCategory);
+
+      // Reload first so the freshly-written answers appear in the manual form below.
+      // loadQuestions clears sync state, so set the feedback AFTER it resolves.
+      await loadQuestions(selectedRace);
+
+      setSyncedCategories(settled);
+      setSyncMessage(
+        settled.length > 0
+          ? "✓ Synced from Jolpica."
+          : "Sync ran, but Jolpica returned no settleable categories yet (results may not be published)."
+      );
+    } catch {
+      setSyncMessage("Error: could not reach the sync service.");
+    } finally {
+      setSyncing(false);
+    }
   }
 
   async function handleSubmitResults() {
@@ -599,6 +682,83 @@ export default function AdminPage() {
                 </select>
               </label>
             </div>
+
+            {/* Jolpica auto-sync */}
+            {selectedRace && (
+              <div
+                style={{
+                  margin: "0 0 1.5rem",
+                  padding: "1rem 1.25rem",
+                  background: "rgba(255,255,255,0.03)",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.75rem",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                  <button
+                    className="gla-race-btn"
+                    style={{ fontSize: "0.85rem" }}
+                    onClick={handleSyncFromJolpica}
+                    disabled={syncing}
+                  >
+                    {syncing ? "Syncing…" : "Sync results from Jolpica"}
+                  </button>
+                  <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.8rem" }}>
+                    Auto-fills pole, winner, podium, fastest lap, and biggest gainer from the live F1 results.
+                  </span>
+                </div>
+
+                {syncMessage && (
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "0.85rem",
+                      color: syncMessage.startsWith("✓") ? "#00D2AA" : "var(--gl-red)",
+                    }}
+                  >
+                    {syncMessage}
+                  </p>
+                )}
+
+                {syncedCategories.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                    {syncedCategories.map((cat) => (
+                      <span
+                        key={cat}
+                        style={{
+                          fontSize: "0.75rem",
+                          padding: "0.2rem 0.55rem",
+                          borderRadius: "4px",
+                          background: "rgba(0,210,170,0.15)",
+                          color: "#00D2AA",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {SYNC_CATEGORY_LABELS[cat]} settled
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Safety car is not available from Jolpica — admin must enter it by hand. */}
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "0.8rem",
+                    color: "#E8B339",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.4rem",
+                  }}
+                >
+                  <span aria-hidden="true">⚠</span>
+                  Safety car must be entered manually — it is the safety-car question in the results form below.
+                </p>
+              </div>
+            )}
 
             {questionsLoading && <div className="gl-spinner" />}
 

@@ -24,6 +24,9 @@ describe("race fallbacks", () => {
     expect(buildFallbackRaceTiming("usa-2026")).toEqual({
       qualifying_starts_at: null,
       race_starts_at: "2026-05-03T00:00:00.000Z",
+      // No qualifying time in the static fallback, so the lock anchor falls
+      // back to the race start (qualifying_starts_at ?? race_starts_at).
+      lock_time_utc: "2026-05-03T00:00:00.000Z",
       quali_locked: false,
       race_locked: false,
     });

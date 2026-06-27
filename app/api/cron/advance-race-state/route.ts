@@ -9,7 +9,8 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
  * must be triggered externally — see INTEGRATIONS.md for setup instructions.
  *
  * Transitions races through their lifecycle:
- *   upcoming → active   when qualifying_starts_at has passed AND race_locked = true
+ *   upcoming → active   when the lock anchor (lock_time_utc, fallback
+ *                       qualifying_starts_at) has passed AND race_locked = true
  *   active   → completed  when race_starts_at + 4 hours has passed
  *   upcoming → completed  safety net for any race that was never marked active
  *
@@ -67,8 +68,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 }
 
 /**
- * Marks races as "active" when qualifying has started and predictions are locked.
- * Only transitions from "upcoming" — never rewinds completed races.
+ * Marks races as "active" once their lock anchor has passed and predictions are
+ * locked. The anchor is lock_time_utc (the first grid-setting session) with
+ * qualifying_starts_at as a fallback. Only transitions from "upcoming" — never
+ * rewinds completed races.
  */
 async function markRacesActive(
   admin: NonNullable<ReturnType<typeof createSupabaseAdminClient>>,
@@ -76,16 +79,22 @@ async function markRacesActive(
 ): Promise<number | Error> {
   const { data: toActivate, error: fetchErr } = await admin
     .from("races")
-    .select("id")
+    .select("id, lock_time_utc, qualifying_starts_at")
     .eq("status", "upcoming")
-    .eq("race_locked", true)
-    .not("qualifying_starts_at", "is", null)
-    .lte("qualifying_starts_at", now);
+    .eq("race_locked", true);
 
   if (fetchErr) return new Error(fetchErr.message);
   if (!toActivate || toActivate.length === 0) return 0;
 
-  const ids = toActivate.map((r: { id: string }) => r.id);
+  const nowMs = new Date(now).getTime();
+  const ids = toActivate
+    .filter((r: { lock_time_utc: string | null; qualifying_starts_at: string | null }) => {
+      const anchor = r.lock_time_utc ?? r.qualifying_starts_at;
+      return anchor != null && new Date(anchor).getTime() <= nowMs;
+    })
+    .map((r: { id: string }) => r.id);
+
+  if (ids.length === 0) return 0;
 
   const { error: updateErr } = await admin
     .from("races")

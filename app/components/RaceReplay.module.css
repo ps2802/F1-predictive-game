@@ -1,0 +1,389 @@
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* RaceReplay — broadcast-telemetry recap of the most recent settled race       */
+/* Tokens mirror DESIGN.md: red=action, teal=success, 0px radius on surfaces    */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+.panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: #0d0d0d;
+}
+
+/* Teal top accent — a settled race is a "results / achievement" surface */
+.panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, #00d2aa 0%, rgba(0, 210, 170, 0.2) 60%, transparent 100%);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.eyebrow {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.title {
+  margin-top: 6px;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.roundTag {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+}
+
+.replayButton {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid rgba(0, 210, 170, 0.28);
+  background: rgba(0, 210, 170, 0.06);
+  color: rgba(0, 210, 170, 0.92);
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.replayButton:hover {
+  background: rgba(0, 210, 170, 0.12);
+  border-color: rgba(0, 210, 170, 0.45);
+}
+
+.replayButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ── Track lane ───────────────────────────────────────────────────────────── */
+
+.body {
+  padding: 22px 20px 18px;
+}
+
+.track {
+  position: relative;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+/* Start / finish hairlines */
+.track::before,
+.track::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.18);
+}
+.track::before { left: 0; }
+.track::after { right: 0; }
+
+/* Swept progress fill — animated via inline width */
+.trackFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, rgba(225, 6, 0, 0.0) 0%, rgba(225, 6, 0, 0.55) 100%);
+  transition: width 120ms linear;
+}
+
+.laneLabels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── Cars travelling the lane ─────────────────────────────────────────────── */
+
+.carLane {
+  position: relative;
+  height: 78px;
+  margin-top: 6px;
+}
+
+.car {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transform: translateX(-50%);
+  transition: left 120ms linear;
+  white-space: nowrap;
+}
+
+.carDot {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+
+.carName {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.78);
+  letter-spacing: 0.01em;
+}
+
+.carPos {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.4);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Driver the user nailed — teal pulse */
+.carHit .carDot {
+  background: #00d2aa;
+  box-shadow: 0 0 10px rgba(0, 210, 170, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+.carHit .carName { color: #00d2aa; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .carHitPulse .carDot {
+    animation: replayPulse 1.4s ease-in-out infinite;
+  }
+}
+
+/* P1 marker tint */
+.carP1 .carDot { background: #ffd700; }
+.carP1.carHit .carDot { background: #00d2aa; }
+
+/* ── Podium reveal ────────────────────────────────────────────────────────── */
+
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.podiumSlot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 14px 12px;
+  background: #0d0d0d;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.podiumSlotShown {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .podiumSlot {
+    transition: opacity 280ms ease-out, transform 280ms ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .podiumSlot {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.podiumPos {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.podiumPosP1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.35); }
+.podiumPosP2 { color: #c0c8d0; }
+.podiumPosP3 { color: #c87533; }
+
+.podiumDriver {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+
+.podiumHit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #00d2aa;
+}
+
+.podiumMiss {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+/* ── Footer / result line ─────────────────────────────────────────────────── */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.resultLine {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.02em;
+}
+
+.resultLine strong {
+  color: #00d2aa;
+  font-weight: 800;
+}
+
+.resultScore {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.resultScoreValue {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.resultScoreLabel {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.36);
+}
+
+.viewLink {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: rgba(0, 210, 170, 0.82);
+  white-space: nowrap;
+}
+.viewLink:hover { color: #00d2aa; }
+
+/* ── Placeholder (pre-season) ─────────────────────────────────────────────── */
+
+.placeholder {
+  padding: 26px 20px;
+  text-align: center;
+}
+
+.placeholderTitle {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.placeholderSub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── Skeleton ─────────────────────────────────────────────────────────────── */
+
+.skeleton {
+  min-height: 220px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background:
+    linear-gradient(
+      110deg,
+      rgba(255, 255, 255, 0.02) 10%,
+      rgba(255, 255, 255, 0.05) 18%,
+      rgba(255, 255, 255, 0.02) 33%
+    );
+  background-size: 220% 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: replayShimmer 1.6s linear infinite;
+  }
+}
+
+@keyframes replayShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -40% 0; }
+}
+
+@keyframes replayPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

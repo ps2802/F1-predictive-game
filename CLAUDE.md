@@ -10,9 +10,9 @@ If gstack skills aren't working, run `cd .claude/skills/gstack && PATH="$HOME/.b
 
 ## What This Is
 
-**Gridlock** is an F1 predictive game where users predict podium finishes (1st/2nd/3rd) for each 2026 Formula 1 race and compete on a global leaderboard. Site: joingridlock.com
+**Gridlock** is a free Web2 F1 predictive game where users predict podium finishes (1st/2nd/3rd) for each 2026 Formula 1 race and compete on a global leaderboard and in private friend leagues for bragging rights. No crypto, no money, no stakes. Site: joingridlock.com
 
-**Stage:** Waitlist live → launching for 2026 season (22 rounds, 22 drivers)
+**Stage:** Live for the 2026 season (22 rounds, 22 drivers)
 
 ## Tech Stack
 
@@ -23,21 +23,22 @@ If gstack skills aren't working, run `cd .claude/skills/gstack && PATH="$HOME/.b
 | Styling | Tailwind CSS v4 (via PostCSS) |
 | Font | Titillium Web (Google Fonts) |
 | Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth (email/password) |
+| Auth | Supabase Auth — Google OAuth (`signInWithGoogle` from `@/lib/auth`) |
 | Hosting | Vercel |
-| External API | Jolpica (F1 calendar data) |
+| External API | Jolpica (Ergast-compatible F1 schedule + results data) |
 
 ## Project Structure
 
 ```
 app/
-  page.tsx              — Landing/waitlist (public)
+  page.tsx              — Landing (public)
+  login/                — Google OAuth sign-in (public)
   layout.tsx            — Root layout, metadata, fonts
   dashboard/page.tsx    — Race list (authenticated)
   predict/[raceId]/     — Podium prediction form (authenticated)
+  leagues/              — Private friend leagues (authenticated)
   api/
     predictions/route.ts — Save prediction (POST)
-    waitlist/route.ts    — Email signup (POST)
 lib/
   races.ts              — 2026 F1 calendar + 22-driver list (static)
   supabase/
@@ -54,7 +55,6 @@ scripts/
 - **races** — id (slug), round, name, country, race_date, is_locked
 - **predictions** — user_id, race_id, first_driver, second_driver, third_driver, points_awarded; UNIQUE(user_id, race_id); all 3 drivers must differ
 - **results** — race_id (PK), p1, p2, p3, is_final; scoring fires automatically via trigger
-- **waitlist** — email (UNIQUE); service_role_only RLS
 - **leaderboard** — SQL view; SUM(points) per user, ordered DESC
 
 ## Scoring Logic

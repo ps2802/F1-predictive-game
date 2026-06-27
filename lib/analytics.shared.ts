@@ -1,9 +1,6 @@
 type AnalyticsPrimitive = string | number | boolean | null | undefined;
 
 export type GridlockEventName =
-  | "add_money_onramp_completed"
-  | "add_money_onramp_failed"
-  | "add_money_started"
   | "auth_completed"
   | "auth_failed"
   | "auth_started"
@@ -32,11 +29,7 @@ export type GridlockEventName =
   | "race_card_clicked"
   | "race_locked"
   | "race_scored"
-  | "league_settled"
-  | "wallet_viewed"
-  | "withdrawal_failed"
-  | "withdrawal_requested"
-  | "withdrawal_started";
+  | "league_settled";
 
 export type GridlockEventProperties = Record<string, AnalyticsPrimitive>;
 export type AnalyticsUserTraits = GridlockEventProperties;
@@ -103,10 +96,6 @@ export function getPageGroup(pathname: string): string {
 
   if (pathname.startsWith("/leagues")) {
     return "leagues";
-  }
-
-  if (pathname.startsWith("/wallet")) {
-    return "wallet";
   }
 
   if (pathname.startsWith("/profile")) {

@@ -43,6 +43,7 @@ export type FallbackRaceRecord = {
   race_date: string;
   race_starts_at: string;
   qualifying_starts_at: null;
+  lock_time_utc: string | null;
   circuit: null;
   is_locked: boolean;
   race_locked: boolean;
@@ -52,6 +53,7 @@ export type FallbackRaceRecord = {
 export type FallbackRaceTiming = {
   qualifying_starts_at: string | null;
   race_starts_at: string | null;
+  lock_time_utc: string | null;
   quali_locked: boolean;
   race_locked: boolean;
 };
@@ -87,6 +89,9 @@ export function buildFallbackRaceRecord(raceId: string): FallbackRaceRecord | nu
     race_date: race.date,
     race_starts_at: `${race.date}T00:00:00.000Z`,
     qualifying_starts_at: null,
+    // No qualifying timing in the static fallback, so anchor the lock to the
+    // race start (qualifying_starts_at ?? race_starts_at).
+    lock_time_utc: `${race.date}T00:00:00.000Z`,
     circuit: null,
     is_locked: isLocked,
     race_locked: isLocked,
@@ -103,6 +108,7 @@ export function buildFallbackRaceTiming(raceId: string): FallbackRaceTiming | nu
   return {
     qualifying_starts_at: race.qualifying_starts_at,
     race_starts_at: race.race_starts_at,
+    lock_time_utc: race.lock_time_utc,
     quali_locked: race.quali_locked,
     race_locked: race.race_locked,
   };

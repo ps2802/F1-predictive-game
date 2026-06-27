@@ -1,5 +1,10 @@
 const JOLPICA_BASE_URL = "https://api.jolpi.ca/ergast/f1";
 
+type JolpicaSession = {
+  date: string;
+  time?: string;
+};
+
 export type JolpicaRace = {
   season: string;
   round: string;
@@ -14,10 +19,13 @@ export type JolpicaRace = {
   };
   date: string;
   time?: string;
-  Qualifying?: {
-    date: string;
-    time?: string;
-  };
+  FirstPractice?: JolpicaSession;
+  Qualifying?: JolpicaSession;
+  // Sprint weekends: the grid-setting competitive sessions before the race.
+  // Jolpica named this "SprintShootout" in 2023 and "SprintQualifying" from 2024 on.
+  Sprint?: JolpicaSession;
+  SprintQualifying?: JolpicaSession;
+  SprintShootout?: JolpicaSession;
 };
 
 type JolpicaScheduleResponse = {
@@ -39,6 +47,9 @@ export type RaceSeedRow = {
   race_date: string;
   race_starts_at: string | null;
   qualifying_starts_at: string | null;
+  // Earliest grid-setting competitive session of the weekend (sprint qualifying
+  // on a sprint weekend, otherwise qualifying). Predictions lock relative to this.
+  lock_time_utc: string | null;
   is_locked: boolean;
   race_locked: boolean;
 };
@@ -93,6 +104,50 @@ export function buildSessionIso(date?: string | null, time?: string | null): str
   return `${date}T${time.endsWith("Z") ? time : `${time}Z`}`;
 }
 
+/**
+ * Returns the earliest of the provided ISO timestamps, ignoring nulls.
+ * Returns null only when every input is null.
+ */
+function earliestIso(...isoTimes: (string | null)[]): string | null {
+  let earliest: string | null = null;
+  for (const iso of isoTimes) {
+    if (iso == null) {
+      continue;
+    }
+    if (earliest == null || new Date(iso).getTime() < new Date(earliest).getTime()) {
+      earliest = iso;
+    }
+  }
+  return earliest;
+}
+
+/**
+ * Computes the single lock anchor for a race weekend: the start of the first
+ * competitive session that sets the grid/order before the race.
+ *
+ * - Normal weekend: qualifying.
+ * - Sprint weekend: sprint qualifying (a.k.a. sprint shootout) runs before the
+ *   sprint, which sets the grid for the sprint race — so it is the true first
+ *   grid-setting session. We take min(sprintQualifyingStart, qualifyingStart).
+ * - Practice does NOT set the grid, so it is never used as the lock anchor.
+ * - Falls back to the race start when no qualifying data is available.
+ */
+export function computeLockTimeUtc(race: JolpicaRace): string | null {
+  const qualifyingStart = buildSessionIso(
+    race.Qualifying?.date ?? null,
+    race.Qualifying?.time ?? null
+  );
+  const sprintQualifyingSession = race.SprintQualifying ?? race.SprintShootout;
+  const sprintQualifyingStart = buildSessionIso(
+    sprintQualifyingSession?.date ?? null,
+    sprintQualifyingSession?.time ?? null
+  );
+  const raceStart = buildSessionIso(race.date, race.time ?? null);
+
+  const gridSettingStart = earliestIso(sprintQualifyingStart, qualifyingStart);
+  return gridSettingStart ?? raceStart;
+}
+
 export function buildRaceId(race: JolpicaRace): string {
   const country = race.Circuit.Location.country;
   const baseId =
@@ -142,7 +197,8 @@ export function buildRaceSeedRows(
       race.Qualifying?.date ?? null,
       race.Qualifying?.time ?? null
     );
-    const lockDeadline = qualifyingStartsAt ?? raceStartsAt;
+    const lockTimeUtc = computeLockTimeUtc(race);
+    const lockDeadline = lockTimeUtc ?? qualifyingStartsAt ?? raceStartsAt;
     const isLocked = lockDeadline != null && new Date(lockDeadline) <= now;
 
     return {
@@ -156,6 +212,7 @@ export function buildRaceSeedRows(
       race_date: race.date,
       race_starts_at: raceStartsAt,
       qualifying_starts_at: qualifyingStartsAt,
+      lock_time_utc: lockTimeUtc,
       is_locked: isLocked,
       race_locked: isLocked,
     };

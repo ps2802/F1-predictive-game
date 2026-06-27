@@ -1,0 +1,45 @@
+/* ──────────────────────────────────────────────────────────────────────────
+ * HyperspeedBackground — lightweight F1 "warp speed" backdrop.
+ * Brand palette: red (#E10600) streaks on black, faint teal (#00D2AA) accent.
+ * Decorative only: pointer-events:none, aria-hidden, never blocks LCP.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* Below the engineering blueprint and hero content, above the panel bg. */
+  z-index: 0;
+  /* Base radial vignette toward the vanishing point — also the reduced-motion
+     fallback floor so the canvas never reveals an empty black box. */
+  background:
+    radial-gradient(
+      120% 90% at 62% 46%,
+      rgba(225, 6, 0, 0.10) 0%,
+      rgba(225, 6, 0, 0.04) 22%,
+      rgba(0, 210, 170, 0.025) 46%,
+      rgba(0, 0, 0, 0) 70%
+    ),
+    #000;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Static fallback: reduced motion / no canvas / low-power ──
+ * A CSS gradient core plus faint SVG speed lines converging on the vanishing
+ * point. No animation, no rAF — purely decorative paint. */
+.fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0.9;
+}

@@ -46,7 +46,6 @@ const CLARITY_MILESTONES = new Set<GridlockEventName>([
   "onboarding_completed",
   "prediction_edit_submitted",
   "prediction_submitted",
-  "withdrawal_requested",
 ]);
 export function isAnalyticsEnabled(): boolean {
   return (

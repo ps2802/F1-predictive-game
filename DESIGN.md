@@ -1,20 +1,20 @@
 # Design System — Gridlock
 
 ## Product Context
-- **What this is:** F1 predictive game where users predict race podiums and compete globally and in private leagues
-- **Who it's for:** F1 fans who want prediction-based competition with real stakes (USDC leagues)
-- **Space/industry:** Sports prediction / fantasy sports / competitive gaming
-- **Project type:** Authenticated web app (dashboard, prediction forms, league management)
+- **What this is:** A free F1 predictive game where users predict the race podium and compete on the global leaderboard and in private friend leagues
+- **Who it's for:** F1 fans who want prediction-based competition with their friends — bragging rights, not money
+- **Space/industry:** Sports prediction / fantasy sports / competitive gaming (free, social)
+- **Project type:** Authenticated web app (dashboard, prediction forms, friend leagues, leaderboards)
 
 ## Aesthetic Direction
 - **Direction:** Broadcast Telemetry — the visual language of F1 timing screens, sector data, and team radio displays
 - **Decoration level:** Intentional — thin hairline dividers, segment rails, red accent used sparingly (like a marshal flag)
-- **Mood:** The user should feel like they are inside a race, not browsing a SaaS dashboard. High-stakes, high-signal, premium dark. Every pixel earns its place.
+- **Mood:** The user should feel like they are inside a race, not browsing a SaaS dashboard. High-signal, competitive, premium dark. Every pixel earns its place.
 - **What we are not:** A betting site template, a fantasy sports card grid, a generic dark SaaS app
 - **Competitive gap:** Every F1 prediction app (official F1 Fantasy, FantasyGP, F1 Predictor) treats the sport as content to browse. Gridlock treats the user as a competitor inside the race. The design enforces that distinction.
 
 ## Branding
-- **Logo:** Always use the logo image asset — never typeset "GRIDLOCK" as text. This applies everywhere: app nav, auth pages, waitlist, preview pages, and any marketing surface.
+- **Logo:** Always use the logo image asset — never typeset "GRIDLOCK" as text. This applies everywhere: app nav, auth pages, preview pages, and any marketing surface.
 - **Logo asset:** Reference the image file used in the current AppNav and landing page implementation.
 - **Text wordmark fallback:** Only acceptable in plain-text contexts (email subject lines, meta tags, page titles). Never in rendered UI.
 
@@ -27,7 +27,7 @@
 - **Subheading:** Titillium Web 600
 - **Body:** Titillium Web 400, color: `--muted`, line-height 1.6
 - **Labels / Metadata:** Titillium Web 600, uppercase, letter-spacing 0.14em, font-size 10–11px
-- **Timing Numerics:** Titillium Web 700, `font-variant-numeric: tabular-nums`, letter-spacing 0.04em — used for countdown, rank, score, wallet balance
+- **Timing Numerics:** Titillium Web 700, `font-variant-numeric: tabular-nums`, letter-spacing 0.04em — used for countdown, rank, points, and score
 - **Font blacklist:** Never use Inter, Roboto, Arial, Helvetica, Open Sans, or any system font stack as a deliberate choice
 
 ## Color
@@ -149,7 +149,6 @@
 - No upcoming race: `NEXT RACE TBD` in command band, countdown shows `— : — : —`, CTA becomes `View Season Schedule`
 - No leagues: League Pressure converts to `Create a League` (red primary) + `Join with Code` (teal outline). No placeholder card grid.
 - New user / zero predictions: leaderboard shows top 3, self-row hidden, amber nudge below ("Make your first prediction")
-- Zero wallet balance: show `$0.00 USDC` — never hide this row
 
 ### Draft activation
 - Amber rail above command band when `draftCount > 0`

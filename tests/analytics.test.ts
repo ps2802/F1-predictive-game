@@ -27,7 +27,7 @@ describe("analytics helpers", () => {
     expect(getPageGroup("/")).toBe("landing");
     expect(getPageGroup("/login")).toBe("auth");
     expect(getPageGroup("/predict/japan-2026")).toBe("prediction");
-    expect(getPageGroup("/wallet")).toBe("wallet");
+    expect(getPageGroup("/leagues")).toBe("leagues");
     expect(getPageGroup("/profile")).toBe("profile");
   });
 

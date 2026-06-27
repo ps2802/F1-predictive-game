@@ -1,10 +1,18 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { sanitizeRedirect, signInWithGoogle } from "@/lib/auth";
 import { track } from "@/lib/analytics";
 import { buildFallbackNextRace } from "@/lib/races";
+
+// Decorative warp-speed backdrop. Lazy + client-only so it never SSRs or blocks
+// the hero's paint/LCP — it loads behind the existing content after hydration.
+const HyperspeedBackground = dynamic(
+  () => import("@/app/components/HyperspeedBackground"),
+  { ssr: false },
+);
 
 type NextRace = {
   id: string;
@@ -219,6 +227,8 @@ function AuthForm() {
 
         {/* Full-panel F1 engineering blueprint background */}
         <div className="gl-login-engineering-bg" aria-hidden="true">
+          {/* Warp-speed streaks sit behind the blueprint SVG (decorative). */}
+          <HyperspeedBackground />
           <svg viewBox="0 0 600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style={{ position: "absolute", inset: 0 }}>
             <defs>
               <pattern id="eng-grid" width="40" height="40" patternUnits="userSpaceOnUse">
