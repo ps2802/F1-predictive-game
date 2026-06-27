@@ -2,6 +2,29 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.2.0.0] - 2026-06-27
+
+### Changed
+- **Gridlock is now a free, Web2 friends game.** Removed every crypto / wallet / payment surface — USDC balances, Privy/Solana wallets, deposits, withdrawals, paid leagues, entry fees, prize pools, payout/rake, the prediction edit fee, the Helius deposit webhook, and the admin revenue/wallets tabs are all gone. Leagues and predictions are free; you compete with friends on the leaderboard for bragging rights.
+- **Auth is now Google sign-in only** via Supabase OAuth (PKCE). Replaced the Privy login + Privy→Supabase bridge with `signInWithGoogle` + an `/auth/callback` route. First login still routes to username onboarding.
+- **One lock per weekend** at the start of the first competitive session (sprint-aware), covering every prediction category. Predictions are active the moment you save them and are never voided.
+- SEO/metadata reframed to the friends game (new title, description, JSON-LD, OpenGraph) and all monetized copy removed across the app.
+
+### Added
+- **OpenF1 live/replay track map** as the dashboard hero — a Canvas map of the circuit with cars as moving dots, powered by the OpenF1 API through a cached server-side proxy. Three auto-selected modes (live / replay / static), lazy-loaded, reduced-motion safe, paused when off-screen or backgrounded.
+- **Live Jolpica results ingestion**: an admin "Sync from Jolpica" action that auto-settles pole, winner, podium, fastest lap, and biggest gainer from the live F1 results; safety car stays manual admin entry.
+- A lightweight warp-speed (Hyperspeed-style) background on the landing page, lazy-loaded with a reduced-motion fallback.
+- `www.joingridlock.com` → apex redirect and baseline security headers.
+
+### Security
+- Private leagues are now genuinely invite-only (tightened the `leagues` row-level read policy so a league's `invite_code` can no longer be enumerated via the data API).
+- League standings are visible only to members of a private league.
+- Username creation now enforces a lowercase, safe-character handle with reserved-word/profanity blocking and case-insensitive uniqueness.
+- Removed the orphaned legacy prediction route that had weaker lock semantics.
+
+### Fixed
+- Pruned the `@privy-io/*` and `@solana-program/memo` dependencies, shrinking the bundle substantially.
+
 ## [0.1.6.0] - 2026-05-03
 
 ### Added

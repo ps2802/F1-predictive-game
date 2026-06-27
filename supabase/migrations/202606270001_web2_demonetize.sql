@@ -168,3 +168,23 @@ ALTER TABLE public.races
 UPDATE public.races
 SET lock_time_utc = coalesce(qualifying_starts_at, race_starts_at)
 WHERE lock_time_utc IS NULL;
+
+-- 8. Harden league visibility (private leagues must stay invite-only). ---------
+-- The original policy allowed any authenticated user to SELECT every league row
+-- (including invite_code) via the data API, defeating the private/invite-only
+-- boundary. Restrict reads to public/global leagues, the creator, and members.
+DROP POLICY IF EXISTS "leagues_read_all" ON public.leagues;
+DROP POLICY IF EXISTS "leagues_select_visible" ON public.leagues;
+CREATE POLICY "leagues_select_visible" ON public.leagues
+  FOR SELECT TO authenticated
+  USING (
+    type IN ('public', 'global')
+    OR creator_id = auth.uid()
+    OR EXISTS (
+      SELECT 1 FROM public.league_members lm
+      WHERE lm.league_id = leagues.id AND lm.user_id = auth.uid()
+    )
+  );
+
+-- Invite-based lookups (join preview, join) run through the service-role client
+-- in the API layer, so they continue to resolve private leagues by invite_code.
