@@ -61,6 +61,9 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+-- The OUT columns (prediction_id, version_number) share names with table
+-- columns used in the body; resolve any ambiguity to the COLUMN.
+#variable_conflict use_column
 DECLARE
   v_prediction_id uuid;
   v_next_version_number integer := 1;
