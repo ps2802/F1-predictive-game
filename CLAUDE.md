@@ -12,7 +12,7 @@ If gstack skills aren't working, run `cd .claude/skills/gstack && PATH="$HOME/.b
 
 **Gridlock** is an F1 predictive game where users predict podium finishes (1st/2nd/3rd) for each 2026 Formula 1 race and compete on a global leaderboard. Site: joingridlock.com
 
-**Stage:** Waitlist live → launching for 2026 season (24 rounds, 20 drivers)
+**Stage:** Waitlist live → launching for 2026 season (22 rounds, 22 drivers)
 
 ## Tech Stack
 
@@ -39,7 +39,7 @@ app/
     predictions/route.ts — Save prediction (POST)
     waitlist/route.ts    — Email signup (POST)
 lib/
-  races.ts              — 2026 F1 calendar + 20-driver list (static)
+  races.ts              — 2026 F1 calendar + 22-driver list (static)
   supabase/
     client.ts           — Browser Supabase client
     server.ts           — Server Supabase client (SSR)
@@ -63,7 +63,7 @@ Exact match on position = 3 pts. Driver appears in podium but wrong position = 1
 
 ## Active Drivers (2026)
 
-Max Verstappen, Liam Lawson, Lando Norris, Oscar Piastri, Charles Leclerc, Lewis Hamilton, George Russell, Andrea Kimi Antonelli, Fernando Alonso, Lance Stroll, Esteban Ocon, Oliver Bearman, Yuki Tsunoda, Isack Hadjar, Carlos Sainz, Alexander Albon, Nico Hülkenberg, Gabriel Bortoleto, Pierre Gasly, Jack Doohan
+Lando Norris, Oscar Piastri, George Russell, Kimi Antonelli, Max Verstappen, Isack Hadjar, Charles Leclerc, Lewis Hamilton, Carlos Sainz, Alexander Albon, Liam Lawson, Arvid Lindblad, Fernando Alonso, Lance Stroll, Esteban Ocon, Oliver Bearman, Nico Hulkenberg, Gabriel Bortoleto, Pierre Gasly, Franco Colapinto, Sergio Perez, Valtteri Bottas
 
 ## Environment Variables
 

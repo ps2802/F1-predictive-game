@@ -112,7 +112,7 @@ export const metadata: Metadata = {
     creator: "@GridlockLeague",
     title: "Gridlock — Free F1 Prediction Game · Win Prizes 2026",
     description:
-      "Free F1 prediction game for 2026. Predict podiums, earn points, win prizes. 24 races. 20 drivers. Starts now.",
+      "Free F1 prediction game for 2026. Predict podiums, earn points, win prizes. 22 races. 22 drivers. Starts now.",
     images: ["/opengraph-image"],
   },
 
@@ -198,7 +198,7 @@ const jsonLd = {
           name: "How do I earn money playing Gridlock?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Top players on the Gridlock seasonal leaderboard earn prizes. By consistently predicting Formula 1 podiums correctly across the 24-race 2026 season, you accumulate points and climb toward prize positions.",
+            text: "Top players on the Gridlock seasonal leaderboard earn prizes. By consistently predicting Formula 1 podiums correctly across the 22-race 2026 season, you accumulate points and climb toward prize positions.",
           },
         },
         {
@@ -222,7 +222,7 @@ const jsonLd = {
           name: "When can I play Gridlock?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Gridlock is live for the entire 2026 Formula 1 season — 24 races from Bahrain to Abu Dhabi. Predictions lock when qualifying begins, so you need to pick before the action starts.",
+            text: "Gridlock is live for the entire 2026 Formula 1 season — 22 races from Australia to Abu Dhabi. Predictions lock when qualifying begins, so you need to pick before the action starts.",
           },
         },
         {
@@ -238,7 +238,7 @@ const jsonLd = {
           name: "What prizes can I win playing Gridlock?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Top players on the Gridlock 2026 seasonal leaderboard earn real prizes. The better your F1 podium predictions across all 24 races, the higher your ranking and the better your prize eligibility.",
+            text: "Top players on the Gridlock 2026 seasonal leaderboard earn real prizes. The better your F1 podium predictions across all 22 races, the higher your ranking and the better your prize eligibility.",
           },
         },
         {
@@ -254,7 +254,7 @@ const jsonLd = {
           name: "Which Formula 1 drivers can I pick in Gridlock for 2026?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "All 20 drivers on the 2026 F1 grid are available: Max Verstappen, Liam Lawson, Lando Norris, Oscar Piastri, Charles Leclerc, Lewis Hamilton, George Russell, Andrea Kimi Antonelli, Fernando Alonso, Lance Stroll, Esteban Ocon, Oliver Bearman, Yuki Tsunoda, Isack Hadjar, Carlos Sainz, Alexander Albon, Nico Hülkenberg, Gabriel Bortoleto, Pierre Gasly, and Jack Doohan.",
+            text: "All 22 drivers on the 2026 F1 grid are available: Lando Norris, Oscar Piastri, George Russell, Kimi Antonelli, Max Verstappen, Isack Hadjar, Charles Leclerc, Lewis Hamilton, Carlos Sainz, Alexander Albon, Liam Lawson, Arvid Lindblad, Fernando Alonso, Lance Stroll, Esteban Ocon, Oliver Bearman, Nico Hulkenberg, Gabriel Bortoleto, Pierre Gasly, Franco Colapinto, Sergio Perez, and Valtteri Bottas.",
           },
         },
       ],

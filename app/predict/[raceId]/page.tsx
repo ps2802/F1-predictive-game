@@ -37,6 +37,7 @@ type RaceTiming = {
   quali_locked: boolean;
   race_locked: boolean;
 };
+type PredictionCategory = "qualifying" | "race" | "chaos";
 
 const STEPS = ["qualifying", "race", "chaos", "review"] as const;
 const STEP_LABELS: Record<string, string> = {
@@ -69,6 +70,7 @@ export default function PredictPage() {
   const [expertCopied, setExpertCopied] = useState(false);
   const [myScore, setMyScore] = useState<number | null | "loading">("loading");
   const [showEditConfirm, setShowEditConfirm] = useState(false);
+  const [pendingSubmitCategory, setPendingSubmitCategory] = useState<PredictionCategory | null>(null);
   const hasTrackedPredictionStart = useRef(false);
 
   const currentCategory = STEPS[step];
@@ -295,6 +297,51 @@ export default function PredictPage() {
     return "—";
   }
 
+  function getOptionValue(questionId: string, optionId: string): string | null {
+    const question = questions.find((q) => q.id === questionId);
+    return question?.options.find((opt) => opt.id === optionId)?.option_value ?? null;
+  }
+
+  function getSelectedValuesForQuestionTypes(questionTypes: string[]): Set<string> {
+    const selectedValues = new Set<string>();
+    for (const question of questions) {
+      if (!questionTypes.includes(question.question_type)) continue;
+      for (const optionId of answers[question.id] ?? []) {
+        const value = getOptionValue(question.id, optionId);
+        if (value) selectedValues.add(value);
+      }
+    }
+    return selectedValues;
+  }
+
+  function isRaceDriverConflict(question: Question, option: Option): boolean {
+    if (question.category !== "race" || option.option_type !== "driver") return false;
+
+    if (question.question_type === "winner") {
+      return getSelectedValuesForQuestionTypes(["podium"]).has(option.option_value);
+    }
+
+    if (question.question_type === "podium") {
+      return getSelectedValuesForQuestionTypes(["winner"]).has(option.option_value);
+    }
+
+    return false;
+  }
+
+  function getAnswersForCategory(category: PredictionCategory): Answers {
+    const questionIds = new Set(
+      questions
+        .filter((question) => question.category === category)
+        .map((question) => question.id)
+    );
+
+    return Object.fromEntries(
+      Object.entries(answers).filter(([questionId, picks]) => (
+        questionIds.has(questionId) && picks.filter(Boolean).length > 0
+      ))
+    );
+  }
+
   function renderReview() {
     const categories = ["qualifying", "race", "chaos"] as const;
     return (
@@ -337,18 +384,28 @@ export default function PredictPage() {
     );
   }
 
-  async function handleSubmit() {
+  async function handleSubmit(submitCategory?: PredictionCategory) {
     if (!isAuthenticated) {
       router.push(`/?redirect=/predict/${raceId}`);
       return;
     }
 
-    if (anyLiveEditWindow && isAuthenticated && !showEditConfirm) {
+    const submitAnswers = submitCategory ? getAnswersForCategory(submitCategory) : answers;
+    const shouldConfirmPaidEdit =
+      submitCategory === "qualifying"
+        ? qualifyingWindow.paidEdit
+        : submitCategory === "race" || submitCategory === "chaos"
+          ? raceWindow.paidEdit
+          : anyLiveEditWindow;
+
+    if (shouldConfirmPaidEdit && isAuthenticated && !showEditConfirm) {
+      setPendingSubmitCategory(submitCategory ?? null);
       setShowEditConfirm(true);
       return;
     }
 
     setShowEditConfirm(false);
+    setPendingSubmitCategory(null);
     setSaving(true);
     setError("");
 
@@ -356,7 +413,7 @@ export default function PredictPage() {
       const res = await fetch("/api/predictions/v2", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ raceId, answers }),
+        body: JSON.stringify({ raceId, answers: submitAnswers }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to save");
@@ -376,7 +433,9 @@ export default function PredictPage() {
         },
         { send_to_posthog: false, send_to_clarity: true }
       );
-      localStorage.removeItem(`picks_${raceId}`);
+      if (!submitCategory && allQuestionsComplete) {
+        localStorage.removeItem(`picks_${raceId}`);
+      }
       setChargedEditFee(Boolean(data.chargedEditFee));
       setSavedStatus(data.status === "active" ? "active" : "draft");
       setSaved(true);
@@ -625,7 +684,10 @@ export default function PredictPage() {
                   {q.options.map((opt) => {
                     const selected = isOptionSelected(q.id, opt.id);
                     const pickIdx = getPickIndex(q.id, opt.id);
-                    const disabled = !currentWindow?.editable || (!selected && isFull);
+                    const disabled =
+                      !currentWindow?.editable ||
+                      (!selected && isFull) ||
+                      (!selected && isRaceDriverConflict(q, opt));
                     return (
                       <button
                         key={opt.id}
@@ -672,10 +734,16 @@ export default function PredictPage() {
           <div className="predict-edit-confirm">
             <p>This will charge <strong>${PREDICTION_EDIT_FEE_USDC} USDC</strong> from your balance to update your picks during the live edit window.</p>
             <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
-              <button className="predict-nav-btn primary" onClick={handleSubmit}>
+              <button className="predict-nav-btn primary" onClick={() => handleSubmit(pendingSubmitCategory ?? undefined)}>
                 Confirm &amp; Pay
               </button>
-              <button className="predict-nav-btn secondary" onClick={() => setShowEditConfirm(false)}>
+              <button
+                className="predict-nav-btn secondary"
+                onClick={() => {
+                  setPendingSubmitCategory(null);
+                  setShowEditConfirm(false);
+                }}
+              >
                 Cancel
               </button>
             </div>
@@ -703,7 +771,7 @@ export default function PredictPage() {
           {currentCategory === "review" ? (
             <button
               className="predict-nav-btn primary"
-              onClick={handleSubmit}
+              onClick={() => handleSubmit()}
               disabled={saving}
               data-testid="prediction-submit-button"
             >
@@ -718,27 +786,39 @@ export default function PredictPage() {
                 : "Continue to Login →"}
             </button>
           ) : (
-            <button
-              className="predict-nav-btn primary"
-              onClick={() => {
-                setSectionIncomplete(!stepComplete(currentCategory as string));
-                track("prediction_step_completed", {
-                  completed: stepComplete(currentCategory),
-                  race_id: raceId,
-                  step_name: currentCategory,
-                });
-                if (isEditing) {
-                  track("prediction_edit_started", {
+            <>
+              {currentCategory === "qualifying" && (
+                <button
+                  className="predict-nav-btn secondary"
+                  onClick={() => handleSubmit("qualifying")}
+                  disabled={saving || currentQuestions.length === 0 || !qualifyingWindow.editable || !stepComplete("qualifying")}
+                  data-testid="prediction-save-qualifying-button"
+                >
+                  {saving ? "Saving..." : "Save Qualifying Picks"}
+                </button>
+              )}
+              <button
+                className="predict-nav-btn primary"
+                onClick={() => {
+                  setSectionIncomplete(!stepComplete(currentCategory as string));
+                  track("prediction_step_completed", {
+                    completed: stepComplete(currentCategory),
                     race_id: raceId,
-                    step_name: STEPS[step + 1],
+                    step_name: currentCategory,
                   });
-                }
-                setStep(step + 1);
-              }}
-              data-testid="prediction-next-button"
-            >
-              Next: {STEP_LABELS[STEPS[step + 1]]} →
-            </button>
+                  if (isEditing) {
+                    track("prediction_edit_started", {
+                      race_id: raceId,
+                      step_name: STEPS[step + 1],
+                    });
+                  }
+                  setStep(step + 1);
+                }}
+                data-testid="prediction-next-button"
+              >
+                Next: {STEP_LABELS[STEPS[step + 1]]} →
+              </button>
+            </>
           )}
         </div>
 

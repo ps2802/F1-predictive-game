@@ -64,6 +64,13 @@ function getRaceCountdown(raceId: string | null): string {
   return `${hours}h ${mins}m`;
 }
 
+function getNextOpenRace() {
+  const now = new Date();
+  return races.find(
+    (race) => race.status === "upcoming" && new Date(race.date) > now
+  ) ?? races.find((race) => race.status === "upcoming") ?? null;
+}
+
 function hasMissingStakeColumn(message: string | undefined): boolean {
   if (!message) return false;
   return (
@@ -96,7 +103,8 @@ export default function LeaguePage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCountdown(getRaceCountdown(league?.race_id ?? null));
+      const raceIdForCountdown = league?.race_id ?? getNextOpenRace()?.id ?? null;
+      setCountdown(getRaceCountdown(raceIdForCountdown));
     }, 60_000);
     return () => clearInterval(interval);
   }, [league?.race_id]);
@@ -128,7 +136,10 @@ export default function LeaguePage() {
       if (!leagueData) { router.push("/leagues"); return; }
       setLeague(leagueData);
       setJoinStake(String(Number(leagueData.entry_fee_usdc ?? 5)));
-      setCountdown(getRaceCountdown(leagueData.race_id));
+      const nextRace = leagueData.race_id
+        ? races.find((race) => race.id === leagueData.race_id) ?? null
+        : getNextOpenRace();
+      setCountdown(getRaceCountdown(nextRace?.id ?? null));
 
       let membershipResult = await supabase
         .from("league_members")
@@ -183,13 +194,13 @@ export default function LeaguePage() {
         setMembers([]);
       }
 
-      if (leagueData.race_id && user) {
+      if (nextRace?.id && user) {
         const { data: pred } = await supabase
           .from("predictions")
           .select("status")
-          .eq("race_id", leagueData.race_id)
+          .eq("race_id", nextRace.id)
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
         setNextRacePredStatus((pred?.status as "active" | "draft") ?? "none");
       }
 
@@ -296,7 +307,9 @@ export default function LeaguePage() {
   const payoutTiers: { place: number; percent: number }[] =
     (league.payout_config as PayoutConfig)?.tiers ?? DEFAULT_PAYOUT_TIERS;
   const pool = Number(league.prize_pool);
-  const targetRace = races.find((race) => race.id === league.race_id);
+  const leagueRace = races.find((race) => race.id === league.race_id);
+  const targetRace = leagueRace ?? getNextOpenRace();
+  const leagueRaceSchedule = leagueRace ? [leagueRace] : races.filter((race) => race.status === "upcoming");
   const isSkillWeighted = league.payout_model === "skill_weighted";
   const countdownDisplay = countdown === "TBD" ? "Schedule Soon" : countdown;
   const stakeWindowClosed = countdown === "Locked";
@@ -448,7 +461,7 @@ export default function LeaguePage() {
             <div className="lb-table" style={{ marginTop: '1.5rem' }}>
               <div className="lb-header">
                 <span>Rank</span>
-                <span>Driver</span>
+                <span>Player</span>
                 <span>Used</span>
                 <span>Points</span>
               </div>
@@ -689,34 +702,47 @@ export default function LeaguePage() {
         {/* Races tab */}
         {activeTab === "races" && (
           <div style={{ marginTop: "1.5rem" }}>
-            {targetRace ? (
+            {leagueRaceSchedule.length > 0 ? (
               <div className="league-races-list">
-                <div className="league-race-item">
-                  <div className="league-race-item-info">
-                    <span className="gla-race-round">Round {targetRace.round}</span>
-                    <strong className="league-race-item-name">{targetRace.name}</strong>
-                    <span className="gla-race-meta">
-                      {targetRace.country} ·{" "}
-                      {targetRace.date
-                        ? new Date(targetRace.date).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })
-                        : "Date TBD"}
-                    </span>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.5rem" }}>
-                    <span className="gla-race-status is-upcoming">Upcoming</span>
-                    <span className="league-econ-value" style={{ fontSize: "1rem" }}>
-                      {countdownDisplay}
-                    </span>
-                  </div>
-                </div>
+                {leagueRaceSchedule.map((raceItem) => {
+                  const isNext = raceItem.id === targetRace?.id;
+                  return (
+                    <div key={raceItem.id} className="league-race-item">
+                      <div className="league-race-item-info">
+                        <span className="gla-race-round">Round {raceItem.round}</span>
+                        <strong className="league-race-item-name">{raceItem.name}</strong>
+                        <span className="gla-race-meta">
+                          {raceItem.country} ·{" "}
+                          {raceItem.date
+                            ? new Date(raceItem.date).toLocaleDateString("en-GB", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              })
+                            : "Date TBD"}
+                        </span>
+                      </div>
+                      <div className="league-race-item-action">
+                        <span className="gla-race-status is-upcoming">
+                          {isNext ? "Next Up" : "Upcoming"}
+                        </span>
+                        {isNext ? (
+                          <span className="league-econ-value league-race-countdown">
+                            {countdownDisplay}
+                          </span>
+                        ) : (
+                          <Link href={`/predict/${raceItem.id}`} className="league-race-link">
+                            Predict
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="league-empty">
-                This league covers the full 2026 season — {races.filter((r) => r.status === "upcoming").length} races remaining.
+                This league covers the full 2026 season. New races appear here as soon as the calendar opens.
               </p>
             )}
           </div>

@@ -9,6 +9,7 @@ export type PredictionQuestionDefinition = {
 export type PredictionOptionDefinition = {
   id: string;
   question_id: string;
+  option_value?: string | null;
 };
 
 export type PredictionAnswerRow = {
@@ -37,12 +38,21 @@ export function validatePredictionAnswers(params: {
   const { answers, questions, options } = params;
 
   const questionMap = new Map(questions.map((question) => [question.id, question]));
+  const questionIdsByType = new Map<string, string[]>();
   const optionIdsByQuestion = new Map<string, Set<string>>();
+  const optionByQuestionAndId = new Map<string, PredictionOptionDefinition>();
+
+  for (const question of questions) {
+    const ids = questionIdsByType.get(question.question_type) ?? [];
+    ids.push(question.id);
+    questionIdsByType.set(question.question_type, ids);
+  }
 
   for (const option of options) {
     const optionIds = optionIdsByQuestion.get(option.question_id) ?? new Set<string>();
     optionIds.add(option.id);
     optionIdsByQuestion.set(option.question_id, optionIds);
+    optionByQuestionAndId.set(`${option.question_id}:${option.id}`, option);
   }
 
   for (const questionId of Object.keys(answers)) {
@@ -94,6 +104,31 @@ export function validatePredictionAnswers(params: {
         pick_order: index + 1,
       });
     });
+  }
+
+  const winnerQuestionIds = questionIdsByType.get("winner") ?? [];
+  const podiumQuestionIds = questionIdsByType.get("podium") ?? [];
+  const winnerValues = new Set<string>();
+
+  for (const questionId of winnerQuestionIds) {
+    for (const optionId of answers[questionId] ?? []) {
+      const option = optionByQuestionAndId.get(`${questionId}:${optionId}`);
+      const value = option?.option_value?.trim();
+      if (value) winnerValues.add(value);
+    }
+  }
+
+  for (const questionId of podiumQuestionIds) {
+    for (const optionId of answers[questionId] ?? []) {
+      const option = optionByQuestionAndId.get(`${questionId}:${optionId}`);
+      const value = option?.option_value?.trim();
+      if (value && winnerValues.has(value)) {
+        return {
+          ok: false,
+          error: `${value} is already picked as race winner. Pick different drivers for P2 and P3.`,
+        };
+      }
+    }
   }
 
   return { ok: true, answerRows };
