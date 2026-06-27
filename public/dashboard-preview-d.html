@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard D — Gridlock</title>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --red:   #E10600;
+  --teal:  #00D2AA;
+  --gold:  #FFD23C;
+  --bg:    #060606;
+  --panel: #0E0E0E;
+  --line:  rgba(255,255,255,0.07);
+}
+
+body {
+  font-family: 'Titillium Web', sans-serif;
+  background: var(--bg);
+  color: #fff;
+  min-height: 100vh;
+}
+
+/* ── Dev toggle ── */
+.dev-toggle {
+  position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  background: #111; border: 1px solid rgba(255,255,255,0.1);
+  border-top: none; border-radius: 0 0 8px 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.dv-btn {
+  padding: 7px 22px; font-size: 9px; font-weight: 900;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  background: transparent; border: none; cursor: pointer;
+  font-family: inherit; color: rgba(255,255,255,0.38);
+  transition: color 120ms, background 120ms;
+}
+.dv-btn + .dv-btn { border-left: 1px solid rgba(255,255,255,0.08); }
+.dv-btn.active { color: #fff; background: rgba(255,255,255,0.07); }
+
+/* ── Visibility helpers ── */
+.z { display: none; }
+.e { display: none; }
+body.zero  .z { display: block; }
+body.engaged .e { display: block; }
+body.zero  .z-flex { display: flex !important; }
+body.engaged .e-flex { display: flex !important; }
+.z-flex, .e-flex { display: none !important; }
+
+/* ── Nav ── */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px; height: 52px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(6,6,6,0.98);
+  position: sticky; top: 0; z-index: 100;
+}
+.logo-link { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
+.logo-img { height: 34px; width: auto; display: block; }
+
+.nav-right { display: flex; align-items: center; gap: 10px; }
+
+.btn-nav-ghost {
+  height: 32px; padding: 0 16px;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+  background: transparent; border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.8); font-family: inherit; cursor: pointer;
+}
+
+.btn-nav-red {
+  height: 32px; padding: 0 16px;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--red); border: none; color: #fff;
+  font-family: inherit; cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(225,6,0,0.5), 0 2px 12px rgba(225,6,0,0.3);
+}
+
+.nav-wallet {
+  display: flex; align-items: center; gap: 7px;
+  height: 32px; padding: 0 14px;
+  font-size: 13px; font-weight: 700; color: var(--teal);
+  background: rgba(0,210,170,0.07); border: 1px solid rgba(0,210,170,0.2);
+  cursor: pointer; font-family: inherit;
+}
+.wallet-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal); }
+
+.red-stripe {
+  height: 2px;
+  background: linear-gradient(90deg, var(--red) 0%, rgba(225,6,0,0.2) 55%, transparent);
+}
+
+/* ── Page ── */
+.page {
+  width: min(1060px, calc(100% - 48px));
+  margin: 0 auto;
+  padding-bottom: 100px;
+}
+
+/* ══════════════════════════════════════════════
+   RACE HERO — the dominant zone, no box
+══════════════════════════════════════════════ */
+.race-hero {
+  padding: 52px 0 0;
+}
+
+.hero-eyebrow {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.28em; text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 14px;
+}
+
+.hero-race-row {
+  display: flex; align-items: flex-start; gap: 20px;
+}
+
+.hero-flag { font-size: 42px; line-height: 1; margin-top: 6px; flex-shrink: 0; }
+
+.hero-name {
+  font-size: clamp(44px, 7vw, 80px); font-weight: 900;
+  line-height: 1; letter-spacing: -0.05em; text-transform: uppercase;
+}
+
+.hero-detail {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 12px;
+  font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6);
+}
+.detail-sep { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,0.25); flex-shrink: 0; }
+
+/* Countdown — big, inline, no box */
+.hero-countdown {
+  display: flex; align-items: baseline; gap: 2px;
+  margin-top: 28px;
+}
+
+.cd-n {
+  font-size: 52px; font-weight: 900; line-height: 1;
+  letter-spacing: -0.05em; font-variant-numeric: tabular-nums;
+}
+.cd-n.red { color: var(--red); text-shadow: 0 0 24px rgba(225,6,0,0.3); }
+
+.cd-u {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
+  color: rgba(255,255,255,0.45); margin: 0 10px 0 3px; padding-bottom: 7px;
+}
+
+.cd-sep { font-size: 32px; font-weight: 200; color: rgba(255,255,255,0.18); padding-bottom: 5px; }
+
+/* Zero state — game loop + CTA */
+.hero-loop {
+  margin-top: 22px;
+  font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.65);
+}
+
+.hero-cta-row {
+  display: flex; align-items: center; gap: 18px;
+  margin-top: 26px;
+  padding-bottom: 52px;
+}
+
+.btn-primary {
+  display: inline-flex; align-items: center; height: 50px; padding: 0 36px;
+  font-size: 12px; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #fff; background: var(--red); border: none; font-family: inherit; cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(225,6,0,0.65), 0 6px 26px rgba(225,6,0,0.42);
+  transition: box-shadow 160ms, transform 120ms;
+  white-space: nowrap;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(225,6,0,0.85), 0 10px 36px rgba(225,6,0,0.55); }
+
+.btn-link {
+  font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.55);
+  background: none; border: none; cursor: pointer; font-family: inherit;
+  text-decoration: underline; text-underline-offset: 3px;
+  text-decoration-color: rgba(255,255,255,0.2);
+}
+.btn-link:hover { color: rgba(255,255,255,0.85); text-decoration-color: rgba(255,255,255,0.45); }
+
+/* Engaged: prediction status */
+.pred-status {
+  display: flex; align-items: center; gap: 9px;
+  margin-top: 20px;
+}
+.pred-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.pred-dot.none { background: var(--red); animation: pulse 1.8s ease-in-out infinite; }
+.pred-dot.done { background: var(--teal); }
+.pred-text {
+  font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.7);
+}
+.pred-text.done { color: var(--teal); }
+
+/* ══════════════════════════════════════════════
+   ZERO STATE — content below hero
+══════════════════════════════════════════════ */
+
+/* How it works */
+.how-it-works {
+  display: flex; gap: 0;
+  padding: 28px 0 32px;
+  border-top: 1px solid var(--line);
+}
+
+.hiw-step {
+  display: flex; gap: 14px; flex: 1; padding-right: 24px;
+}
+
+.hiw-num {
+  font-size: 11px; font-weight: 900; letter-spacing: 0.08em;
+  color: var(--red); min-width: 18px; padding-top: 1px;
+}
+
+.hiw-body { display: flex; flex-direction: column; gap: 6px; }
+.hiw-title { font-size: 13px; font-weight: 800; }
+.hiw-desc { font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.45; }
+
+/* Featured league slim card */
+.featured-slim {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 16px 22px;
+  background: rgba(0,210,170,0.04);
+  border: 1px solid rgba(0,210,170,0.16);
+  margin-bottom: 28px;
+}
+
+.fs-eyebrow {
+  font-size: 9px; font-weight: 900; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--teal); margin-bottom: 3px;
+}
+.fs-name { font-size: 16px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 3px; }
+.fs-meta { font-size: 12px; color: rgba(255,255,255,0.6); }
+
+.btn-join {
+  display: inline-flex; align-items: center; height: 34px; padding: 0 20px;
+  font-size: 10px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--teal); background: rgba(0,210,170,0.08);
+  border: 1px solid rgba(0,210,170,0.3); font-family: inherit; cursor: pointer;
+  flex-shrink: 0;
+  transition: background 160ms, border-color 160ms;
+}
+.btn-join:hover { background: rgba(0,210,170,0.15); border-color: rgba(0,210,170,0.5); }
+
+/* Public league rows */
+.pub-rows { display: flex; flex-direction: column; }
+
+.pub-row {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.pub-rows .pub-row:first-child { border-top: 1px solid var(--line); }
+
+.pub-name { flex: 1; font-size: 14px; font-weight: 800; letter-spacing: -0.02em; }
+.pub-meta { font-size: 12px; color: rgba(255,255,255,0.55); }
+
+.btn-ghost-sm {
+  display: inline-flex; align-items: center; height: 30px; padding: 0 16px;
+  font-size: 10px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(255,255,255,0.7); background: transparent;
+  border: 1px solid rgba(255,255,255,0.18); font-family: inherit; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+  transition: border-color 140ms, color 140ms;
+}
+.btn-ghost-sm:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
+
+/* Code row */
+.code-row {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 24px 0 8px;
+}
+.code-row-text { font-size: 12px; color: rgba(255,255,255,0.42); }
+.btn-text-red {
+  font-size: 12px; font-weight: 800; color: var(--red);
+  background: none; border: none; cursor: pointer; font-family: inherit;
+}
+.btn-text-red:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ══════════════════════════════════════════════
+   ENGAGED STATE — content below hero
+══════════════════════════════════════════════ */
+
+/* Stats row — no boxes, just inline text */
+.stats-row {
+  display: flex; align-items: center; gap: 28px;
+  padding: 22px 0;
+  border-top: 1px solid var(--line);
+}
+
+.stat-i { display: flex; align-items: baseline; gap: 7px; }
+.stat-i-val {
+  font-size: 26px; font-weight: 900; letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+.stat-i-val.teal { color: var(--teal); }
+.stat-i-lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: rgba(255,255,255,0.5); }
+.stats-sep { width: 1px; height: 22px; background: rgba(255,255,255,0.1); }
+
+/* My leagues */
+.leagues-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 0 16px;
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+}
+.leagues-label {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+}
+.leagues-browse {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(255,255,255,0.38); background: none; border: none; cursor: pointer; font-family: inherit;
+}
+.leagues-browse:hover { color: rgba(255,255,255,0.7); }
+
+/* League rows — horizontal */
+.league-rows { display: flex; flex-direction: column; }
+
+.league-row {
+  display: flex; align-items: center; gap: 20px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.league-rows .league-row:first-child { border-top: 1px solid var(--line); }
+
+.lr-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.lr-name { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
+.lr-meta {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; color: rgba(255,255,255,0.55); font-weight: 600;
+}
+.lr-sep { color: rgba(255,255,255,0.2); }
+
+.lr-action {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  flex-shrink: 0; min-width: 130px;
+}
+
+/* Status pills */
+.pill {
+  display: inline-flex; align-items: center; height: 22px; padding: 0 10px;
+  font-size: 9px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase;
+}
+.pill-due     { background: rgba(225,6,0,0.1); border: 1px solid rgba(225,6,0,0.28); color: #ff6b6b; }
+.pill-sub     { background: rgba(0,210,170,0.09); border: 1px solid rgba(0,210,170,0.26); color: var(--teal); }
+.pill-locked  { background: transparent; border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.42); }
+.pill-pending { background: rgba(255,210,60,0.07); border: 1px solid rgba(255,210,60,0.2); color: rgba(255,210,60,0.8); }
+
+.btn-act {
+  display: inline-flex; align-items: center; height: 30px; padding: 0 18px;
+  font-size: 10px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #fff; background: var(--red); border: none; font-family: inherit; cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(225,6,0,0.5), 0 2px 10px rgba(225,6,0,0.22);
+  white-space: nowrap;
+  transition: box-shadow 140ms, transform 100ms;
+}
+.btn-act:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(225,6,0,0.7), 0 4px 16px rgba(225,6,0,0.38); }
+
+.btn-act-ghost {
+  display: inline-flex; align-items: center; height: 30px; padding: 0 18px;
+  font-size: 10px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(255,255,255,0.65); background: transparent;
+  border: 1px solid rgba(255,255,255,0.18); font-family: inherit; cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 140ms, color 140ms;
+}
+.btn-act-ghost:hover { border-color: rgba(255,255,255,0.38); color: #fff; }
+
+/* Create CTA at bottom */
+.create-cta {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 22px 0 0;
+}
+.create-cta-text { font-size: 12px; color: rgba(255,255,255,0.4); }
+
+/* ── Animations ── */
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+</style>
+</head>
+<body class="zero">
+
+<!-- Dev state toggle -->
+<div class="dev-toggle">
+  <button class="dv-btn active" onclick="setState('zero')">Zero State</button>
+  <button class="dv-btn" onclick="setState('engaged')">Engaged State</button>
+</div>
+
+<!-- Nav -->
+<nav>
+  <a href="/dashboard" class="logo-link">
+    <img src="/gridlock logo - transparent.png" alt="Gridlock" class="logo-img" />
+  </a>
+
+  <div class="nav-right z-flex">
+    <button class="btn-nav-ghost">Join Private League</button>
+  </div>
+
+  <div class="nav-right e-flex">
+    <div class="nav-wallet">
+      <div class="wallet-dot"></div>
+      $30 USDC
+    </div>
+    <button class="btn-nav-red">+ Create League</button>
+  </div>
+</nav>
+<div class="red-stripe"></div>
+
+<div class="page">
+
+  <!-- ═══════════════════════
+       RACE HERO
+  ════════════════════════ -->
+  <div class="race-hero">
+    <div class="hero-eyebrow">Round 4 · 2026 Season</div>
+
+    <div class="hero-race-row">
+      <span class="hero-flag">🇺🇸</span>
+      <h1 class="hero-name">Miami<br>Grand Prix</h1>
+    </div>
+
+    <div class="hero-detail">
+      <span>Miami International Autodrome</span>
+      <div class="detail-sep"></div>
+      <span>Sat, 3 May 2026</span>
+      <div class="detail-sep"></div>
+      <span>Qualifying locks Sat 2 May</span>
+    </div>
+
+    <div class="hero-countdown">
+      <span class="cd-n red" id="days">27</span><span class="cd-u">d</span>
+      <span class="cd-sep">:</span>
+      <span class="cd-n" id="hrs">20</span><span class="cd-u">h</span>
+      <span class="cd-sep">:</span>
+      <span class="cd-n" id="min">55</span><span class="cd-u">m</span>
+      <span class="cd-sep">:</span>
+      <span class="cd-n" id="sec">00</span><span class="cd-u">s</span>
+    </div>
+
+    <!-- ZERO STATE CTA -->
+    <div class="z">
+      <div class="hero-loop">Pick the podium. Score points. Win prizes.</div>
+      <div class="hero-cta-row">
+        <button class="btn-primary">Make Your First Prediction →</button>
+        <button class="btn-link">or join a league first</button>
+      </div>
+    </div>
+
+    <!-- ENGAGED STATE CTA -->
+    <div class="e">
+      <div class="pred-status">
+        <div class="pred-dot none"></div>
+        <span class="pred-text">No picks yet for Miami</span>
+      </div>
+      <div class="hero-cta-row">
+        <button class="btn-primary">Make Picks →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════
+       ZERO STATE CONTENT
+  ════════════════════════ -->
+  <div class="z">
+
+    <div class="how-it-works">
+      <div class="hiw-step">
+        <span class="hiw-num">01</span>
+        <div class="hiw-body">
+          <span class="hiw-title">Pick the podium</span>
+          <span class="hiw-desc">Choose 1st, 2nd, and 3rd place before qualifying locks.</span>
+        </div>
+      </div>
+      <div class="hiw-step">
+        <span class="hiw-num">02</span>
+        <div class="hiw-body">
+          <span class="hiw-title">Score points</span>
+          <span class="hiw-desc">3 pts for exact position. 1 pt if the driver finishes anywhere on the podium.</span>
+        </div>
+      </div>
+      <div class="hiw-step">
+        <span class="hiw-num">03</span>
+        <div class="hiw-body">
+          <span class="hiw-title">Win prizes</span>
+          <span class="hiw-desc">Lead your league at season end and take the USDC prize pool.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Featured global league -->
+    <div class="featured-slim">
+      <div>
+        <div class="fs-eyebrow">Free entry · Open to everyone</div>
+        <div class="fs-name">F1 Global Championship</div>
+        <div class="fs-meta">169 USDC prize pool · 78 members · Season-long</div>
+      </div>
+      <button class="btn-join">Join Free →</button>
+    </div>
+
+    <!-- Open leagues -->
+    <div class="leagues-head" style="border-top:none; padding-top:0">
+      <span class="leagues-label">Open Leagues</span>
+      <button class="leagues-browse">Browse all →</button>
+    </div>
+
+    <div class="pub-rows">
+      <div class="pub-row">
+        <span class="pub-name">Weekend Warriors</span>
+        <span class="pub-meta">$50 prize · 12 members · Free to join</span>
+        <button class="btn-ghost-sm">Join →</button>
+      </div>
+      <div class="pub-row">
+        <span class="pub-name">F1 Fanatics 2026</span>
+        <span class="pub-meta">$25 prize · 8 members · Free to join</span>
+        <button class="btn-ghost-sm">Join →</button>
+      </div>
+    </div>
+
+    <div class="code-row">
+      <span class="code-row-text">Have a private league code?</span>
+      <button class="btn-text-red">Enter invite code →</button>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════
+       ENGAGED STATE CONTENT
+  ════════════════════════ -->
+  <div class="e">
+
+    <!-- Stats — inline, no boxes -->
+    <div class="stats-row">
+      <div class="stat-i">
+        <span class="stat-i-val">24</span>
+        <span class="stat-i-lbl">points</span>
+      </div>
+      <div class="stats-sep"></div>
+      <div class="stat-i">
+        <span class="stat-i-val">3</span>
+        <span class="stat-i-lbl">leagues</span>
+      </div>
+      <div class="stats-sep"></div>
+      <div class="stat-i">
+        <span class="stat-i-val teal">$30</span>
+        <span class="stat-i-lbl">winnings</span>
+      </div>
+    </div>
+
+    <!-- My leagues -->
+    <div class="leagues-head">
+      <span class="leagues-label">My Leagues</span>
+      <button class="leagues-browse">Browse more →</button>
+    </div>
+
+    <div class="league-rows">
+
+      <!-- Pick due -->
+      <div class="league-row">
+        <div class="lr-info">
+          <span class="lr-name">F1 Global Championship</span>
+          <div class="lr-meta">
+            <span>$500 prize</span>
+            <span class="lr-sep">·</span>
+            <span>78 members</span>
+            <span class="lr-sep">·</span>
+            <span>Rank #12</span>
+          </div>
+        </div>
+        <div class="lr-action">
+          <span class="pill pill-due">Pick due</span>
+          <button class="btn-act">Make Picks →</button>
+        </div>
+      </div>
+
+      <!-- Picks submitted -->
+      <div class="league-row">
+        <div class="lr-info">
+          <span class="lr-name">kj</span>
+          <div class="lr-meta">
+            <span>$10 prize</span>
+            <span class="lr-sep">·</span>
+            <span>4 members</span>
+            <span class="lr-sep">·</span>
+            <span>Rank #2</span>
+          </div>
+        </div>
+        <div class="lr-action">
+          <span class="pill pill-sub">Submitted</span>
+          <button class="btn-act-ghost">Edit Picks</button>
+        </div>
+      </div>
+
+      <!-- Locked -->
+      <div class="league-row">
+        <div class="lr-info">
+          <span class="lr-name">Test League</span>
+          <div class="lr-meta">
+            <span>$25 prize</span>
+            <span class="lr-sep">·</span>
+            <span>21 members</span>
+            <span class="lr-sep">·</span>
+            <span>Rank #5</span>
+          </div>
+        </div>
+        <div class="lr-action">
+          <span class="pill pill-locked">Locked</span>
+        </div>
+      </div>
+
+      <!-- Results pending -->
+      <div class="league-row">
+        <div class="lr-info">
+          <span class="lr-name">Paddock Insiders</span>
+          <div class="lr-meta">
+            <span>$100 prize</span>
+            <span class="lr-sep">·</span>
+            <span>34 members</span>
+            <span class="lr-sep">·</span>
+            <span>Rank #7</span>
+          </div>
+        </div>
+        <div class="lr-action">
+          <span class="pill pill-pending">Results pending</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="create-cta">
+      <span class="create-cta-text">Want to compete with friends?</span>
+      <button class="btn-text-red">Create a league</button>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  const lock = new Date('2026-05-02T18:00:00Z').getTime();
+  function tick() {
+    const diff = Math.max(0, lock - Date.now());
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('days').textContent = pad(Math.floor(diff / 86400000));
+    document.getElementById('hrs').textContent  = pad(Math.floor((diff % 86400000) / 3600000));
+    document.getElementById('min').textContent  = pad(Math.floor((diff % 3600000) / 60000));
+    document.getElementById('sec').textContent  = pad(Math.floor((diff % 60000) / 1000));
+  }
+  tick(); setInterval(tick, 1000);
+
+  function setState(s) {
+    document.body.className = s;
+    document.querySelectorAll('.dv-btn').forEach((b, i) => {
+      b.classList.toggle('active', (s === 'zero' && i === 0) || (s === 'engaged' && i === 1));
+    });
+  }
+</script>
+</body>
+</html>

@@ -18,7 +18,6 @@ const PROTECTED_PREFIXES = [
   "/profile",
   "/leagues",
   "/leaderboard",
-  "/wallet",
   "/scores",
   "/join",
   "/onboarding",
@@ -52,7 +51,6 @@ export async function proxy(request: NextRequest) {
   });
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-    auth: { flowType: "implicit" },
     cookies: {
       getAll() {
         return request.cookies.getAll();

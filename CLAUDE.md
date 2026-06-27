@@ -10,9 +10,9 @@ If gstack skills aren't working, run `cd .claude/skills/gstack && PATH="$HOME/.b
 
 ## What This Is
 
-**Gridlock** is an F1 predictive game where users predict podium finishes (1st/2nd/3rd) for each 2026 Formula 1 race and compete on a global leaderboard. Site: joingridlock.com
+**Gridlock** is a free Web2 F1 predictive game where users predict podium finishes (1st/2nd/3rd) for each 2026 Formula 1 race and compete on a global leaderboard and in private friend leagues for bragging rights. No crypto, no money, no stakes. Site: joingridlock.com
 
-**Stage:** Waitlist live → launching for 2026 season (24 rounds, 20 drivers)
+**Stage:** Live for the 2026 season (22 rounds, 22 drivers)
 
 ## Tech Stack
 
@@ -23,23 +23,24 @@ If gstack skills aren't working, run `cd .claude/skills/gstack && PATH="$HOME/.b
 | Styling | Tailwind CSS v4 (via PostCSS) |
 | Font | Titillium Web (Google Fonts) |
 | Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth (email/password) |
+| Auth | Supabase Auth — Google OAuth (`signInWithGoogle` from `@/lib/auth`) |
 | Hosting | Vercel |
-| External API | Jolpica (F1 calendar data) |
+| External API | Jolpica (Ergast-compatible F1 schedule + results data) |
 
 ## Project Structure
 
 ```
 app/
-  page.tsx              — Landing/waitlist (public)
+  page.tsx              — Landing (public)
+  login/                — Google OAuth sign-in (public)
   layout.tsx            — Root layout, metadata, fonts
   dashboard/page.tsx    — Race list (authenticated)
   predict/[raceId]/     — Podium prediction form (authenticated)
+  leagues/              — Private friend leagues (authenticated)
   api/
     predictions/route.ts — Save prediction (POST)
-    waitlist/route.ts    — Email signup (POST)
 lib/
-  races.ts              — 2026 F1 calendar + 20-driver list (static)
+  races.ts              — 2026 F1 calendar + 22-driver list (static)
   supabase/
     client.ts           — Browser Supabase client
     server.ts           — Server Supabase client (SSR)
@@ -54,7 +55,6 @@ scripts/
 - **races** — id (slug), round, name, country, race_date, is_locked
 - **predictions** — user_id, race_id, first_driver, second_driver, third_driver, points_awarded; UNIQUE(user_id, race_id); all 3 drivers must differ
 - **results** — race_id (PK), p1, p2, p3, is_final; scoring fires automatically via trigger
-- **waitlist** — email (UNIQUE); service_role_only RLS
 - **leaderboard** — SQL view; SUM(points) per user, ordered DESC
 
 ## Scoring Logic
@@ -63,7 +63,7 @@ Exact match on position = 3 pts. Driver appears in podium but wrong position = 1
 
 ## Active Drivers (2026)
 
-Max Verstappen, Liam Lawson, Lando Norris, Oscar Piastri, Charles Leclerc, Lewis Hamilton, George Russell, Andrea Kimi Antonelli, Fernando Alonso, Lance Stroll, Esteban Ocon, Oliver Bearman, Yuki Tsunoda, Isack Hadjar, Carlos Sainz, Alexander Albon, Nico Hülkenberg, Gabriel Bortoleto, Pierre Gasly, Jack Doohan
+Lando Norris, Oscar Piastri, George Russell, Kimi Antonelli, Max Verstappen, Isack Hadjar, Charles Leclerc, Lewis Hamilton, Carlos Sainz, Alexander Albon, Liam Lawson, Arvid Lindblad, Fernando Alonso, Lance Stroll, Esteban Ocon, Oliver Bearman, Nico Hulkenberg, Gabriel Bortoleto, Pierre Gasly, Franco Colapinto, Sergio Perez, Valtteri Bottas
 
 ## Environment Variables
 
@@ -227,3 +227,35 @@ Before marking any task complete:
 
 See `INTEGRATIONS_AUDIT.md` for the full evaluation of all considered tools.
 See `INTEGRATIONS.md` for install steps and rollback instructions.
+
+## Skill routing
+
+When the user's request matches an available skill, ALWAYS invoke it using the Skill
+tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
+The skill has specialized workflows that produce better results than ad-hoc answers.
+
+Key routing rules:
+- Product ideas, "is this worth building", brainstorming → invoke office-hours
+- Bugs, errors, "why is this broken", 500 errors → invoke investigate
+- Ship, deploy, push, create PR → invoke ship
+- QA, test the site, find bugs → invoke qa
+- Code review, check my diff → invoke review
+- Update docs after shipping → invoke document-release
+- Weekly retro → invoke retro
+- Design system, brand → invoke design-consultation
+- Visual audit, design polish → invoke design-review
+- Architecture review → invoke plan-eng-review
+- Save progress, checkpoint, resume → invoke checkpoint
+- Code quality, health check → invoke health
+
+## Design System
+Always read DESIGN.md before making any visual or UI decisions.
+All font choices, colors, spacing, border-radius, motion rules, and aesthetic direction are defined there.
+Do not deviate without explicit user approval.
+In QA mode, flag any code that doesn't match DESIGN.md.
+Key rules from DESIGN.md:
+- Logo image asset everywhere — never typeset "GRIDLOCK" as text in rendered UI
+- Titillium Web only — no Inter, Roboto, or system fonts
+- No card grids — use rails, rows, and panel splits
+- Color tokens: --red (action/urgency only), --teal (success/active only), --amber (warning/draft only)
+- Border-radius: 0px on data surfaces, small radius on buttons only

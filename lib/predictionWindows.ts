@@ -1,63 +1,63 @@
-import {
-  PAID_EDIT_WINDOW_MINUTES,
-  PRE_LOCK_BUFFER_MINUTES,
-} from "./gameRules";
+import { PRE_LOCK_BUFFER_MINUTES } from "./gameRules";
 
-type PredictionSession = "qualifying" | "race";
+export type PredictionSession = "qualifying" | "race";
 
-type PredictionWindowState = {
+/**
+ * A weekend has ONE lock at the start of its first competitive session. Picks
+ * are freely editable until then; after lock they are final (read-only). There
+ * is no paid edit window — Gridlock is free.
+ */
+export type PredictionWindowState = {
   session: PredictionSession;
   editable: boolean;
-  paidEdit: boolean;
   locked: boolean;
   lockAt: string | null;
-  paidEditClosesAt: string | null;
 };
 
 type RaceTimingInput = {
+  /** Start of the first competitive session covering the whole weekend. */
+  lock_time_utc?: string | null;
   qualifying_starts_at?: string | null;
   race_starts_at?: string | null;
   quali_locked?: boolean | null;
   race_locked?: boolean | null;
 };
 
+/**
+ * Resolves the editability window for a session. The lock anchor is the start
+ * of the first competitive session (lock_time_utc), falling back to qualifying
+ * then race start when the canonical lock time is not yet populated. A single
+ * lock applies to every category, so both sessions share the same anchor.
+ */
 export function resolvePredictionWindow(
   race: RaceTimingInput,
   session: PredictionSession,
   now = new Date()
 ): PredictionWindowState {
   const startAt =
-    session === "qualifying" ? race.qualifying_starts_at ?? null : race.race_starts_at ?? null;
+    race.lock_time_utc ?? race.qualifying_starts_at ?? race.race_starts_at ?? null;
   const manuallyLocked =
-    session === "qualifying" ? race.quali_locked === true : race.race_locked === true;
+    race.quali_locked === true || race.race_locked === true;
 
   if (!startAt) {
     return {
       session,
       editable: !manuallyLocked,
-      paidEdit: false,
       locked: manuallyLocked,
       lockAt: null,
-      paidEditClosesAt: null,
     };
   }
 
   const startMs = new Date(startAt).getTime();
   const lockMs = startMs - PRE_LOCK_BUFFER_MINUTES * 60 * 1000;
-  const paidEditCloseMs = startMs + PAID_EDIT_WINDOW_MINUTES * 60 * 1000;
   const nowMs = now.getTime();
-
-  const preLockOpen = nowMs < lockMs;
-  const paidEditOpen = nowMs >= lockMs && nowMs <= paidEditCloseMs;
-  const locked = manuallyLocked || nowMs > paidEditCloseMs;
+  const locked = manuallyLocked || nowMs >= lockMs;
 
   return {
     session,
-    editable: !manuallyLocked && (preLockOpen || paidEditOpen),
-    paidEdit: !manuallyLocked && paidEditOpen,
+    editable: !locked,
     locked,
     lockAt: new Date(lockMs).toISOString(),
-    paidEditClosesAt: new Date(paidEditCloseMs).toISOString(),
   };
 }
 

@@ -5,7 +5,8 @@ import { trackServer } from "@/lib/analytics.server";
 /**
  * GET /api/cron/lock-races
  *
- * Locks any race whose qualifying session has started but whose
+ * Locks any race whose lock anchor (lock_time_utc — the start of the first
+ * grid-setting competitive session of the weekend) has passed but whose
  * race_locked flag is still false — so admin doesn't have to do it manually.
  *
  * Intended to run every 5 minutes. Call via an external cron service
@@ -16,9 +17,10 @@ import { trackServer } from "@/lib/analytics.server";
  * Pass CRON_SECRET as the bearer token from your cron service.
  *
  * Manual oversight still needed:
- *   - qualifying_starts_at must be set for each race (via admin panel / migration).
- *   - If a race needs to stay open past qualifying (unusual), remove the
- *     qualifying_starts_at instead to prevent re-locking.
+ *   - lock_time_utc (or qualifying_starts_at as fallback) must be set for each
+ *     race (seeded from Jolpica via scripts/seed-races.ts, or via admin panel).
+ *   - If a race needs to stay open past its first session (unusual), clear the
+ *     lock anchor to prevent re-locking.
  */
 export async function GET(request: NextRequest) {
   // CRON_SECRET must always be set in production. Reject the request if
@@ -36,23 +38,30 @@ export async function GET(request: NextRequest) {
   if (!admin)
     return NextResponse.json({ error: "Service role key missing." }, { status: 503 });
 
-  const now = new Date().toISOString();
+  const now = new Date();
+  const nowIso = now.toISOString();
 
-  // Find races that should be locked (qualifying started, not yet locked)
-  const { data: racesToLock, error: fetchErr } = await admin
+  // Find races that are not yet locked, then anchor the lock to lock_time_utc
+  // (the first grid-setting session) with qualifying_starts_at as a fallback.
+  // Filtering on the coalesced anchor is done in code so a single column is
+  // authoritative regardless of which timing fields are populated.
+  const { data: unlockedRaces, error: fetchErr } = await admin
     .from("races")
-    .select("id, grand_prix_name, qualifying_starts_at")
-    .eq("race_locked", false)
-    .not("qualifying_starts_at", "is", null)
-    .lte("qualifying_starts_at", now);
+    .select("id, grand_prix_name, lock_time_utc, qualifying_starts_at")
+    .eq("race_locked", false);
 
   if (fetchErr)
     return NextResponse.json({ error: fetchErr.message }, { status: 500 });
 
-  if (!racesToLock || racesToLock.length === 0)
-    return NextResponse.json({ locked: [] });
+  const ids = (unlockedRaces ?? [])
+    .filter((r) => {
+      const anchor = r.lock_time_utc ?? r.qualifying_starts_at;
+      return anchor != null && new Date(anchor).getTime() <= now.getTime();
+    })
+    .map((r) => r.id);
 
-  const ids = racesToLock.map((r) => r.id);
+  if (ids.length === 0)
+    return NextResponse.json({ locked: [] });
 
   const { error: updateErr } = await admin
     .from("races")
@@ -62,20 +71,15 @@ export async function GET(request: NextRequest) {
   if (updateErr)
     return NextResponse.json({ error: updateErr.message }, { status: 500 });
 
-  // Snapshot pick popularity at lock time so settlement uses deterministic data
+  // Snapshot pick popularity at lock time so settlement uses deterministic data.
+  // Predictions are 'active' from submission and are NOT voided/flipped at lock —
+  // locking only stops further edits and freezes the popularity snapshot.
   const snapshotErrors: { raceId: string; error: string }[] = [];
   for (const raceId of ids) {
     const { error: snapshotErr } = await admin.rpc("freeze_pick_popularity", { p_race_id: raceId });
     if (snapshotErr) {
       snapshotErrors.push({ raceId, error: snapshotErr.message });
     }
-
-    // Void draft predictions — they were never paid/entered so should not score
-    await admin
-      .from("predictions")
-      .update({ status: "locked" })
-      .eq("race_id", raceId)
-      .eq("status", "draft");
   }
 
   if (snapshotErrors.length > 0) {
@@ -84,7 +88,7 @@ export async function GET(request: NextRequest) {
         error: "Some races were locked, but popularity snapshots were not frozen. Apply the missing Supabase migrations and retry before settlement.",
         locked: ids,
         count: ids.length,
-        lockedAt: now,
+        lockedAt: nowIso,
         snapshotsFrozen: ids.length - snapshotErrors.length,
         snapshotErrors,
       },
@@ -103,7 +107,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     locked: ids,
     count: ids.length,
-    lockedAt: now,
+    lockedAt: nowIso,
     snapshotsFrozen: ids.length,
   });
 }

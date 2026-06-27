@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { PrivyProvider } from "@privy-io/react-auth";
 import {
   captureInitialAcquisitionContext,
   getPageGroup,
@@ -37,51 +36,14 @@ function AnalyticsRuntime() {
   return null;
 }
 
-function MissingPrivyConfigNotice() {
-  useEffect(() => {
-    console.error(
-      "[Gridlock] NEXT_PUBLIC_PRIVY_APP_ID is not set. " +
-      "Auth will not work until the variable is configured in the active environment."
-    );
-  }, []);
-
-  return null;
-}
-
 export function Providers({ children }: { children: React.ReactNode }) {
-  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
-
-  if (!appId) {
-    return (
-      <>
-        <MissingPrivyConfigNotice />
-        {children}
-      </>
-    );
-  }
-
+  // Gridlock is Web2-only with Supabase Google OAuth — no client-side auth
+  // provider wrapper is needed. The Supabase browser client is created
+  // per-call. This component only mounts the analytics runtime.
   return (
-    <PrivyProvider
-      appId={appId}
-      config={{
-        // loginMethods is intentionally omitted — Privy will show whatever
-        // methods are enabled in the dashboard. Passing methods that are NOT
-        // enabled in the dashboard causes Privy to throw internally and the
-        // modal never renders (silent failure).
-        appearance: {
-          theme: "dark",
-          accentColor: "#E8002D",
-          logo: "/gridlock logo - transparent.png",
-          landingHeader: "Gridlock",
-          loginMessage: "Predict the grid. Outsmart the crowd.",
-        },
-        embeddedWallets: {
-          solana: { createOnLogin: "all-users" },
-        },
-      }}
-    >
+    <>
       <AnalyticsRuntime />
       {children}
-    </PrivyProvider>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
 const WaitlistBody = z.object({
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   const { email } = parsed.data;
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase)
     return NextResponse.json({ error: "Service unavailable." }, { status: 503 });
 

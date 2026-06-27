@@ -14,7 +14,7 @@ export type ProfilePrediction = {
   race_id: string;
 };
 
-type ProfileRaceHistoryItem = {
+export type ProfileRaceHistoryItem = {
   race_id: string;
   total_score: number | null;
   calculated_at: string | null;

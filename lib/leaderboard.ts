@@ -1,15 +1,15 @@
-type LeaderboardProfile = {
+export type LeaderboardProfile = {
   id: string;
   username: string | null;
   avatar_url: string | null;
 };
 
-type LeaderboardScoreRow = {
+export type LeaderboardScoreRow = {
   user_id: string;
   total_score: number | null;
 };
 
-type LeaderboardPredictionRow = {
+export type LeaderboardPredictionRow = {
   user_id: string;
   race_id: string;
 };

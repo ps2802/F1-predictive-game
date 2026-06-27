@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Gridlock — The F1 Prediction Game · 2026 Season";
+export const alt = "Gridlock — Predict F1 races. Beat your friends. · 2026 Season";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -124,7 +124,7 @@ export default function Image() {
             fontWeight: 400,
           }}
         >
-          The F1 Prediction Game
+          Predict F1 races. Beat your friends.
         </div>
 
         {/* Bottom telemetry bar */}
@@ -147,7 +147,7 @@ export default function Image() {
               textTransform: "uppercase",
             }}
           >
-            20 DRIVERS
+            22 DRIVERS
           </span>
           <div
             style={{ width: 24, height: 1, background: "rgba(255,255,255,0.1)" }}

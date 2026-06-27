@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Gridlock — The F1 Prediction Game",
+    name: "Gridlock",
     short_name: "Gridlock",
     description:
-      "The F1 prediction game. Predict the grid. Outsmart the crowd.",
+      "Predict F1 races. Beat your friends. Climb the leaderboard every race weekend.",
     start_url: "/",
     display: "standalone",
     orientation: "portrait",
@@ -17,12 +17,6 @@ export default function manifest(): MetadataRoute.Manifest {
         src: "/favicon.ico",
         sizes: "16x16 32x32",
         type: "image/x-icon",
-      },
-      {
-        src: "/icon.svg",
-        sizes: "any",
-        type: "image/svg+xml",
-        purpose: "any",
       },
       {
         src: "/icon.png",

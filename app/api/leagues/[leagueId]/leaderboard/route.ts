@@ -26,6 +26,33 @@ export async function GET(
     return NextResponse.json({ error: "Supabase admin client not configured." }, { status: 500 });
   }
 
+  // Authorization: a private league's standings are visible only to its members.
+  // Public/global leagues are open. Prevents enumerating any league's roster + scores.
+  const { data: league } = await admin
+    .from("leagues")
+    .select("id, type")
+    .eq("id", leagueId)
+    .maybeSingle();
+
+  if (!league) {
+    return NextResponse.json({ error: "League not found." }, { status: 404 });
+  }
+
+  if (league.type !== "public" && league.type !== "global") {
+    const { data: callerMembership } = await admin
+      .from("league_members")
+      .select("user_id")
+      .eq("league_id", leagueId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!callerMembership) {
+      return NextResponse.json(
+        { error: "You are not a member of this league." },
+        { status: 403 }
+      );
+    }
+  }
+
   const { data: memberships, error: membershipsError } = await admin
     .from("league_members")
     .select("user_id")

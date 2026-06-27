@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type RaceCatalogEntry = {
+export type RaceCatalogEntry = {
   id: string;
   round: number;
   name: string;
@@ -15,7 +15,7 @@ type RaceCatalogEntry = {
   is_locked: boolean;
 };
 
-type RaceCatalogMeta = {
+export type RaceCatalogMeta = {
   totalRounds: number;
   driverCount: number | null;
 };

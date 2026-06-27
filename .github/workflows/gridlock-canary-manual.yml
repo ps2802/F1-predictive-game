@@ -1,0 +1,62 @@
+name: Gridlock Canary Manual
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: Target environment
+        required: true
+        default: preview
+        type: choice
+        options:
+          - local
+          - preview
+          - prod
+      scenario:
+        description: Canary scenario
+        required: true
+        default: full-two-user
+        type: choice
+        options:
+          - full-two-user
+          - fresh-signup-smoke
+      base_url:
+        description: Optional base URL override
+        required: false
+        type: string
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run canary
+        run: |
+          CMD=(npm run canary:gridlock -- --env "${{ inputs.env }}" --scenario "${{ inputs.scenario }}")
+          if [ -n "${{ inputs.base_url }}" ]; then
+            CMD+=(--base-url "${{ inputs.base_url }}")
+          fi
+          "${CMD[@]}"
+        env:
+          GRIDLOCK_CANARY_BASE_URL_LOCAL: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_LOCAL }}
+          GRIDLOCK_CANARY_BASE_URL_PREVIEW: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_PREVIEW }}
+          GRIDLOCK_CANARY_BASE_URL_PROD: ${{ secrets.GRIDLOCK_CANARY_BASE_URL_PROD }}
+          GRIDLOCK_CANARY_MAIL_PROVIDER: agentmail
+          GRIDLOCK_CANARY_MAIL_API_KEY: ${{ secrets.GRIDLOCK_CANARY_MAIL_API_KEY }}
+          GRIDLOCK_CANARY_MAIL_DOMAIN: ${{ secrets.GRIDLOCK_CANARY_MAIL_DOMAIN }}
+          GRIDLOCK_CANARY_PERSONA_A_EMAIL: ${{ secrets.GRIDLOCK_CANARY_PERSONA_A_EMAIL }}
+          GRIDLOCK_CANARY_PERSONA_B_EMAIL: ${{ secrets.GRIDLOCK_CANARY_PERSONA_B_EMAIL }}
+          GRIDLOCK_CANARY_ALERT_WEBHOOK: ${{ secrets.GRIDLOCK_CANARY_ALERT_WEBHOOK }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gridlock-canary-manual
+          path: .e2e-artifacts/
+          if-no-files-found: warn

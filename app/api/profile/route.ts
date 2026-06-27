@@ -9,6 +9,15 @@ import {
 } from "@/lib/profileHistory";
 import type { PredictionVersionRow } from "@/lib/predictions";
 
+// Handles that would impersonate the platform or be confusing/abusive.
+const RESERVED_USERNAMES = new Set<string>([
+  "admin", "administrator", "root", "system", "support", "help", "official",
+  "gridlock", "moderator", "mod", "staff", "team", "null", "undefined", "anonymous",
+  "me", "you", "everyone", "api", "settings", "profile", "login", "logout",
+]);
+// Lightweight profanity substring block (best-effort, not exhaustive).
+const PROFANITY: readonly string[] = ["fuck", "shit", "cunt", "nigger", "faggot", "rape"];
+
 export async function GET() {
   const supabase = await createSupabaseServerClient();
   if (!supabase)
@@ -27,7 +36,7 @@ export async function GET() {
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, username, avatar_url, balance_usdc, is_admin, created_at, wallet_address")
+      .select("id, username, avatar_url, is_admin, created_at")
       .eq("id", user.id)
       .single(),
     supabase
@@ -105,13 +114,38 @@ export async function PATCH(request: NextRequest) {
     avatar_url?: string;
   };
 
-  const trimmedUsername = username?.trim();
+  const updates: Record<string, string> = {};
 
-  if (trimmedUsername !== undefined && (trimmedUsername.length < 2 || trimmedUsername.length > 30))
-    return NextResponse.json(
-      { error: "Username must be 2–30 characters." },
-      { status: 400 }
-    );
+  if (username !== undefined) {
+    // Usernames are lowercase handles: safe chars only, reserved words blocked,
+    // and unique case-insensitively (we always store lowercase).
+    const normalized = username.trim().toLowerCase();
+    if (!/^[a-z0-9_]{2,20}$/.test(normalized)) {
+      return NextResponse.json(
+        {
+          error:
+            "Username must be 2–20 characters: lowercase letters, numbers, or underscores.",
+        },
+        { status: 400 }
+      );
+    }
+    if (RESERVED_USERNAMES.has(normalized) || PROFANITY.some((w) => normalized.includes(w))) {
+      return NextResponse.json({ error: "That username isn't available." }, { status: 400 });
+    }
+
+    // Case-insensitive uniqueness (everything is stored lowercase), excluding self.
+    const { data: taken } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("username", normalized)
+      .neq("id", user.id)
+      .maybeSingle();
+    if (taken) {
+      return NextResponse.json({ error: "That username is already taken." }, { status: 409 });
+    }
+
+    updates.username = normalized;
+  }
 
   // Only allow https:// avatar URLs — blocks javascript: and data: URI XSS vectors
   if (avatar_url !== undefined) {
@@ -121,11 +155,8 @@ export async function PATCH(request: NextRequest) {
         { status: 400 }
       );
     }
+    updates.avatar_url = avatar_url;
   }
-
-  const updates: Record<string, string> = {};
-  if (trimmedUsername !== undefined) updates.username = trimmedUsername;
-  if (avatar_url !== undefined) updates.avatar_url = avatar_url;
 
   const { error } = await admin
     .from("profiles")

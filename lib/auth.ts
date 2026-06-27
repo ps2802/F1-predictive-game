@@ -1,89 +1,31 @@
 "use client";
 
 /**
- * lib/auth.ts — Shared auth helpers for the Privy → Supabase session bridge.
+ * lib/auth.ts — Google sign-in via Supabase OAuth (PKCE).
  *
- * Extracted from app/login/page.tsx so both the login and signup routes share
- * identical post-auth logic without a fragile cross-page import.
- *
- * Root cause of the previous auth failure:
- *   1. getAccessToken() can return null immediately after Privy's onComplete
- *      fires — the Privy SDK sometimes needs a brief moment to make the token
- *      available. The old code silently returned on null, leaving the loading
- *      spinner stuck forever with no error shown.
- *   2. @supabase/ssr uses PKCE by default. Calling verifyOtp() with a server-
- *      generated magic-link token fails if no PKCE code_verifier was stored by
- *      the client. Fix: createBrowserClient uses flowType: 'implicit'.
- *
- * Performance optimization:
- *   The privy-sync API now returns hasUsername so we skip the extra profile
- *   query, reducing the client-side redirect latency significantly.
+ * Gridlock is Web2-only: the single supported identity provider is Google,
+ * configured in the Supabase dashboard. signInWithGoogle() kicks off the OAuth
+ * redirect; the browser comes back to /auth/callback, which exchanges the code
+ * for a Supabase cookie session and routes the user to onboarding (first login)
+ * or the dashboard. Every other surface still reads identity via
+ * supabase.auth.getUser(), so nothing downstream changes.
  */
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { identifyUser, track } from "@/lib/analytics";
+import { track } from "@/lib/analytics";
 
-type RouterLike = { push: (href: string) => void };
-
-/**
- * Retries getAccessToken() with short backoff until the token is available.
- * Privy's onComplete can fire before the access token is ready.
- */
-async function getAccessTokenWithRetry(
-  getAccessToken: () => Promise<string | null>,
-  maxAttempts = 4
-): Promise<string> {
-  // Short delays — token is usually available on the 1st or 2nd attempt.
-  const delays = [50, 150, 300];
-  for (let i = 0; i < maxAttempts; i++) {
-    const token = await getAccessToken();
-    if (token) return token;
-    if (i < delays.length) {
-      await new Promise((r) => setTimeout(r, delays[i]));
-    }
-  }
-  throw new Error(
-    "Could not get Privy access token after retries. Please try again."
-  );
+/** Only allow same-origin relative paths to prevent open-redirect abuse. */
+export function sanitizeRedirect(redirectTo: string | null | undefined): string | null {
+  return redirectTo && /^\/[^/]/.test(redirectTo) ? redirectTo : null;
 }
 
 /**
- * handlePrivyAuthComplete — called from onComplete after any Privy login/signup.
- *
- * Flow:
- *   1. Get Privy access token (retries if not immediately available)
- *   2. POST /api/auth/privy-sync → creates/finds Supabase user, returns OTP + hasUsername
- *   3. verifyOtp → establishes Supabase browser session cookie
- *   4. Redirect: no username → /onboarding; returning user → /dashboard
+ * signInWithGoogle — starts the Supabase Google OAuth flow.
+ * On success the browser is redirected to Google and then back to
+ * /auth/callback?next=<redirect>. Throws on configuration/SDK errors so the
+ * caller can surface a message instead of hanging on a spinner.
  */
-export async function handlePrivyAuthComplete(
-  getAccessToken: () => Promise<string | null>,
-  redirectTo: string | null,
-  router: RouterLike
-): Promise<void> {
-  // Step 1: Privy token (with retry for race condition)
-  const accessToken = await getAccessTokenWithRetry(getAccessToken);
-
-  // Step 2: Sync Privy identity to Supabase
-  const res = await fetch("/api/auth/privy-sync", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ accessToken }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "unknown error");
-    throw new Error(`Auth sync failed (${res.status}): ${body}`);
-  }
-
-  const { token, hasUsername, privyUserId, userId } = (await res.json()) as {
-    token: string;
-    hasUsername: boolean;
-    privyUserId?: string;
-    userId?: string;
-  };
-
-  // Step 3: Establish Supabase browser session
+export async function signInWithGoogle(redirectTo: string | null): Promise<void> {
   const supabase = createSupabaseBrowserClient();
   if (!supabase) {
     throw new Error(
@@ -91,44 +33,24 @@ export async function handlePrivyAuthComplete(
     );
   }
 
-  // token_hash is required here — the server returns generateLink()'s
-  // hashed_token, which must be verified via token_hash (not email+token,
-  // which expects a 6-digit OTP code). Without email, Supabase doesn't
-  // attempt email-OTP validation and instead verifies the hash directly.
-  const { error: otpError } = await supabase.auth.verifyOtp({
-    token_hash: token,
-    type: "magiclink",
+  const next = sanitizeRedirect(redirectTo);
+  const callbackUrl = new URL("/auth/callback", window.location.origin);
+  if (next) {
+    callbackUrl.searchParams.set("next", next);
+  }
+
+  track("auth_started", { provider: "google", redirect_to: next ?? undefined });
+
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: callbackUrl.toString(),
+      queryParams: { prompt: "select_account" },
+    },
   });
 
-  if (otpError) {
-    throw new Error(`Session handshake failed: ${otpError.message}`);
+  if (error) {
+    track("auth_failed", { provider: "google", reason: error.message });
+    throw new Error(`Google sign-in failed: ${error.message}`);
   }
-
-  const distinctId = userId ?? privyUserId;
-  if (distinctId) {
-    identifyUser(distinctId, {
-      auth_provider: "privy",
-      has_username: hasUsername,
-    });
-  }
-
-  track("auth_completed", {
-    has_username: hasUsername,
-    redirect_to: redirectTo ?? undefined,
-  });
-
-  // Step 4: Redirect — use hasUsername from API to skip extra profile query.
-  // Only allow relative paths (starting with /) to prevent open redirect attacks.
-  if (redirectTo && /^\/[^/]/.test(redirectTo)) {
-    router.push(redirectTo);
-    return;
-  }
-
-  // New users (no username yet) go through onboarding; returning users skip it.
-  if (!hasUsername) {
-    router.push("/onboarding");
-    return;
-  }
-
-  router.push("/dashboard");
 }

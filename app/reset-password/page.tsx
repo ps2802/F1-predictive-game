@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -88,7 +89,7 @@ function ResetPasswordForm() {
             <>
               <p className="gla-auth-msg is-error">{sessionError}</p>
               <div className="gla-auth-footer">
-                <a href="/">Back to sign in</a>
+                <Link href="/">Back to sign in</Link>
               </div>
             </>
           ) : !sessionReady ? (

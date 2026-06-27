@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { AppNav } from "@/app/components/AppNav";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { isAdminEmail } from "@/lib/admin";
-import { PLATFORM_FEE_WALLET_ADDRESS } from "@/lib/gameRules";
 
 type Question = {
   id: string;
@@ -35,19 +34,35 @@ type DbRace = {
   question_count: number;
 };
 
-type Section = "races" | "results" | "revenue" | "wallets";
+// Categories Jolpica can auto-settle. Safety car is NOT in Jolpica → manual entry only.
+type SyncedCategory = "pole" | "winner" | "podium" | "fastest_lap" | "biggest_gainer";
 
-type FeeData = {
-  breakdown: { leagueRake: number; editFees: number; total: number };
-  recentFees: Array<{ id: string; amount: number; description: string | null; created_at: string }>;
+const SYNC_CATEGORY_LABELS: Record<SyncedCategory, string> = {
+  pole: "Pole",
+  winner: "Winner",
+  podium: "Podium",
+  fastest_lap: "Fastest lap",
+  biggest_gainer: "Biggest gainer",
 };
 
-type WalletEntry = {
-  userId: string;
-  username: string;
-  address: string;
-  watched: boolean;
+const SYNCABLE_CATEGORIES: readonly SyncedCategory[] = [
+  "pole",
+  "winner",
+  "podium",
+  "fastest_lap",
+  "biggest_gainer",
+];
+
+type SyncResponse = {
+  settled?: string[];
+  questions_written?: number;
 };
+
+function isSyncedCategory(value: string): value is SyncedCategory {
+  return (SYNCABLE_CATEGORIES as readonly string[]).includes(value);
+}
+
+type Section = "races" | "results";
 
 const emptyForm = {
   id: "",
@@ -75,15 +90,6 @@ export default function AdminPage() {
   const [lockingRace, setLockingRace] = useState<string | null>(null);
   const [raceActionMsg, setRaceActionMsg] = useState("");
 
-  // ── Platform Revenue state ────────────────────────────
-  const [feeData, setFeeData] = useState<FeeData | null>(null);
-
-  // ── Wallets state ────────────────────────────────────
-  const [wallets, setWallets] = useState<WalletEntry[]>([]);
-  const [walletsLoading, setWalletsLoading] = useState(false);
-  const [enrollingAll, setEnrollingAll] = useState(false);
-  const [walletMsg, setWalletMsg] = useState("");
-
   // ── Results / Scoring state ───────────────────────────
   const [selectedRace, setSelectedRace] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -94,6 +100,9 @@ export default function AdminPage() {
   const [questionsLoading, setQuestionsLoading] = useState(false);
   const [resultsDirty, setResultsDirty] = useState(false);
   const [hasSavedResults, setHasSavedResults] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState("");
+  const [syncedCategories, setSyncedCategories] = useState<SyncedCategory[]>([]);
 
   // ── Race Management functions ─────────────────────────
 
@@ -119,47 +128,9 @@ export default function AdminPage() {
       if (!profile?.is_admin) { router.push("/dashboard"); return; }
       setIsAdmin(true);
       await loadDbRaces();
-      fetch("/api/admin/fees")
-        .then((r) => r.json())
-        .then((d) => setFeeData(d))
-        .catch(() => null);
       setLoading(false);
     });
   }, [loadDbRaces, router]);
-
-  async function loadWallets() {
-    setWalletsLoading(true);
-    const res = await fetch("/api/admin/wallets");
-    const data = await res.json();
-    if (res.ok) setWallets(data.wallets ?? []);
-    setWalletsLoading(false);
-  }
-
-  async function handleEnrollAll() {
-    setEnrollingAll(true);
-    setWalletMsg("");
-    const res = await fetch("/api/admin/wallets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
-    const data = await res.json();
-    if (res.ok) {
-      setWalletMsg(`✓ Enrolled ${data.enrolled} address${data.enrolled !== 1 ? "es" : ""} with Helius.`);
-      await loadWallets();
-    } else {
-      setWalletMsg(`Error: ${data.error}`);
-    }
-    setEnrollingAll(false);
-  }
-
-  async function handleEnrollOne(address: string) {
-    setWalletMsg("");
-    const res = await fetch("/api/admin/wallets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ address }) });
-    const data = await res.json();
-    if (res.ok) {
-      setWalletMsg(`✓ Enrolled ${address.slice(0, 8)}…`);
-      await loadWallets();
-    } else {
-      setWalletMsg(`Error: ${data.error}`);
-    }
-  }
 
   function handleFormChange(field: keyof typeof emptyForm, value: string) {
     setCreateForm((prev) => ({ ...prev, [field]: value }));
@@ -242,6 +213,8 @@ export default function AdminPage() {
     setResultsDirty(false);
     setHasSavedResults(false);
     setMessage("");
+    setSyncMessage("");
+    setSyncedCategories([]);
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
 
@@ -296,6 +269,56 @@ export default function AdminPage() {
       }
       return { ...prev, [questionId]: current };
     });
+  }
+
+  async function handleSyncFromJolpica() {
+    if (!selectedRace) {
+      setSyncMessage("Error: select a race first.");
+      return;
+    }
+
+    const race = dbRaces.find((r) => r.id === selectedRace);
+    // raceId is required; season/round are derived from the race row when available.
+    const payload: { raceId: string; season?: number; round?: number } = { raceId: selectedRace };
+    if (race) {
+      if (Number.isFinite(race.season)) payload.season = race.season;
+      if (Number.isFinite(race.round)) payload.round = race.round;
+    }
+
+    setSyncing(true);
+    setSyncMessage("");
+    setSyncedCategories([]);
+
+    try {
+      const res = await fetch("/api/admin/results/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json()) as SyncResponse & { error?: string };
+
+      if (!res.ok) {
+        setSyncMessage(`Error: ${data.error ?? "Sync failed."}`);
+        return;
+      }
+
+      const settled = (data.settled ?? []).filter(isSyncedCategory);
+
+      // Reload first so the freshly-written answers appear in the manual form below.
+      // loadQuestions clears sync state, so set the feedback AFTER it resolves.
+      await loadQuestions(selectedRace);
+
+      setSyncedCategories(settled);
+      setSyncMessage(
+        settled.length > 0
+          ? "✓ Synced from Jolpica."
+          : "Sync ran, but Jolpica returned no settleable categories yet (results may not be published)."
+      );
+    } catch {
+      setSyncMessage("Error: could not reach the sync service.");
+    } finally {
+      setSyncing(false);
+    }
   }
 
   async function handleSubmitResults() {
@@ -393,10 +416,10 @@ export default function AdminPage() {
 
         {/* Section tabs */}
         <div style={{ display: "flex", gap: "0.5rem", margin: "1.5rem 0 2rem", flexWrap: "wrap" }}>
-          {(["races", "results", "revenue", "wallets"] as Section[]).map((s) => (
+          {(["races", "results"] as Section[]).map((s) => (
             <button
               key={s}
-              onClick={() => { setSection(s); if (s === "wallets") loadWallets(); }}
+              onClick={() => setSection(s)}
               style={{
                 padding: "0.4rem 1rem",
                 borderRadius: "6px",
@@ -408,7 +431,7 @@ export default function AdminPage() {
                 fontWeight: section === s ? 700 : 400,
               }}
             >
-              {s === "races" ? "Race Management" : s === "results" ? "Results & Scoring" : s === "revenue" ? "Platform Revenue" : "Wallets"}
+              {s === "races" ? "Race Management" : "Results & Scoring"}
             </button>
           ))}
         </div>
@@ -420,7 +443,7 @@ export default function AdminPage() {
             {/* Action message */}
             {(raceActionMsg || createMsg) && (
               <p style={{
-                color: (raceActionMsg || createMsg).startsWith("✓") ? "#4caf50" : "var(--gl-red)",
+                color: (raceActionMsg || createMsg).startsWith("✓") ? "#00D2AA" : "var(--gl-red)",
                 fontSize: "0.9rem",
               }}>
                 {raceActionMsg || createMsg}
@@ -522,7 +545,7 @@ export default function AdminPage() {
                       {creating ? "Creating..." : "Create Race"}
                     </button>
                     {createMsg && (
-                      <span style={{ fontSize: "0.85rem", color: createMsg.startsWith("✓") ? "#4caf50" : "var(--gl-red)" }}>
+                      <span style={{ fontSize: "0.85rem", color: createMsg.startsWith("✓") ? "#00D2AA" : "var(--gl-red)" }}>
                         {createMsg}
                       </span>
                     )}
@@ -584,7 +607,7 @@ export default function AdminPage() {
                         padding: "0.2rem 0.5rem",
                         borderRadius: "4px",
                         background: r.question_count > 0 ? "rgba(76,175,80,0.15)" : "rgba(255,255,255,0.07)",
-                        color: r.question_count > 0 ? "#4caf50" : "rgba(255,255,255,0.35)",
+                        color: r.question_count > 0 ? "#00D2AA" : "rgba(255,255,255,0.35)",
                         whiteSpace: "nowrap",
                       }}>
                         {r.question_count > 0 ? `${r.question_count} questions` : "not seeded"}
@@ -634,138 +657,12 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ── PLATFORM REVENUE ── */}
-        {section === "revenue" && (
-          <section className="admin-section">
-            <h2 className="admin-section-title">Platform Revenue</h2>
-            {feeData ? (
-              <>
-                <div className="admin-stats-row">
-                  <div className="admin-stat-card">
-                    <span className="admin-stat-value">${feeData.breakdown.total.toFixed(2)}</span>
-                    <span className="admin-stat-label">Total Collected</span>
-                  </div>
-                  <div className="admin-stat-card">
-                    <span className="admin-stat-value">${feeData.breakdown.leagueRake.toFixed(2)}</span>
-                    <span className="admin-stat-label">League Rake (10%)</span>
-                  </div>
-                  <div className="admin-stat-card">
-                    <span className="admin-stat-value">${feeData.breakdown.editFees.toFixed(2)}</span>
-                    <span className="admin-stat-label">Edit Fees</span>
-                  </div>
-                </div>
-
-                {feeData.recentFees.length > 0 && (
-                  <div className="admin-fee-list">
-                    <h3 className="admin-subsection-title">Recent Events</h3>
-                    {feeData.recentFees.slice(0, 10).map((fee) => (
-                      <div key={fee.id} className="admin-fee-row">
-                        <span className="admin-fee-desc">{fee.description ?? "Fee"}</span>
-                        <span className="admin-fee-amount">+${Number(fee.amount).toFixed(2)}</span>
-                        <span className="admin-fee-date">
-                          {new Date(fee.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="admin-fee-note" style={{ fontFamily: "monospace", wordBreak: "break-all" }}>
-                  <span style={{ opacity: 0.6, fontSize: "0.75rem", display: "block", marginBottom: "0.25rem" }}>Fee collection wallet</span>
-                  {PLATFORM_FEE_WALLET_ADDRESS}
-                </div>
-              </>
-            ) : (
-              <p className="admin-loading">Loading revenue data...</p>
-            )}
-          </section>
-        )}
-
-        {/* ── WALLETS ── */}
-        {section === "wallets" && (
-          <section className="admin-section">
-            <h2 className="admin-section-title">User Wallets</h2>
-            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", marginBottom: "1.25rem" }}>
-              Wallets automatically enroll when users log in via Privy. Use &quot;Enroll All&quot; to backfill existing accounts.
-            </p>
-
-            {walletMsg && (
-              <p style={{ fontSize: "0.9rem", color: walletMsg.startsWith("✓") ? "#4caf50" : "var(--gl-red)", marginBottom: "1rem" }}>
-                {walletMsg}
-              </p>
-            )}
-
-            <button
-              className="gla-race-btn"
-              onClick={handleEnrollAll}
-              disabled={enrollingAll}
-              style={{ marginBottom: "1.5rem" }}
-            >
-              {enrollingAll ? "Enrolling…" : "Enroll All with Helius"}
-            </button>
-
-            {walletsLoading ? (
-              <div className="gl-spinner" />
-            ) : wallets.length === 0 ? (
-              <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.85rem" }}>No user wallets found.</p>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                {wallets.map((w) => (
-                  <div
-                    key={w.userId}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr auto auto",
-                      gap: "1rem",
-                      alignItems: "center",
-                      padding: "0.6rem 1rem",
-                      background: "rgba(255,255,255,0.03)",
-                      borderRadius: "6px",
-                      border: "1px solid rgba(255,255,255,0.07)",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontSize: "0.9rem", color: "#fff" }}>{w.username}</span>
-                      <span style={{ marginLeft: "0.75rem", fontSize: "0.75rem", color: "rgba(255,255,255,0.35)", fontFamily: "monospace" }}>
-                        {w.address.slice(0, 8)}…{w.address.slice(-6)}
-                      </span>
-                    </div>
-                    <span style={{
-                      fontSize: "0.75rem",
-                      padding: "0.2rem 0.5rem",
-                      borderRadius: "4px",
-                      background: w.watched ? "rgba(76,175,80,0.15)" : "rgba(255,165,0,0.12)",
-                      color: w.watched ? "#4caf50" : "#ffa500",
-                    }}>
-                      {w.watched ? "Watching" : "Not enrolled"}
-                    </span>
-                    {!w.watched && (
-                      <button
-                        onClick={() => handleEnrollOne(w.address)}
-                        style={{
-                          fontSize: "0.75rem",
-                          padding: "0.25rem 0.6rem",
-                          borderRadius: "4px",
-                          border: "1px solid rgba(255,255,255,0.15)",
-                          background: "transparent",
-                          color: "#fff",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Enroll
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-
         {/* ── RESULTS & SCORING ── */}
         {section === "results" && (
           <>
-            <p className="gla-page-sub" style={{ marginBottom: "1.5rem" }}>Enter race results and trigger scoring</p>
+            <p className="gla-page-sub" style={{ marginBottom: "1.5rem" }}>
+              Enter race results and trigger scoring. Safety-car results are entered manually below, alongside every other question.
+            </p>
 
             {/* Race selector */}
             <div style={{ margin: "0 0 1.5rem" }}>
@@ -785,6 +682,83 @@ export default function AdminPage() {
                 </select>
               </label>
             </div>
+
+            {/* Jolpica auto-sync */}
+            {selectedRace && (
+              <div
+                style={{
+                  margin: "0 0 1.5rem",
+                  padding: "1rem 1.25rem",
+                  background: "rgba(255,255,255,0.03)",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.75rem",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                  <button
+                    className="gla-race-btn"
+                    style={{ fontSize: "0.85rem" }}
+                    onClick={handleSyncFromJolpica}
+                    disabled={syncing}
+                  >
+                    {syncing ? "Syncing…" : "Sync results from Jolpica"}
+                  </button>
+                  <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.8rem" }}>
+                    Auto-fills pole, winner, podium, fastest lap, and biggest gainer from the live F1 results.
+                  </span>
+                </div>
+
+                {syncMessage && (
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "0.85rem",
+                      color: syncMessage.startsWith("✓") ? "#00D2AA" : "var(--gl-red)",
+                    }}
+                  >
+                    {syncMessage}
+                  </p>
+                )}
+
+                {syncedCategories.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                    {syncedCategories.map((cat) => (
+                      <span
+                        key={cat}
+                        style={{
+                          fontSize: "0.75rem",
+                          padding: "0.2rem 0.55rem",
+                          borderRadius: "4px",
+                          background: "rgba(0,210,170,0.15)",
+                          color: "#00D2AA",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {SYNC_CATEGORY_LABELS[cat]} settled
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Safety car is not available from Jolpica — admin must enter it by hand. */}
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "0.8rem",
+                    color: "#E8B339",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.4rem",
+                  }}
+                >
+                  <span aria-hidden="true">⚠</span>
+                  Safety car must be entered manually — it is the safety-car question in the results form below.
+                </p>
+              </div>
+            )}
 
             {questionsLoading && <div className="gl-spinner" />}
 
@@ -841,7 +815,7 @@ export default function AdminPage() {
                 </div>
 
                 {message && (
-                  <p style={{ marginBottom: "1rem", color: message.startsWith("✓") ? "#4caf50" : "var(--gl-red)" }}>
+                  <p style={{ marginBottom: "1rem", color: message.startsWith("✓") ? "#00D2AA" : "var(--gl-red)" }}>
                     {message}
                   </p>
                 )}

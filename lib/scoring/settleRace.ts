@@ -17,6 +17,8 @@
  * Chaos Bonus: +5 if ≥10 questions score any points in the race
  */
 
+import { DROP_WORST_N_RACES } from "@/lib/gameRules";
+
 export const SCORE_CAPS = {
   qualifying: 150,
   race: 300,
@@ -24,7 +26,7 @@ export const SCORE_CAPS = {
   weekend: 400,
 } as const;
 
-const CONFIDENCE_MULTIPLIERS: Record<string, number> = {
+export const CONFIDENCE_MULTIPLIERS: Record<string, number> = {
   low_variance: 0.9,
   medium: 1.0,
   high: 1.2,
@@ -34,18 +36,18 @@ const CONFIDENCE_MULTIPLIERS: Record<string, number> = {
 export const MAX_DIFFICULTY_MULTIPLIER = 6.5;
 
 // Points for exact-match podium positions
-const PODIUM_EXACT_POINTS = [25, 18, 15] as const; // P1, P2, P3
-const PODIUM_PARTIAL_CREDIT = 8; // driver on podium, wrong position
+export const PODIUM_EXACT_POINTS = [25, 18, 15] as const; // P1, P2, P3
+export const PODIUM_PARTIAL_CREDIT = 8; // driver on podium, wrong position
 
 // Points for exact-match qualifying positions
-const QUALIFYING_EXACT_POINTS = [15, 10, 10] as const; // Pole, Q2, Q3
-const QUALIFYING_FRONT_ROW_PARTIAL = 5; // driver on front row (P1/P2), wrong position
+export const QUALIFYING_EXACT_POINTS = [15, 10, 10] as const; // Pole, Q2, Q3
+export const QUALIFYING_FRONT_ROW_PARTIAL = 5; // driver on front row (P1/P2), wrong position
 
 // Teams in Q3 tier points (by correct count)
 export const TEAMS_Q3_POINTS: Record<number, number> = { 5: 15, 4: 8, 3: 4 };
 
 // Points finishers tier (by minimum correct count)
-const POINTS_FINISHERS_TIERS = [
+export const POINTS_FINISHERS_TIERS = [
   { min: 5, pts: 10 },
   { min: 3, pts: 5 },
   { min: 1, pts: 2 },
@@ -90,7 +92,7 @@ export type PopularitySnapshot = {
   popularity_percent: number; // 0–1 (e.g. 0.42 for 42%)
 };
 
-type ScoredQuestion = {
+export type ScoredQuestion = {
   question_id: string;
   question_type: string;
   category: QuestionCategory;
@@ -102,7 +104,7 @@ type ScoredQuestion = {
   correct_picks: number;
 };
 
-type RaceScoreResult = {
+export type RaceScoreResult = {
   user_id: string;
   race_id: string;
   total_score: number;
@@ -554,7 +556,7 @@ export type SettlementInput = {
   }>;
 };
 
-type SettlementOutput = {
+export type SettlementOutput = {
   scores: RaceScoreResult[];
   settledAt: string;
 };
@@ -605,14 +607,14 @@ export function settleRace(input: SettlementInput): SettlementOutput {
 
 /**
  * Drop the N worst race scores for a user when computing their season total.
- * Used on the global leaderboard, not applied to individual race scores.
+ * Used on the global leaderboard — not applied to individual race scores.
  */
-export function applyDropWorstN(raceScores: number[], dropN: number): number {
-  if (raceScores.length <= dropN) {
-    return 0;
-  }
-
-  const sorted = [...raceScores].sort((a, b) => a - b);
-  const kept = sorted.slice(dropN);
-  return kept.reduce((sum, score) => sum + score, 0);
+export function applyDropWorstN(
+  raceScores: number[],
+  dropN: number = DROP_WORST_N_RACES
+): number {
+  if (raceScores.length <= dropN) return 0;
+  const sorted = [...raceScores].sort((a, b) => a - b); // ascending
+  const kept = sorted.slice(dropN); // drop the N smallest
+  return kept.reduce((sum, s) => sum + s, 0);
 }

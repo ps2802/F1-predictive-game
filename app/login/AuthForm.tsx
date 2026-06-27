@@ -1,11 +1,18 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { usePrivy, useLogin } from "@privy-io/react-auth";
-import { handlePrivyAuthComplete } from "@/lib/auth";
+import { Suspense, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
+import { sanitizeRedirect, signInWithGoogle } from "@/lib/auth";
 import { track } from "@/lib/analytics";
 import { buildFallbackNextRace } from "@/lib/races";
+
+// Decorative warp-speed backdrop. Lazy + client-only so it never SSRs or blocks
+// the hero's paint/LCP — it loads behind the existing content after hydration.
+const HyperspeedBackground = dynamic(
+  () => import("@/app/components/HyperspeedBackground"),
+  { ssr: false },
+);
 
 type NextRace = {
   id: string;
@@ -106,18 +113,22 @@ function NextRaceCountdownCard() {
     return null;
   }
 
-  const dateLabel = new Date(targetIso).toLocaleDateString("en-GB", {
+  const dateParts = new Intl.DateTimeFormat("en-GB", {
     weekday: "short",
     day: "numeric",
     month: "short",
     timeZone: "UTC",
-  });
+  }).formatToParts(new Date(targetIso));
+  const weekday = dateParts.find((part) => part.type === "weekday")?.value ?? "";
+  const day = dateParts.find((part) => part.type === "day")?.value ?? "";
+  const month = dateParts.find((part) => part.type === "month")?.value ?? "";
+  const dateLabel = `${weekday} ${day} ${month}`.trim();
 
   return (
     <div className="home-countdown-box gl-login-countdown-box">
       <p className="home-countdown-label">
         <span className="home-countdown-dot" aria-hidden="true" />
-        NEXT RACE - PREDICTIONS LOCK IN
+        NEXT RACE - QUALIFYING LOCKS IN
       </p>
       <p className="home-countdown-race">{nextRace.grand_prix_name}</p>
       <p className="home-countdown-date">{dateLabel} · Round {nextRace.round}</p>
@@ -149,19 +160,17 @@ function NextRaceCountdownCard() {
 /**
  * /login — unified auth entry point for Gridlock.
  *
- * Handles both new signups and returning logins through the same Privy modal.
- * Privy determines whether the user is new internally. After auth:
+ * One button: "Continue with Google". signInWithGoogle() kicks off the Supabase
+ * Google OAuth redirect and resolves identity in /auth/callback, which routes:
  *   - New user (no username)  → /onboarding
  *   - Returning user          → /dashboard (or ?redirect=)
  *
  * The separate /signup route redirects here so there is one canonical path.
  */
 function AuthForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams?.get("redirect") ?? null;
+  const redirect = sanitizeRedirect(searchParams?.get("redirect") ?? null);
 
-  const { getAccessToken, authenticated } = usePrivy();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [totalRounds, setTotalRounds] = useState<number | null>(null);
@@ -197,58 +206,18 @@ function AuthForm() {
     };
   }, []);
 
-  const onComplete = useCallback(
-    async () => {
-      setError(null);
-      try {
-        await handlePrivyAuthComplete(getAccessToken, redirect, router);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Sign-in failed.";
-        track("auth_failed", {
-          error_category: msg.includes("fetch") ? "network" : "sync",
-        });
-        setError(msg.includes("fetch") ? "Network error — please try again." : msg);
-        setLoading(false);
-      }
-    },
-    [getAccessToken, redirect, router]
-  );
-
-  const onError = useCallback((error: string) => {
-    // User dismissed the modal — not an error
-    if (error === "exited_auth_flow") {
-      setLoading(false);
-      return;
-    }
-    track("auth_failed", { error_category: "privy_modal" });
-    setError("Sign-in failed. Please try again.");
-    setLoading(false);
-  }, []);
-
-  const { login } = useLogin({ onComplete, onError });
-
-  const handleEnter = () => {
+  // On success signInWithGoogle redirects the browser to Google, so we keep the
+  // loading state until navigation happens; we only reset it if the call throws.
+  const handleEnter = async (): Promise<void> => {
     setLoading(true);
     setError(null);
-    track("auth_started", {
-      already_authenticated: authenticated,
-      redirect_to: redirect ?? undefined,
-    });
-    // If already authenticated with Privy (existing session), skip the modal
-    // and go straight to the Supabase sync — calling login() when already
-    // authenticated causes Privy to throw "user is already logged in".
-    if (authenticated) {
-      handlePrivyAuthComplete(getAccessToken, redirect, router).catch((err) => {
-        const msg = err instanceof Error ? err.message : "Sign-in failed.";
-        track("auth_failed", {
-          error_category: msg.includes("fetch") ? "network" : "sync",
-        });
-        setError(msg.includes("fetch") ? "Network error — please try again." : "Sign-in failed. Please try again.");
-        setLoading(false);
-      });
-      return;
+    try {
+      await signInWithGoogle(redirect);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Sign-in failed. Please try again.";
+      setError(msg.includes("fetch") ? "Network error — please try again." : msg);
+      setLoading(false);
     }
-    login();
   };
 
   return (
@@ -258,6 +227,8 @@ function AuthForm() {
 
         {/* Full-panel F1 engineering blueprint background */}
         <div className="gl-login-engineering-bg" aria-hidden="true">
+          {/* Warp-speed streaks sit behind the blueprint SVG (decorative). */}
+          <HyperspeedBackground />
           <svg viewBox="0 0 600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style={{ position: "absolute", inset: 0 }}>
             <defs>
               <pattern id="eng-grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -541,7 +512,7 @@ function AuthForm() {
 
         <p className="gl-login-eyebrow">
           <span className="gl-login-dot" />
-          2026 SEASON · WIN REAL MONEY · NOW LIVE
+          2026 SEASON · FREE TO PLAY · NOW LIVE
         </p>
 
         {/* Sector indicator bars */}
@@ -553,37 +524,12 @@ function AuthForm() {
 
         <h1 className="gl-login-h1">
           Predict the podium.<br />
-          <em>Win real money.</em>
+          <em>Beat your friends.</em>
         </h1>
 
         <p className="gl-login-sub">
-          Call 1st, 2nd, 3rd before qualifying locks. Nail the exact position — 3 pts. Right driver, wrong spot — 1 pt. Top scorer wins the USDC prize pool.
+          Call the top three every race. Climb the leaderboard. Settle it on track.
         </p>
-
-        {/* How it works — 3 steps */}
-        <div className="gl-login-how">
-          <div className="gl-login-how-step">
-            <span className="gl-login-how-icon" aria-hidden="true">🏁</span>
-            <div>
-              <span className="gl-login-how-label">PREDICT</span>
-              <span className="gl-login-how-desc">Pick podium before qualifying locks</span>
-            </div>
-          </div>
-          <div className="gl-login-how-step">
-            <span className="gl-login-how-icon" aria-hidden="true">⚡</span>
-            <div>
-              <span className="gl-login-how-label">SCORE</span>
-              <span className="gl-login-how-desc">3 pts exact · 1 pt right driver wrong slot</span>
-            </div>
-          </div>
-          <div className="gl-login-how-step">
-            <span className="gl-login-how-icon" aria-hidden="true">🏆</span>
-            <div>
-              <span className="gl-login-how-label">WIN</span>
-              <span className="gl-login-how-desc">Top scorers split the USDC prize pool</span>
-            </div>
-          </div>
-        </div>
 
         <NextRaceCountdownCard />
 
@@ -599,8 +545,8 @@ function AuthForm() {
           </div>
           <div className="gl-login-stat-div" />
           <div className="gl-login-stat">
-            <span className="gl-login-stat-n">$</span>
-            <span className="gl-login-stat-l">USDC Prizes</span>
+            <span className="gl-login-stat-n">Free</span>
+            <span className="gl-login-stat-l">To Play</span>
           </div>
         </div>
 
@@ -608,18 +554,19 @@ function AuthForm() {
           className="gl-login-btn"
           onClick={handleEnter}
           disabled={loading}
+          data-testid="auth-enter-button"
         >
-          {loading ? <span className="gl-login-spinner" /> : "CLAIM YOUR SEAT"}
+          {loading ? (
+            <span className="gl-login-spinner" />
+          ) : (
+            "CONTINUE WITH GOOGLE"
+          )}
         </button>
 
         {error && <p className="gl-login-error">{error}</p>}
 
         <p className="gl-login-returning">
-          Already have an account? Same button — we&apos;ll recognize you.
-        </p>
-
-        <p className="gl-login-urgency">
-          Every race you sit out is a prize you&apos;ll never collect.
+          New or returning — one tap with Google and you&apos;re on the grid.
         </p>
       </div>
 

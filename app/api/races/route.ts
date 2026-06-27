@@ -1,18 +1,16 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getRacePresentationMeta } from "@/lib/dashboard";
 
 type RaceRow = {
   id: string;
   round: number;
-  country?: string | null;
-  race_date?: string | null;
   race_starts_at?: string | null;
   qualifying_starts_at?: string | null;
   grand_prix_name?: string | null;
-  name?: string | null;
   season?: number | null;
-  is_locked?: boolean | null;
   race_locked?: boolean | null;
+  quali_locked?: boolean | null;
 };
 
 export async function GET() {
@@ -43,28 +41,26 @@ export async function GET() {
   });
 
   const mappedRaces = seasonScopedRaces.map((race) => {
+    const presentation = getRacePresentationMeta(race.id);
     const qualifyingStart = race.qualifying_starts_at
       ? new Date(race.qualifying_starts_at)
       : null;
     const isClosed =
-      race.is_locked === true ||
       race.race_locked === true ||
+      race.quali_locked === true ||
       (qualifyingStart !== null && now >= qualifyingStart);
 
     return {
       id: race.id,
       round: race.round,
-      name: race.grand_prix_name ?? race.name ?? race.id,
-      country: race.country ?? null,
-      date:
-        race.race_starts_at?.slice(0, 10) ??
-        race.race_date ??
-        null,
+      name: race.grand_prix_name ?? presentation?.name ?? race.id,
+      country: presentation?.country ?? null,
+      flag: presentation?.flag ?? null,
+      date: race.race_starts_at?.slice(0, 10) ?? null,
       qualifying_starts_at: race.qualifying_starts_at,
       race_starts_at: race.race_starts_at,
       status: isClosed ? "closed" : "upcoming",
       race_locked: race.race_locked === true,
-      is_locked: race.is_locked === true,
     };
   });
 

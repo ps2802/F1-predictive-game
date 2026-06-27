@@ -15,11 +15,12 @@ const QUESTIONS: PredictionQuestionDefinition[] = [
 ];
 
 const OPTIONS: PredictionOptionDefinition[] = [
-  { id: "opt-a", question_id: "q-podium" },
-  { id: "opt-b", question_id: "q-podium" },
-  { id: "opt-c", question_id: "q-podium" },
-  { id: "opt-d", question_id: "q-podium" },
-  { id: "opt-w", question_id: "q-winner" },
+  { id: "opt-a", question_id: "q-podium", option_value: "Driver A" },
+  { id: "opt-b", question_id: "q-podium", option_value: "Driver B" },
+  { id: "opt-c", question_id: "q-podium", option_value: "Driver C" },
+  { id: "opt-d", question_id: "q-podium", option_value: "Driver D" },
+  { id: "opt-w", question_id: "q-winner", option_value: "Race Winner" },
+  { id: "opt-w2", question_id: "q-winner", option_value: "Driver A" },
 ];
 
 describe("validatePredictionAnswers", () => {
@@ -89,6 +90,22 @@ describe("validatePredictionAnswers", () => {
     expect(result).toEqual({
       ok: false,
       error: "Invalid option submitted for podium.",
+    });
+  });
+
+  it("rejects picking the race winner again for P2 or P3", () => {
+    const result = validatePredictionAnswers({
+      answers: {
+        "q-podium": ["opt-a", "opt-b", "opt-c"],
+        "q-winner": ["opt-w2"],
+      },
+      questions: QUESTIONS,
+      options: OPTIONS,
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Driver A is already picked as race winner. Pick different drivers for P2 and P3.",
     });
   });
 });

@@ -2,6 +2,127 @@
 
 All notable changes to Gridlock will be documented in this file.
 
+## [0.2.0.0] - 2026-06-27
+
+### Changed
+- **Gridlock is now a free, Web2 friends game.** Removed every crypto / wallet / payment surface — USDC balances, Privy/Solana wallets, deposits, withdrawals, paid leagues, entry fees, prize pools, payout/rake, the prediction edit fee, the Helius deposit webhook, and the admin revenue/wallets tabs are all gone. Leagues and predictions are free; you compete with friends on the leaderboard for bragging rights.
+- **Auth is now Google sign-in only** via Supabase OAuth (PKCE). Replaced the Privy login + Privy→Supabase bridge with `signInWithGoogle` + an `/auth/callback` route. First login still routes to username onboarding.
+- **One lock per weekend** at the start of the first competitive session (sprint-aware), covering every prediction category. Predictions are active the moment you save them and are never voided.
+- SEO/metadata reframed to the friends game (new title, description, JSON-LD, OpenGraph) and all monetized copy removed across the app.
+
+### Added
+- **OpenF1 live/replay track map** as the dashboard hero — a Canvas map of the circuit with cars as moving dots, powered by the OpenF1 API through a cached server-side proxy. Three auto-selected modes (live / replay / static), lazy-loaded, reduced-motion safe, paused when off-screen or backgrounded.
+- **Live Jolpica results ingestion**: an admin "Sync from Jolpica" action that auto-settles pole, winner, podium, fastest lap, and biggest gainer from the live F1 results; safety car stays manual admin entry.
+- A lightweight warp-speed (Hyperspeed-style) background on the landing page, lazy-loaded with a reduced-motion fallback.
+- `www.joingridlock.com` → apex redirect and baseline security headers.
+
+### Security
+- Private leagues are now genuinely invite-only (tightened the `leagues` row-level read policy so a league's `invite_code` can no longer be enumerated via the data API).
+- League standings are visible only to members of a private league.
+- Username creation now enforces a lowercase, safe-character handle with reserved-word/profanity blocking and case-insensitive uniqueness.
+- Removed the orphaned legacy prediction route that had weaker lock semantics.
+
+### Fixed
+- Pruned the `@privy-io/*` and `@solana-program/memo` dependencies, shrinking the bundle substantially.
+
+## [0.1.6.0] - 2026-05-03
+
+### Added
+- Race winner is now blocked from being picked again as P2 or P3, with a clear inline message and disabled options. Server-side validation enforces the same rule.
+- Qualifying picks can be saved on their own without completing the rest of the prediction, so users can lock in qualifying ahead of the GP without losing race or chaos drafts.
+- Leagues page now shows the next open race when a league is not pinned to a specific round, and lists upcoming races with quick-predict links.
+
+### Changed
+- Synced Gridlock to the official 2026 F1 grid: 22 drivers, 11 teams, Cadillac added, Yuki Tsunoda and Jack Doohan removed, Sergio Perez, Valtteri Bottas, and Arvid Lindblad added. Driver list, team colors, OpenGraph share image, and FAQ copy all updated.
+- Mobile layout polish across the predict flow, dashboard hero, leagues page, and tabs.
+
+### Fixed
+- League detail page no longer crashes when a logged-in user has no prediction yet for the next race (switched the predictions lookup to a safe single-row fetch).
+
+## [0.1.5.0] - 2026-05-02
+
+### Changed
+- Wallet funding entry points now open the in-app wallet overlay instead of sending users to a separate wallet page.
+- Add money now uses Privy's Solana wallet funding flow for USDC on Solana mainnet.
+- Beta sign-in credits now default to off unless explicitly enabled by environment configuration.
+
+### Fixed
+- Removed stale onboarding copy that claimed users received test USDC.
+- Updated the Privy Solana dependency path needed by the mainnet USDC funding modal.
+- Cleared the critical production dependency audit finding in the lockfile.
+
+## [0.1.4.3] - 2026-04-29
+
+### Fixed
+- Add money now stays available for Privy-enabled users even when the saved profile row has no `wallet_address`, by letting the client onramp flow resolve the live Solana wallet state.
+- Privy auth sync now persists Solana wallet addresses from both `privy` and `privy-v2` linked wallets, fixing users who could sign in but could not reliably fund their wallet.
+- Privy-enabled UI gates now use the shared environment-aware helper instead of checking only `NEXT_PUBLIC_PRIVY_APP_ID`, keeping local and production onramp behavior aligned.
+
+## [0.1.4.2] - 2026-04-27
+
+### Fixed
+- Dashboard Add money now uses the saved profile wallet address when opening Privy's onramp, so the click no longer depends on late Privy client wallet discovery.
+- Add money clicks now route to the wallet page instead of silently doing nothing if Privy is not ready yet.
+
+## [0.1.4.1] - 2026-04-27
+
+### Added
+- Wallet and dashboard Add money actions now open Privy's fiat onramp for USDC on Solana instead of leaving users to copy a deposit address first.
+- Added analytics events for Add money onramp starts, completions, and failures.
+
+### Changed
+- Wallet page layout is now wrapped in a reusable shell for embedded and full-page contexts, with the onramp action promoted into the hero controls.
+- League cards now surface race, grid count, stake floor, and prize pool in a denser scan-friendly layout.
+
+## [0.1.4.0] - 2026-04-19
+
+### Changed
+- Dashboard header now shares the same centered content shell as the card grid below, so the brand, navigation, and utility edges line up with the main dashboard system instead of the browser viewport
+- Desktop nav keeps the editorial 3-zone structure, while mobile now uses a dedicated toolbar system with an essentials-only top row and a separate horizontal primary tab rail
+- Mobile account access is condensed into a touch-friendly wallet/profile pill, with larger tap targets and no inline nav compression
+- Admin and Sign out were removed from the mobile top bar and moved into a right-side drawer, preventing duplicate renders, wrapping, and crowded toolbar states on small screens
+
+### Fixed
+- Toolbar layout no longer visually centers the nav against the full viewport on dashboard pages
+- Mobile header no longer relies on the desktop toolbar collapsing until it barely fits at 375px, 390px, 430px, and tablet widths
+- Wallet drawer styling now uses the refined close/header treatment from the latest wallet UI polish
+
+## [0.1.3.0] - 2026-04-19
+
+### Changed
+- Nav header rebuilt as a clean 3-column layout: logo left, primary nav centered, account utility right — eliminates the duplicate raw text block and unstyled hamburger that were rendering on all screen sizes
+- Sign out is now a low-emphasis utility action (barely visible, no button styling) instead of a primary nav link
+- Wallet balance now shows in teal, matching the design token for positive/financial values
+- Active nav link gets a 2px red bottom indicator instead of just color change
+- Mobile nav now has proper CSS — hamburger renders as 3 lines, mobile drawer slides down with styled touch-target rows
+- Wallet page split into a server entry component + `WalletPageClient` for cleaner SSR/hydration boundary
+
+## [0.1.2.0] - 2026-04-16
+
+### Changed
+- Dashboard text contrast increased across the board: eyebrow labels, detail lines, section actions, and standings subtext are all more readable
+- Nav bar alignment fixed: no longer floats 3px from the viewport top; height bumped to 64px for cleaner vertical rhythm; nav links more legible at rest and hover
+- My Leagues rows have more breathing room (16px padding) and a more visible View button
+- Action strip arrows and sub-labels now carry enough contrast to read at a glance
+- Wallet balance label and Deposit USDC tile include tooltips explaining what they do
+- Standings + Race Calendar panel now collapses to a single column on mobile — was stuck in two columns due to inline style with no responsive override
+## [0.1.1.0] - 2026-04-11
+
+### Added
+- Per-league competitive context in the dashboard: the My Leagues panel now shows your rank, how many points separate you from P1, and your lead over P2 — so you always know where you stand without clicking in
+- On Deck race panel now shows 1 hero race + up to 3 upcoming races (4 total), giving more at-a-glance visibility into the near-term schedule
+
+### Fixed
+- P1 user tied with P2 was shown as "Sole leader" — it now correctly shows "Tied"
+- League rank context falls back to nulls gracefully when the member list is unavailable, instead of crashing
+
+### For contributors
+- `computeLeagueRankContext` added to `lib/dashboard.ts` — pure function, tie-breaks by userId lexicographic order, 100% unit test coverage
+- `globalRankDelta` field added to the ViewModel (always null until pg_cron rank snapshot infrastructure is added post-launch)
+- Dashboard API no longer populates wallet balance server-side — client hydrates from Privy after mount to avoid stale values
+- Broadcast Telemetry design system documented in `DESIGN.md` with full color tokens, typography, spacing, motion, and accessibility specs
+- `CLAUDE.md` updated with gstack skill routing rules and DESIGN.md reference
+
 ## [0.1.0.0] - 2026-03-31
 
 ### Added

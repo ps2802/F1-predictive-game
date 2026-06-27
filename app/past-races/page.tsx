@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AppNav } from "@/app/components/AppNav";
@@ -93,6 +94,7 @@ export default async function PastRacesPage() {
   try {
     pastRaces = await getPastRaces();
   } catch (err) {
+    if (isRedirectError(err)) throw err;
     error = err instanceof Error ? err.message : "Failed to load past races";
   }
 
