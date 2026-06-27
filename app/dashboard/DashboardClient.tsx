@@ -35,33 +35,22 @@ const TEAL = "#00D2AA";
 const PANEL = "#0D0D0D";
 const BORDER = "rgba(255,255,255,0.07)";
 
-/* Race replay is lazy + client-only so it never enters first paint or the
-   server bundle. A hairline skeleton holds the slot while it streams in. */
-const RaceReplay = dynamic(() => import("@/app/components/RaceReplay"), {
+/* TrackMap is lazy + client-only so the Canvas/OpenF1 module never enters first
+   paint or the server bundle. A hairline skeleton holds the hero slot while it
+   streams in. */
+const TrackMap = dynamic(() => import("@/app/components/TrackMap"), {
   ssr: false,
   loading: () => (
     <div
       aria-hidden="true"
       style={{
-        minHeight: "220px",
+        height: "clamp(200px, 32vh, 300px)",
         border: `1px solid rgba(255,255,255,0.04)`,
         background: PANEL,
       }}
     />
   ),
 });
-
-/* Finds the most recent settled race (highest round, raceStatus 'locked'). */
-function findLatestSettledRace(schedule: DashboardRaceRow[]): DashboardRaceRow | null {
-  let latest: DashboardRaceRow | null = null;
-  for (const race of schedule) {
-    if (race.raceStatus !== "locked") continue;
-    if (latest === null || race.round > latest.round) {
-      latest = race;
-    }
-  }
-  return latest;
-}
 
 type LoadState = {
   error: string;
@@ -152,7 +141,6 @@ export default function DashboardClient() {
   const grouped = groupDashboardRaces(state.viewModel.schedule);
   const seasonMarkers = buildDashboardSeasonMarkers(state.viewModel.schedule);
   const vm = state.viewModel;
-  const latestSettled = findLatestSettledRace(vm.schedule);
 
   return (
     <div className="gla-root">
@@ -167,6 +155,9 @@ export default function DashboardClient() {
       {/* narrow viewport matches preview-b */}
       <div className={`gla-shell-container ${styles.viewport}`} style={{ padding: "36px 0 100px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {/* ⓪ Track map — Canvas hero (live / replay / static), full-width band */}
+          <TrackMap />
+
           <DashboardSummaryBand metrics={vm.metrics} />
 
           {/* ① Hero — next race */}
@@ -174,18 +165,6 @@ export default function DashboardClient() {
 
           {/* ② Action strip — 3 tiles */}
           <ActionStrip metrics={vm.metrics} nextRace={vm.nextRace} />
-
-          {/* ②.5 Race replay — animated recap of the most recent settled race */}
-          {latestSettled ? (
-            <RaceReplay
-              raceId={latestSettled.id}
-              raceName={latestSettled.name}
-              round={latestSettled.round}
-              flag={latestSettled.flag}
-            />
-          ) : (
-            <PreSeasonReplayNotice />
-          )}
 
           {/* ③ My Leagues */}
           <MyLeaguesSection leagues={vm.leaguePreview} />
@@ -590,39 +569,6 @@ function ActionStrip({
         );
       })}
     </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── */
-/* Pre-season replay notice (no settled race yet)                              */
-/* ─────────────────────────────────────────────────────────────────────────── */
-
-function PreSeasonReplayNotice() {
-  return (
-    <section
-      aria-label="Race replay"
-      style={{ position: "relative", overflow: "hidden", border: `1px solid ${BORDER}`, background: PANEL }}
-    >
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute", top: 0, left: 0, right: 0, height: "1px",
-          background: `linear-gradient(90deg, ${TEAL} 0%, rgba(0,210,170,0.2) 60%, transparent 100%)`,
-        }}
-      />
-      <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <div style={sectionLabel}>Race Replay</div>
-        <div style={sectionTitle}>Locked</div>
-      </div>
-      <div style={{ padding: "26px 20px", textAlign: "center" }}>
-        <div style={{ fontSize: "14px", fontWeight: 800, color: "rgba(255,255,255,0.7)" }}>
-          Your first race replay unlocks after Round 1
-        </div>
-        <div style={{ marginTop: "6px", fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
-          Lock a podium, watch the lights go out, and see how your call held up.
-        </div>
-      </div>
-    </section>
   );
 }
 
