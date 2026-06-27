@@ -80,7 +80,7 @@ function OnboardingForm() {
             <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.8)", lineHeight: 1.6, margin: 0 }}>
               Gridlock is the F1 prediction game where you call the podium before every race —
               1st, 2nd, and 3rd. Nail the exact positions, score big. Miss by one spot, still
-              earn points. The sharpest strategist on the leaderboard wins the prize pool.
+              earn points. The sharpest strategist tops the leaderboard and beats their friends.
             </p>
             <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.45)", marginTop: "0.75rem", marginBottom: 0 }}>
               Explore leagues, make your first prediction, and get ready for 2026 lights out.

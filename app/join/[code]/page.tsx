@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
 import { findRaceById, useRaceCatalog } from "@/lib/raceCatalog";
 
 type LeaguePreview = {
@@ -12,32 +11,32 @@ type LeaguePreview = {
   race_id: string | null;
   name: string;
   type: "public" | "private";
-  invite_code: string;
-  entry_fee_usdc: number;
-  prize_pool: number;
   member_count: number;
   max_users: number;
-  is_active: boolean;
-  minimum_stake_usdc: number;
   is_member: boolean;
 };
 
-export default function JoinPage() {
+type JoinStatus =
+  | "loading"
+  | "login-required"
+  | "ready"
+  | "joining"
+  | "done"
+  | "error";
+
+export default function JoinPage(): React.ReactElement {
   const params = useParams();
   const router = useRouter();
   const { races } = useRaceCatalog();
   const code = ((params?.code as string) ?? "").toUpperCase();
-  const [status, setStatus] = useState<
-    "loading" | "login-required" | "ready" | "joining" | "done" | "error"
-  >("loading");
+  const [status, setStatus] = useState<JoinStatus>("loading");
   const [message, setMessage] = useState("");
   const [league, setLeague] = useState<LeaguePreview | null>(null);
-  const [stake, setStake] = useState(String(MINIMUM_LEAGUE_STAKE_USDC));
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadInvite() {
+    async function loadInvite(): Promise<void> {
       const supabase = createSupabaseBrowserClient();
       if (!supabase) {
         if (!cancelled) {
@@ -73,17 +72,10 @@ export default function JoinPage() {
 
       const nextLeague = data.league as LeaguePreview;
       setLeague(nextLeague);
-      setStake(String(nextLeague.minimum_stake_usdc));
 
       if (nextLeague.is_member) {
         setStatus("done");
-        setMessage("You have already joined this league.");
-        return;
-      }
-
-      if (!nextLeague.is_active) {
-        setStatus("error");
-        setMessage("This league is no longer active.");
+        setMessage("You're already in this league.");
         return;
       }
 
@@ -97,7 +89,7 @@ export default function JoinPage() {
     };
   }, [code]);
 
-  async function handleJoin() {
+  async function handleJoin(): Promise<void> {
     if (!league) return;
 
     setStatus("joining");
@@ -106,10 +98,7 @@ export default function JoinPage() {
     const res = await fetch("/api/leagues/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        invite_code: code,
-        stake_amount_usdc: Number(stake),
-      }),
+      body: JSON.stringify({ invite_code: code }),
     });
     const data = await res.json();
 
@@ -120,12 +109,11 @@ export default function JoinPage() {
     }
 
     setStatus("done");
-    setMessage("Joined! Redirecting to league...");
+    setMessage("You're in. Loading the league...");
     setTimeout(() => router.push(`/leagues/${data.leagueId}`), 1200);
   }
 
   const targetRace = findRaceById(races, league?.race_id ?? null);
-  const minimumStake = league?.minimum_stake_usdc ?? MINIMUM_LEAGUE_STAKE_USDC;
 
   return (
     <div className="gla-root">
@@ -147,7 +135,7 @@ export default function JoinPage() {
               <p className="gla-page-sub" style={{ marginTop: "0.5rem" }}>
                 Invite code {code}
               </p>
-              <div className="wallet-action-row" style={{ marginTop: "1.5rem" }}>
+              <div className="league-action-row" style={{ marginTop: "1.5rem" }}>
                 <Link href={`/?redirect=/join/${code}`} className="gla-race-btn">
                   Continue to Login
                 </Link>
@@ -160,7 +148,7 @@ export default function JoinPage() {
 
           {status === "ready" && league && (
             <>
-              <p className="gla-race-round">Invite Code {league.invite_code}</p>
+              <p className="gla-race-round">Invite Code {code}</p>
               <h1 className="gla-page-title" style={{ marginTop: "0.5rem" }}>
                 {league.name}
               </h1>
@@ -169,51 +157,21 @@ export default function JoinPage() {
                 {targetRace ? ` · ${targetRace.name}` : ""}
               </p>
 
-              <div className="league-economics" style={{ marginTop: "1.5rem" }}>
-                <div className="league-econ-card">
-                  <span className="league-econ-value">
-                    ${Number(league.prize_pool).toFixed(2)}
-                  </span>
-                  <span className="league-econ-label">Prize Pool</span>
-                </div>
-                <div className="league-econ-card">
-                  <span className="league-econ-value">
-                    ${Number(league.entry_fee_usdc).toFixed(0)}
-                  </span>
-                  <span className="league-econ-label">League Minimum</span>
-                </div>
-                <div className="league-econ-card">
-                  <span className="league-econ-value">{league.type}</span>
-                  <span className="league-econ-label">League Type</span>
-                </div>
-              </div>
+              <p style={{ color: "rgba(255,255,255,0.6)", marginTop: "1.25rem" }}>
+                Predict the podium every race and climb the league table. No buy-in,
+                no catch — just bragging rights.
+              </p>
 
               <div className="league-join-form" style={{ marginTop: "1.5rem" }}>
-                <input
-                  className="league-join-input"
-                  type="number"
-                  min={minimumStake}
-                  step="1"
-                  value={stake}
-                  onChange={(e) => setStake(e.target.value)}
-                  placeholder="Stake in USDC"
-                  data-testid="league-join-stake-input"
-                />
                 <button
                   type="button"
                   className="gla-race-btn"
-                  disabled={Number(stake) < minimumStake}
                   onClick={handleJoin}
                   data-testid="league-join-submit-button"
                 >
                   Join League
                 </button>
               </div>
-
-              <p style={{ color: "rgba(255,255,255,0.6)", marginTop: "1rem" }}>
-                Enter with at least ${minimumStake} USDC. You can stake more if you want
-                a larger position in this prize pool.
-              </p>
             </>
           )}
 
@@ -232,7 +190,7 @@ export default function JoinPage() {
               >
                 {message}
               </p>
-              <div className="wallet-action-row" style={{ marginTop: "1.5rem" }}>
+              <div className="league-action-row" style={{ marginTop: "1.5rem" }}>
                 {league && (
                   <Link href={`/leagues/${league.id}`} className="gla-race-btn">
                     Open League

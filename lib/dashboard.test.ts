@@ -202,8 +202,6 @@ function makeLeague(overrides: Partial<DashboardLeaguePreviewItem> = {}): Dashbo
     name: "Test League",
     memberCount: 5,
     maxUsers: 10,
-    prizePool: 100,
-    entryFeeUsdc: 10,
     raceId: "bahrain-2026",
     raceName: "Bahrain Grand Prix",
     raceRound: 1,

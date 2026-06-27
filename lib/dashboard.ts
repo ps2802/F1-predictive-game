@@ -5,8 +5,6 @@ export type DashboardRaceStatus = "open" | "locked";
 
 export interface DashboardProfile {
   username: string | null;
-  walletAddress: string | null;
-  balanceUsdc: number | null;
   isAdmin: boolean;
 }
 
@@ -18,8 +16,6 @@ export interface DashboardMetricState {
   seasonScore: number;
   leaguesJoined: number;
   leaguesCreated: number;
-  totalStakedUsdc: number;
-  walletBalance: number | null;
 }
 
 export interface DashboardRaceRow {
@@ -56,8 +52,6 @@ export interface DashboardLeaguePreviewItem {
   name: string;
   memberCount: number;
   maxUsers: number;
-  prizePool: number;
-  entryFeeUsdc: number;
   raceId: string | null;
   raceName: string | null;
   raceRound: number | null;

@@ -4,13 +4,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { resetAnalytics } from "@/lib/analytics";
-import { hasPrivyClientConfig } from "@/lib/privy";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { WALLET_OVERLAY_OPEN_EVENT } from "./walletOverlay";
 
 interface AppNavProfile {
   username?: string | null;
-  balance_usdc?: number | null;
   is_admin?: boolean | null;
 }
 
@@ -40,22 +37,19 @@ function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-// Only rendered when Privy client config is available — safe to call usePrivy() here.
-function PrivySignOutButton(): React.JSX.Element {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { usePrivy } = require("@privy-io/react-auth") as {
-    usePrivy: () => { logout: () => Promise<void> };
-  };
-  const { logout } = usePrivy();
+async function signOut(): Promise<void> {
+  const supabase = createSupabaseBrowserClient();
+  if (supabase) {
+    await supabase.auth.signOut();
+  }
+  resetAnalytics();
+}
+
+function SignOutButton(): React.JSX.Element {
   const router = useRouter();
 
   async function handleLogout(): Promise<void> {
-    const supabase = createSupabaseBrowserClient();
-    if (supabase) {
-      await supabase.auth.signOut();
-    }
-    await logout();
-    resetAnalytics();
+    await signOut();
     router.push("/");
   }
 
@@ -66,61 +60,12 @@ function PrivySignOutButton(): React.JSX.Element {
   );
 }
 
-function SimpleSignOutButton(): React.JSX.Element {
-  const router = useRouter();
-
-  async function handleLogout(): Promise<void> {
-    const supabase = createSupabaseBrowserClient();
-    if (supabase) {
-      await supabase.auth.signOut();
-    }
-    resetAnalytics();
-    router.push("/");
-  }
-
-  return (
-    <button className="gla-nav-signout" onClick={handleLogout}>
-      Sign out
-    </button>
-  );
-}
-
-function DrawerPrivySignOutButton({ onSignOut }: { onSignOut: () => void }): React.JSX.Element {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { usePrivy } = require("@privy-io/react-auth") as {
-    usePrivy: () => { logout: () => Promise<void> };
-  };
-  const { logout } = usePrivy();
+function DrawerSignOutButton({ onSignOut }: { onSignOut: () => void }): React.JSX.Element {
   const router = useRouter();
 
   async function handleLogout(): Promise<void> {
     onSignOut();
-    const supabase = createSupabaseBrowserClient();
-    if (supabase) {
-      await supabase.auth.signOut();
-    }
-    await logout();
-    resetAnalytics();
-    router.push("/");
-  }
-
-  return (
-    <button className="gla-nav-drawer-action gla-nav-drawer-action-signout" onClick={handleLogout}>
-      Sign out
-    </button>
-  );
-}
-
-function DrawerSimpleSignOutButton({ onSignOut }: { onSignOut: () => void }): React.JSX.Element {
-  const router = useRouter();
-
-  async function handleLogout(): Promise<void> {
-    onSignOut();
-    const supabase = createSupabaseBrowserClient();
-    if (supabase) {
-      await supabase.auth.signOut();
-    }
-    resetAnalytics();
+    await signOut();
     router.push("/");
   }
 
@@ -138,43 +83,22 @@ export function AppNav({
 }: AppNavProps): React.JSX.Element {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [walletOpen, setWalletOpen] = useState(false);
-  const hasPrivy = hasPrivyClientConfig();
   const resolvedIsAdmin = isAdmin ?? profile?.is_admin ?? false;
-  const hasBalance = profile?.balance_usdc !== undefined && profile.balance_usdc !== null;
   const resolvedProfileLabel =
     profileLabel ?? (profile?.username ? `@${profile.username}` : null);
-  const resolvedBalanceLabel = hasBalance ? `$${Number(profile!.balance_usdc).toFixed(2)}` : null;
-  const showUtilityDivider = resolvedIsAdmin || Boolean(resolvedProfileLabel) || hasBalance;
-  const showMobileAccount = Boolean(resolvedProfileLabel) || hasBalance;
-  const mobileAccountValue = resolvedBalanceLabel ?? resolvedProfileLabel ?? "Account";
-  const mobileAccountLabel = hasBalance ? "Wallet" : "Profile";
+  const showUtilityDivider = resolvedIsAdmin || Boolean(resolvedProfileLabel);
 
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
 
-    if (menuOpen || walletOpen) {
+    if (menuOpen) {
       document.body.style.overflow = "hidden";
     }
 
     return () => {
       document.body.style.overflow = originalOverflow;
     };
-  }, [menuOpen, walletOpen]);
-
-  useEffect(() => {
-    function handleOpenWallet(event: Event) {
-      event.preventDefault();
-      setMenuOpen(false);
-      setWalletOpen(true);
-    }
-
-    window.addEventListener(WALLET_OVERLAY_OPEN_EVENT, handleOpenWallet);
-
-    return () => {
-      window.removeEventListener(WALLET_OVERLAY_OPEN_EVENT, handleOpenWallet);
-    };
-  }, []);
+  }, [menuOpen]);
 
   return (
     <>
@@ -227,26 +151,18 @@ export function AppNav({
                   {ADMIN_NAV_ITEM.label}
                 </Link>
               )}
-              {(resolvedProfileLabel || hasBalance) && (
-                <button
-                  type="button"
-                  className="gla-nav-user"
-                  onClick={() => setWalletOpen(true)}
-                  title="Open wallet"
-                  data-testid="nav-wallet"
+              {resolvedProfileLabel && (
+                <Link
+                  href="/profile"
+                  className={`gla-nav-user${pathname && isActivePath(pathname, "/profile") ? " is-active" : ""}`}
+                  title="View profile"
+                  data-testid="nav-profile"
                 >
-                  {resolvedProfileLabel && (
-                    <span className="gla-nav-username">{resolvedProfileLabel}</span>
-                  )}
-                  {hasBalance && (
-                    <span className="gla-nav-balance">
-                      {resolvedBalanceLabel}
-                    </span>
-                  )}
-                </button>
+                  <span className="gla-nav-username">{resolvedProfileLabel}</span>
+                </Link>
               )}
               {showUtilityDivider && <span className="gla-nav-divider" aria-hidden="true" />}
-              {hasPrivy ? <PrivySignOutButton /> : <SimpleSignOutButton />}
+              <SignOutButton />
             </div>
           </div>
 
@@ -265,17 +181,16 @@ export function AppNav({
               </Link>
 
               <div className="gla-nav-mobile-tools">
-                {showMobileAccount && (
-                  <button
-                    type="button"
+                {resolvedProfileLabel && (
+                  <Link
+                    href="/profile"
                     className="gla-nav-mobile-account"
-                    onClick={() => setWalletOpen(true)}
-                    title="Open wallet"
-                    data-testid="nav-wallet-mobile"
+                    title="View profile"
+                    data-testid="nav-profile-mobile"
                   >
-                    <span className="gla-nav-mobile-account-label">{mobileAccountLabel}</span>
-                    <span className="gla-nav-mobile-account-value">{mobileAccountValue}</span>
-                  </button>
+                    <span className="gla-nav-mobile-account-label">Profile</span>
+                    <span className="gla-nav-mobile-account-value">{resolvedProfileLabel}</span>
+                  </Link>
                 )}
                 <button
                   type="button"
@@ -337,7 +252,6 @@ export function AppNav({
                 </h2>
                 <p className="gla-nav-drawer-meta">
                   {resolvedProfileLabel ?? "Race control"}
-                  {resolvedBalanceLabel ? ` · ${resolvedBalanceLabel}` : ""}
                 </p>
               </div>
               <button
@@ -351,17 +265,14 @@ export function AppNav({
             </div>
 
             <div className="gla-nav-drawer-body">
-              {showMobileAccount && (
-                <button
-                  type="button"
-                  className="gla-nav-drawer-action"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    setWalletOpen(true);
-                  }}
+              {resolvedProfileLabel && (
+                <Link
+                  href="/profile"
+                  className={`gla-nav-drawer-action${pathname && isActivePath(pathname, "/profile") ? " is-active" : ""}`}
+                  onClick={() => setMenuOpen(false)}
                 >
-                  Open wallet
-                </button>
+                  Profile
+                </Link>
               )}
               {resolvedIsAdmin && (
                 <Link
@@ -372,59 +283,7 @@ export function AppNav({
                   {ADMIN_NAV_ITEM.label}
                 </Link>
               )}
-              {hasPrivy ? (
-                <DrawerPrivySignOutButton onSignOut={() => setMenuOpen(false)} />
-              ) : (
-                <DrawerSimpleSignOutButton onSignOut={() => setMenuOpen(false)} />
-              )}
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Wallet drawer overlay */}
-      {walletOpen && (
-        <>
-          <div
-            className="gla-wallet-overlay"
-            onClick={() => setWalletOpen(false)}
-            aria-hidden="true"
-          />
-          <div
-            className="gla-wallet-drawer"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="gla-wallet-drawer-title"
-          >
-            <div className="gla-wallet-drawer-head">
-              <div className="gla-wallet-drawer-copy">
-                <p className="gla-wallet-drawer-eyebrow">Wallet Rail</p>
-                <h2 className="gla-wallet-drawer-title" id="gla-wallet-drawer-title">
-                  USDC Ledger
-                </h2>
-                <p className="gla-wallet-drawer-meta">
-                  {resolvedProfileLabel ?? "Gridlock account"}
-                  {resolvedBalanceLabel
-                    ? ` · ${resolvedBalanceLabel} available`
-                    : " · Funding, deposits, and withdrawals"}
-                </p>
-              </div>
-              <button
-                type="button"
-                className="gla-wallet-drawer-close"
-                onClick={() => setWalletOpen(false)}
-                aria-label="Close wallet"
-              >
-                Close
-              </button>
-            </div>
-            <div className="gla-wallet-drawer-body">
-              <iframe
-                src="/wallet?embed=1"
-                className="gla-wallet-iframe"
-                title="Wallet"
-                loading="lazy"
-              />
+              <DrawerSignOutButton onSignOut={() => setMenuOpen(false)} />
             </div>
           </div>
         </>

@@ -6,7 +6,6 @@ import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { buildFallbackRaceTiming, findRaceById } from "@/lib/races";
 import { track } from "@/lib/analytics";
-import { PREDICTION_EDIT_FEE_USDC } from "@/lib/gameRules";
 import { formatCountdown, resolvePredictionWindow } from "@/lib/predictionWindows";
 import { AppNav } from "@/app/components/AppNav";
 
@@ -59,18 +58,14 @@ export default function PredictPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [savedStatus, setSavedStatus] = useState<"draft" | "active" | null>(null);
   const [error, setError] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [sectionIncomplete, setSectionIncomplete] = useState(false);
   const [raceTiming, setRaceTiming] = useState<RaceTiming | null>(null);
-  const [chargedEditFee, setChargedEditFee] = useState(false);
   const [copyingExpert, setCopyingExpert] = useState(false);
   const [expertCopied, setExpertCopied] = useState(false);
   const [myScore, setMyScore] = useState<number | null | "loading">("loading");
-  const [showEditConfirm, setShowEditConfirm] = useState(false);
-  const [pendingSubmitCategory, setPendingSubmitCategory] = useState<PredictionCategory | null>(null);
   const hasTrackedPredictionStart = useRef(false);
 
   const currentCategory = STEPS[step];
@@ -88,17 +83,13 @@ export default function PredictPage() {
     const picks = (answers[q.id] ?? []).filter(Boolean);
     return picks.length >= q.multi_select;
   });
-  const anyLiveEditWindow = qualifyingWindow.paidEdit || raceWindow.paidEdit;
 
   function getTimingCardValue(windowState: typeof qualifyingWindow) {
-    if (windowState.paidEdit) {
-      return formatCountdown(windowState.paidEditClosesAt);
+    if (windowState.locked) {
+      return "Locked";
     }
     if (windowState.lockAt) {
       return formatCountdown(windowState.lockAt);
-    }
-    if (windowState.locked) {
-      return "Locked";
     }
     return "Schedule Soon";
   }
@@ -107,9 +98,6 @@ export default function PredictPage() {
     windowState: typeof qualifyingWindow,
     sessionLabel: "Qualifying" | "GP"
   ) {
-    if (windowState.paidEdit) {
-      return `${sessionLabel} Live Edit`;
-    }
     if (windowState.locked) {
       return `${sessionLabel} Closed`;
     }
@@ -123,7 +111,6 @@ export default function PredictPage() {
     setLoading(true);
     setError("");
     setSaved(false);
-    setChargedEditFee(false);
     setSectionIncomplete(false);
     setQuestions([]);
     setAnswers({});
@@ -391,21 +378,7 @@ export default function PredictPage() {
     }
 
     const submitAnswers = submitCategory ? getAnswersForCategory(submitCategory) : answers;
-    const shouldConfirmPaidEdit =
-      submitCategory === "qualifying"
-        ? qualifyingWindow.paidEdit
-        : submitCategory === "race" || submitCategory === "chaos"
-          ? raceWindow.paidEdit
-          : anyLiveEditWindow;
 
-    if (shouldConfirmPaidEdit && isAuthenticated && !showEditConfirm) {
-      setPendingSubmitCategory(submitCategory ?? null);
-      setShowEditConfirm(true);
-      return;
-    }
-
-    setShowEditConfirm(false);
-    setPendingSubmitCategory(null);
     setSaving(true);
     setError("");
 
@@ -417,17 +390,13 @@ export default function PredictPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to save");
-      const eventName =
-        data.status === "draft"
-          ? "prediction_saved_draft"
-          : isEditing
-            ? "prediction_edit_submitted"
-            : "prediction_submitted";
+      const eventName = isEditing
+        ? "prediction_edit_submitted"
+        : "prediction_submitted";
 
       track(
         eventName,
         {
-          charged_edit_fee: Boolean(data.chargedEditFee),
           race_id: raceId,
           status: data.status,
         },
@@ -436,8 +405,6 @@ export default function PredictPage() {
       if (!submitCategory && allQuestionsComplete) {
         localStorage.removeItem(`picks_${raceId}`);
       }
-      setChargedEditFee(Boolean(data.chargedEditFee));
-      setSavedStatus(data.status === "active" ? "active" : "draft");
       setSaved(true);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Something went wrong";
@@ -508,15 +475,6 @@ export default function PredictPage() {
           <p className="gla-page-sub">
             {race.name} · Round {race.round}
           </p>
-          {savedStatus && (
-            <p
-              className="league-entry-note"
-              data-testid="prediction-status-badge"
-              style={{ marginTop: "0.85rem" }}
-            >
-              Status: {savedStatus === "active" ? "Active" : "Draft"}
-            </p>
-          )}
           {!allQuestionsComplete && (
             <p style={{
               color: "rgba(0, 210, 170, 1)",
@@ -526,12 +484,7 @@ export default function PredictPage() {
               marginInline: "auto",
               lineHeight: 1.5,
             }}>
-              Come back before each lock window to finish the rest of your picks.
-            </p>
-          )}
-          {chargedEditFee && (
-            <p style={{ color: "rgba(255,255,255,0.72)", marginTop: "0.75rem" }}>
-              A ${PREDICTION_EDIT_FEE_USDC} USDC edit fee was charged for this update.
+              Come back before lights out to finish the rest of your picks.
             </p>
           )}
 
@@ -542,7 +495,7 @@ export default function PredictPage() {
                 Next Step
               </p>
               <p style={{ fontSize: "0.95rem", color: "#fff", marginBottom: "1rem" }}>
-                Join a league to compete for the prize pool
+                Join a league to go head-to-head with your friends
               </p>
               <Link href={`/leagues?raceId=${raceId}`} className="gla-race-btn" style={{ display: "block", textAlign: "center" }}>
                 Choose a League &rarr;
@@ -588,7 +541,7 @@ export default function PredictPage() {
 
       {isEditing && (
         <div className="predict-edit-banner">
-          Editing your predictions. During a live edit window, updates cost ${PREDICTION_EDIT_FEE_USDC} USDC.
+          Editing your predictions. Picks stay open until lock — final at the first session.
         </div>
       )}
 
@@ -714,13 +667,13 @@ export default function PredictPage() {
 
         {currentCategory === "qualifying" && (
           <p className="predict-section-note">
-            Qualifying picks lock 10 minutes before qualifying starts. If you already submitted, you can edit for 10 minutes after lights out by paying ${PREDICTION_EDIT_FEE_USDC} USDC.
+            Picks lock 10 minutes before the first session of the weekend. Edit freely until then — after lock they&apos;re final.
           </p>
         )}
 
         {currentCategory === "race" && (
           <p className="predict-section-note">
-            GP and chaos picks lock 10 minutes before the Grand Prix. After the start, live edits stay open for 10 minutes with a ${PREDICTION_EDIT_FEE_USDC} USDC fee.
+            GP and chaos picks lock with the rest of the weekend, 10 minutes before the first session. Final once locked.
           </p>
         )}
 
@@ -728,26 +681,6 @@ export default function PredictPage() {
           <p className="predict-section-warning">
             This section is locked. Your previously saved picks are still visible, but you can&apos;t change them now.
           </p>
-        )}
-
-        {showEditConfirm && (
-          <div className="predict-edit-confirm">
-            <p>This will charge <strong>${PREDICTION_EDIT_FEE_USDC} USDC</strong> from your balance to update your picks during the live edit window.</p>
-            <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
-              <button className="predict-nav-btn primary" onClick={() => handleSubmit(pendingSubmitCategory ?? undefined)}>
-                Confirm &amp; Pay
-              </button>
-              <button
-                className="predict-nav-btn secondary"
-                onClick={() => {
-                  setPendingSubmitCategory(null);
-                  setShowEditConfirm(false);
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
         )}
 
         {error && <p className="predict-error">{error}</p>}
@@ -778,11 +711,9 @@ export default function PredictPage() {
               {saving
                 ? "Saving..."
                 : isAuthenticated
-                ? anyLiveEditWindow
-                  ? `Pay $${PREDICTION_EDIT_FEE_USDC} to Update`
-                  : allQuestionsComplete
-                    ? isEditing ? "Update Predictions" : "Submit Predictions"
-                    : "Save Progress"
+                ? allQuestionsComplete
+                  ? isEditing ? "Update Picks" : "Submit Predictions"
+                  : "Save Progress"
                 : "Continue to Login →"}
             </button>
           ) : (

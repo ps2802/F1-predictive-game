@@ -11,15 +11,13 @@ type League = {
   id: string;
   name: string;
   type: "public" | "private" | "global";
-  entry_fee_usdc: number;
   member_count: number;
   max_users: number;
   invite_code: string;
   is_member: boolean;
-  prize_pool: number;
 };
 
-type SortOption = "newest" | "members" | "prize";
+type SortOption = "newest" | "members";
 
 export default function LeaguesPage() {
   const router = useRouter();
@@ -125,7 +123,6 @@ export default function LeaguesPage() {
     .filter((l) => l.name.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => {
       if (sortBy === "members") return b.member_count - a.member_count;
-      if (sortBy === "prize") return b.prize_pool - a.prize_pool;
       return 0; // "newest" — API already orders by created_at desc
     });
 
@@ -199,7 +196,7 @@ export default function LeaguesPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              {(["newest", "members", "prize"] as SortOption[]).map((opt) => (
+              {(["newest", "members"] as SortOption[]).map((opt) => (
                 <button
                   key={opt}
                   onClick={() => setSortBy(opt)}
@@ -214,7 +211,7 @@ export default function LeaguesPage() {
                     fontWeight: sortBy === opt ? 700 : 400,
                   }}
                 >
-                  {opt === "newest" ? "Newest" : opt === "members" ? "Most Members" : "Prize Pool"}
+                  {opt === "newest" ? "Newest" : "Most Members"}
                 </button>
               ))}
             </div>
@@ -245,12 +242,6 @@ function LeagueCard({ league, isMember }: { league: League; isMember: boolean })
       </div>
       <div className="league-card-stats">
         <span>{league.member_count}/{league.max_users} members</span>
-        {league.entry_fee_usdc > 0 && (
-          <span className="league-card-fee">${league.entry_fee_usdc} USDC</span>
-        )}
-        {league.prize_pool > 0 && (
-          <span className="league-card-pool">🏆 ${league.prize_pool}</span>
-        )}
       </div>
       {isMember && <span className="league-card-member-badge">✓ Joined</span>}
     </Link>

@@ -36,16 +36,10 @@ type DashboardScoreRow = {
   total_score: number | null;
 };
 
-type DashboardTransactionRow = {
-  amount: number | string | null;
-};
-
 type DashboardLeagueRow = {
   id: string;
   race_id: string | null;
   name: string;
-  entry_fee_usdc: number | null;
-  prize_pool: number | null;
   member_count: number | null;
   max_users: number | null;
 };
@@ -142,11 +136,10 @@ export async function GET() {
     { data: scoreRows, error: scoresError },
     { data: memberships, error: membershipsError },
     { count: leaguesCreatedCount, error: leaguesCreatedError },
-    { data: entryTransactions, error: entryTransactionsError },
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("username, wallet_address, balance_usdc, is_admin")
+      .select("username, is_admin")
       .eq("id", user.id)
       .single(),
     supabase
@@ -168,11 +161,6 @@ export async function GET() {
       .from("leagues")
       .select("id", { count: "exact", head: true })
       .eq("creator_id", user.id),
-    supabase
-      .from("transactions")
-      .select("amount")
-      .eq("user_id", user.id)
-      .eq("type", "entry_fee"),
   ]);
 
   const firstError =
@@ -181,8 +169,7 @@ export async function GET() {
     predictionsError ??
     scoresError ??
     membershipsError ??
-    leaguesCreatedError ??
-    entryTransactionsError;
+    leaguesCreatedError;
 
   if (firstError) {
     return NextResponse.json({ error: firstError.message }, { status: 500 });
@@ -231,10 +218,6 @@ export async function GET() {
   );
   const seasonScore = Number(totalsByUser.get(user.id) ?? 0);
   let globalRank = ranksByUser.get(user.id) ?? null;
-  const totalStakedUsdc = ((entryTransactions ?? []) as DashboardTransactionRow[]).reduce(
-    (sum, transaction) => sum + Math.abs(Number(transaction.amount ?? 0)),
-    0
-  );
 
   const leagueIds = (memberships ?? []).map((membership) => membership.league_id);
   let leaguePreview: DashboardLeaguePreviewItem[] = [];
@@ -246,7 +229,7 @@ export async function GET() {
     ] = await Promise.all([
       supabase
         .from("leagues")
-        .select("id, race_id, name, entry_fee_usdc, prize_pool, member_count, max_users")
+        .select("id, race_id, name, member_count, max_users")
         .in("id", leagueIds),
       // Fetch member user_ids for per-league rank context (scores come from totalsByUser).
       // Uses admin client to read all league members regardless of RLS.
@@ -302,8 +285,6 @@ export async function GET() {
           name: league.name,
           memberCount: Number(league.member_count ?? 0),
           maxUsers: Number(league.max_users ?? 0),
-          prizePool: Number(league.prize_pool ?? 0),
-          entryFeeUsdc: Number(league.entry_fee_usdc ?? 0),
           raceName: linkedRace?.name ?? null,
           raceRound: linkedRace?.round ?? null,
           userRank,
@@ -319,10 +300,6 @@ export async function GET() {
 
         if (aIndex !== bIndex) {
           return aIndex - bIndex;
-        }
-
-        if (b.prizePool !== a.prizePool) {
-          return b.prizePool - a.prizePool;
         }
 
         return a.name.localeCompare(b.name);
@@ -386,8 +363,6 @@ export async function GET() {
   const viewModel: DashboardViewModel = {
     profile: {
       username: profile?.username ?? null,
-      walletAddress: profile?.wallet_address ?? null,
-      balanceUsdc: profile?.balance_usdc ?? null,
       isAdmin: profile?.is_admin === true,
     },
     nextRace:
@@ -403,8 +378,6 @@ export async function GET() {
       seasonScore,
       leaguesJoined: leagueIds.length,
       leaguesCreated: leaguesCreatedCount ?? 0,
-      totalStakedUsdc,
-      walletBalance: profile?.balance_usdc ?? null,
     },
     leaderboardPreview: {
       leaders: leaderboardLeaders,

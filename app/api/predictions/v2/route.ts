@@ -4,7 +4,6 @@ import { validatePredictionAnswers } from "@/lib/predictions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
-import { PREDICTION_EDIT_FEE_USDC } from "@/lib/gameRules";
 import { buildFallbackRaceRecord } from "@/lib/races";
 import { resolvePredictionWindow } from "@/lib/predictionWindows";
 import { trackServer } from "@/lib/analytics.server";
@@ -33,7 +32,7 @@ async function ensureRaceRecord(
 ) {
   const { data: existingRace } = await supabase
     .from("races")
-    .select("qualifying_starts_at, race_starts_at, quali_locked, race_locked")
+    .select("lock_time_utc, qualifying_starts_at, race_starts_at, quali_locked, race_locked")
     .eq("id", raceId)
     .maybeSingle();
 
@@ -46,9 +45,14 @@ async function ensureRaceRecord(
     return null;
   }
 
+  // First competitive session anchors the single weekend lock.
+  const fallbackLock =
+    fallbackRace.qualifying_starts_at ?? fallbackRace.race_starts_at ?? null;
+
   const admin = createSupabaseAdminClient();
   if (!admin) {
     return {
+      lock_time_utc: fallbackLock,
       qualifying_starts_at: fallbackRace.qualifying_starts_at,
       race_starts_at: fallbackRace.race_starts_at,
       quali_locked: fallbackRace.quali_locked,
@@ -64,6 +68,7 @@ async function ensureRaceRecord(
   }
 
   return {
+    lock_time_utc: fallbackLock,
     qualifying_starts_at: fallbackRace.qualifying_starts_at,
     race_starts_at: fallbackRace.race_starts_at,
     quali_locked: fallbackRace.quali_locked,
@@ -95,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     const { raceId, answers } = parsed.data;
 
-    // Check race timing windows.
+    // Check race timing window (single lock at the first competitive session).
     const race = await ensureRaceRecord(raceId, supabase);
 
     if (!race)
@@ -119,8 +124,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid question IDs." }, { status: 400 });
 
     const questionsById = new Map((allRaceQuestions ?? []).map((question) => [question.id, question]));
+
+    // One unified lock covers every category. Both sessions share the anchor.
     const qualifyingWindow = resolvePredictionWindow(race, "qualifying");
     const raceWindow = resolvePredictionWindow(race, "race");
+
+    const windowForCategory = (category: string | null | undefined) =>
+      category === "qualifying" ? qualifyingWindow : raceWindow;
 
     const touchedSessions = new Set<"qualifying" | "race">();
     for (const questionId of questionIds) {
@@ -133,12 +143,7 @@ export async function POST(request: NextRequest) {
       const windowState = session === "qualifying" ? qualifyingWindow : raceWindow;
       if (!windowState.editable) {
         return NextResponse.json(
-          {
-            error:
-              session === "qualifying"
-                ? "Qualifying predictions are locked for this race."
-                : "Grand Prix predictions are locked for this race.",
-          },
+          { error: "Predictions are locked for this race." },
           { status: 403 }
         );
       }
@@ -155,7 +160,7 @@ export async function POST(request: NextRequest) {
 
     const { data: existingPrediction, error: existingPredictionErr } = await supabase
       .from("predictions")
-      .select("id, edit_count, status")
+      .select("id, status")
       .eq("user_id", user.id)
       .eq("race_id", raceId)
       .maybeSingle();
@@ -220,59 +225,27 @@ export async function POST(request: NextRequest) {
     }
 
     if (changedQuestionIds.size === 0) {
-    // No changes — return the actual stored status so the client stays in sync
-      const existingStatus = existingPrediction?.status ?? "draft";
       return NextResponse.json({
         success: true,
         predictionId: existingPrediction?.id ?? null,
-        status: existingStatus,
-        chargedEditFee: false,
-        editFeeUsdc: 0,
+        status: existingPrediction?.status ?? "active",
       });
     }
 
-    let shouldChargeEditFee = false;
+    // Re-check the lock for each changed question's session — picks are final
+    // once locked, no exceptions (Gridlock is free; there is no paid edit).
     for (const questionId of changedQuestionIds) {
       const question = questionsById.get(questionId);
       if (!question) continue;
-      const windowState =
-        question.category === "qualifying" ? qualifyingWindow : raceWindow;
-
-      if (!windowState.editable) {
+      if (!windowForCategory(question.category).editable) {
         return NextResponse.json(
-          {
-            error:
-              question.category === "qualifying"
-                ? "Qualifying predictions are locked for this race."
-                : "Grand Prix predictions are locked for this race.",
-          },
+          { error: "Predictions are locked for this race." },
           { status: 403 }
         );
       }
-
-      if (windowState.paidEdit) {
-        if (!existingPrediction?.id) {
-          return NextResponse.json(
-            {
-              error:
-                question.category === "qualifying"
-                  ? "You must submit qualifying picks before the lock window to use the paid edit window."
-                  : "You must submit Grand Prix picks before the lock window to use the paid edit window.",
-            },
-            { status: 403 }
-          );
-        }
-        shouldChargeEditFee = true;
-      }
     }
 
-  // New predictions are draft until the user joins a league (pays entry).
-  // Existing active predictions stay active. Paid-edit-window updates also stay active.
-    const isUpdatingExistingActive =
-      existingPrediction?.id != null && existingPrediction.status === "active";
-    const newPredictionStatus: "active" | "draft" =
-      isUpdatingExistingActive || shouldChargeEditFee ? "active" : "draft";
-
+    // Every submitted sheet is active immediately — there is no payment gate.
     const { data: submissionResult, error: submissionErr } = await supabase.rpc(
       "record_prediction_submission",
       {
@@ -280,19 +253,12 @@ export async function POST(request: NextRequest) {
         p_race_id: raceId,
         p_answers_json: mergedAnswers,
         p_answer_rows: validation.answerRows,
-        p_status: newPredictionStatus,
-        p_increment_edit_count: shouldChargeEditFee,
-        p_edit_fee_usdc: shouldChargeEditFee ? PREDICTION_EDIT_FEE_USDC : 0,
-        p_edit_description: shouldChargeEditFee
-          ? "Prediction edit fee during live edit window"
-          : "Prediction submission",
+        p_status: "active",
       }
     );
 
     if (submissionErr) {
-      const status =
-        submissionErr.message.includes("Insufficient balance") ? 402 : 400;
-      return NextResponse.json({ error: submissionErr.message }, { status });
+      return NextResponse.json({ error: submissionErr.message }, { status: 400 });
     }
 
     const resultRow = Array.isArray(submissionResult) ? submissionResult[0] : submissionResult;
@@ -300,18 +266,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to save prediction." }, { status: 500 });
     }
 
-    const analyticsEvent =
-      newPredictionStatus === "draft"
-        ? "prediction_saved_draft"
-        : shouldChargeEditFee || isUpdatingExistingActive
-          ? "prediction_edit_submitted"
-          : "prediction_submitted";
+    const analyticsEvent = existingPrediction?.id
+      ? "prediction_edit_submitted"
+      : "prediction_submitted";
 
     await trackServer(
       analyticsEvent,
       {
-        charged_edit_fee: shouldChargeEditFee,
-        prediction_status: newPredictionStatus,
+        prediction_status: "active",
         race_id: raceId,
       },
       user.id
@@ -320,9 +282,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       predictionId: resultRow.prediction_id,
-      status: newPredictionStatus,
-      chargedEditFee: shouldChargeEditFee,
-      editFeeUsdc: shouldChargeEditFee ? PREDICTION_EDIT_FEE_USDC : 0,
+      status: "active",
     });
   } catch (error) {
     console.error("[Gridlock] prediction submit crashed:", error);

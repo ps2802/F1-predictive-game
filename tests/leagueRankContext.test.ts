@@ -12,8 +12,6 @@ const base: DashboardLeaguePreviewItem = {
   raceId: null,
   memberCount: 4,
   maxUsers: 10,
-  prizePool: 0,
-  entryFeeUsdc: 0,
 };
 
 describe("leagueSubline", () => {

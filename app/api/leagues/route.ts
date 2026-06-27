@@ -1,37 +1,34 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
-import {
-  createLeagueWithoutRpc,
-  shouldFallbackLeagueCreate,
-} from "@/lib/leagueMutations";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-const PayoutTier = z.object({
-  place: z.number().int().min(1).max(10),
-  percent: z.number().min(0).max(100),
-});
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
 const CreateLeagueBody = z.object({
-  race_id: z.string().min(1, "Race is required."),
-  name: z.string().min(1).max(60),
+  name: z.string().trim().min(1, "League name is required.").max(60),
+  description: z.string().trim().max(280).optional(),
   type: z.enum(["public", "private"]).default("private"),
-  minimum_stake_usdc: z.number().min(MINIMUM_LEAGUE_STAKE_USDC).max(1000),
-  creator_stake_usdc: z.number().min(MINIMUM_LEAGUE_STAKE_USDC).max(1000),
+  // Leagues are season-wide by default; an optional race scopes to one round.
+  race_id: z.string().min(1).nullable().optional(),
   max_users: z.number().int().min(2).max(10000).default(1000),
-  payout_model: z.enum(["manual", "skill_weighted"]).default("manual"),
-  payout_config: z.object({ tiers: z.array(PayoutTier) }).nullable().optional(),
 });
+
+// Unambiguous uppercase alphabet (no 0/O/1/I) for human-shareable codes.
+const INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+function generateInviteCode(length = 8): string {
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += INVITE_ALPHABET[Math.floor(Math.random() * INVITE_ALPHABET.length)];
+  }
+  return code;
+}
 
 async function getAuthenticatedUser() {
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
     return {
-      error: NextResponse.json(
-        { error: "Supabase env vars missing." },
-        { status: 500 }
-      ),
+      error: NextResponse.json({ error: "Supabase env vars missing." }, { status: 500 }),
       supabase: null,
       user: null,
     };
@@ -105,8 +102,13 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request.headers);
+  if (await isRateLimited(`leagues-create:${ip}`, 10, 60 * 1000)) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   const auth = await getAuthenticatedUser();
-  if (auth.error || !auth.supabase || !auth.user) {
+  if (auth.error || !auth.user) {
     return auth.error;
   }
 
@@ -118,121 +120,65 @@ export async function POST(request: Request) {
     );
   }
 
-  const {
-    race_id,
-    name,
-    type,
-    minimum_stake_usdc,
-    creator_stake_usdc,
-    max_users,
-    payout_model,
-    payout_config,
-  } = parsed.data;
-
-  if (creator_stake_usdc < minimum_stake_usdc) {
-    return NextResponse.json(
-      { error: "Creator stake must be at least the league minimum stake." },
-      { status: 400 }
-    );
-  }
+  const { name, description, type, race_id, max_users } = parsed.data;
 
   const admin = createSupabaseAdminClient();
-
-  let leagueId: string;
-  let chargedAmountUsdc: number;
-
-  const { data: createdLeagueResult, error: createLeagueError } = await auth.supabase.rpc(
-    "create_league_with_stake",
-    {
-      p_creator_id: auth.user.id,
-      p_race_id: race_id,
-      p_name: name.trim(),
-      p_type: type,
-      p_max_users: max_users,
-      p_min_stake_usdc: minimum_stake_usdc,
-      p_creator_stake_usdc: creator_stake_usdc,
-      p_payout_model: payout_model,
-      p_payout_config: payout_config ?? null,
-    }
-  );
-
-  if (createLeagueError) {
-    if (!shouldFallbackLeagueCreate(createLeagueError.message) || !admin) {
-      const status =
-        createLeagueError.message.includes("Insufficient balance") ? 402 : 400;
-      return NextResponse.json({ error: createLeagueError.message }, { status });
-    }
-
-    try {
-      const fallback = await createLeagueWithoutRpc(admin, {
-        creatorId: auth.user.id,
-        raceId: race_id,
-        name,
-        type,
-        minimumStakeUsdc: minimum_stake_usdc,
-        creatorStakeUsdc: creator_stake_usdc,
-        maxUsers: max_users,
-        payoutModel: payout_model,
-        payoutConfig: payout_config ?? null,
-      });
-
-      leagueId = fallback.leagueId;
-      chargedAmountUsdc = fallback.chargedAmountUsdc;
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to create league.";
-      const status =
-        message.includes("Insufficient balance") ? 402 : 400;
-      return NextResponse.json({ error: message }, { status });
-    }
-  } else {
-    const resultRow = Array.isArray(createdLeagueResult)
-      ? createdLeagueResult[0]
-      : createdLeagueResult;
-
-    if (!resultRow?.league_id) {
-      return NextResponse.json(
-        { error: "League could not be created." },
-        { status: 500 }
-      );
-    }
-
-    leagueId = resultRow.league_id;
-    chargedAmountUsdc = Number(
-      resultRow.charged_amount_usdc ?? creator_stake_usdc
-    );
+  if (!admin) {
+    return NextResponse.json({ error: "Service unavailable." }, { status: 500 });
   }
 
-  const { data: league, error: leagueError } = await auth.supabase
-    .from("leagues")
-    .select("*")
-    .eq("id", leagueId)
-    .single();
+  // Insert the league, retrying on invite-code collision (UNIQUE(invite_code)).
+  let league: { id: string } | null = null;
+  let lastError: string | null = null;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const inviteCode = generateInviteCode();
+    const { data, error } = await admin
+      .from("leagues")
+      .insert({
+        creator_id: auth.user.id,
+        name,
+        description: description ?? null,
+        type,
+        race_id: race_id ?? null,
+        max_users,
+        invite_code: inviteCode,
+        member_count: 1,
+        is_active: true,
+      })
+      .select("*")
+      .single();
 
-  if (leagueError || !league) {
+    if (!error && data) {
+      league = data;
+      break;
+    }
+    lastError = error?.message ?? "League could not be created.";
+    // 23505 = unique_violation (invite_code clash) → retry with a fresh code.
+    if (error?.code !== "23505") {
+      return NextResponse.json({ error: lastError }, { status: 400 });
+    }
+  }
+
+  if (!league) {
     return NextResponse.json(
-      { error: leagueError?.message ?? "League created, but could not be loaded." },
+      { error: lastError ?? "Could not generate a unique invite code. Try again." },
       { status: 500 }
     );
   }
 
-  const { data: activatedCount, error: activateErr } = await auth.supabase.rpc(
-    "activate_user_predictions",
-    { p_user_id: auth.user.id }
-  );
+  const { error: memberError } = await admin
+    .from("league_members")
+    .insert({ league_id: league.id, user_id: auth.user.id });
 
-  return NextResponse.json(
-    {
-      league,
-      stakeAmountUsdc: chargedAmountUsdc,
-      activatedCount: activatedCount ?? 0,
-      ...(activateErr
-        ? {
-            activationWarning:
-              "League created, but your draft predictions could not be activated automatically.",
-          }
-        : {}),
-    },
-    { status: 201 }
-  );
+  if (memberError) {
+    // Roll back the orphaned league so the creator isn't locked out of a league
+    // they can't join.
+    await admin.from("leagues").delete().eq("id", league.id);
+    return NextResponse.json(
+      { error: "League created, but you could not be added as a member. Please try again." },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({ league }, { status: 201 });
 }

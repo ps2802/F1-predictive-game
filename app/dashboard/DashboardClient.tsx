@@ -4,12 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppNav } from "@/app/components/AppNav";
-import { PrivyAddMoneyButton } from "@/app/components/PrivyAddMoneyButton";
-import { WalletOverlayButton } from "@/app/components/walletOverlay";
 import { track } from "@/lib/analytics";
 import {
   buildDashboardSeasonMarkers,
-  formatDashboardCurrency,
   formatDashboardDateTime,
   formatDashboardRaceDate,
   formatDashboardRank,
@@ -29,7 +26,6 @@ import {
   type DashboardRaceRow,
   type DashboardViewModel,
 } from "@/lib/dashboard";
-import { hasPrivyClientConfig } from "@/lib/privy";
 import styles from "@/app/dashboard/DashboardPage.module.css";
 
 /* ─── CSS tokens (inline, matches preview-b palette) ─── */
@@ -134,7 +130,6 @@ export default function DashboardClient() {
       <AppNav
         profile={{
           username: vm.profile.username,
-          balance_usdc: vm.profile.balanceUsdc,
           is_admin: vm.profile.isAdmin,
         }}
       />
@@ -142,7 +137,7 @@ export default function DashboardClient() {
       {/* narrow viewport matches preview-b */}
       <div className={`gla-shell-container ${styles.viewport}`} style={{ padding: "36px 0 100px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <DashboardSummaryBand metrics={vm.metrics} walletAddress={vm.profile.walletAddress} />
+          <DashboardSummaryBand metrics={vm.metrics} />
 
           {/* ① Hero — next race */}
           <HeroCard race={vm.nextRace} nowMs={countdownNow} draftCount={vm.draftCount} />
@@ -177,21 +172,23 @@ export default function DashboardClient() {
 
 function DashboardSummaryBand({
   metrics,
-  walletAddress,
 }: {
   metrics: DashboardViewModel["metrics"];
-  walletAddress: DashboardViewModel["profile"]["walletAddress"];
 }) {
   const joinedLabel =
     metrics.leaguesJoined === 1 ? "League joined" : "Leagues joined";
   const createdLabel =
     metrics.leaguesCreated === 1 ? "1 created" : `${metrics.leaguesCreated} created`;
-  const exposureContext =
+  const rankDetail =
     metrics.globalRank !== null
-      ? `${formatDashboardRank(metrics.globalRank)} on the global board`
-      : metrics.seasonScore > 0
-        ? `${formatDashboardScore(metrics.seasonScore)} pts on the season`
-        : "Build your edge before the next lock";
+      ? metrics.globalRank === 1
+        ? "Top of the board — defend it"
+        : "Climb the global board"
+      : "Score a race to get ranked";
+  const scoreDetail =
+    metrics.seasonScore > 0
+      ? "Points banked this season"
+      : "Lock a prediction to get on the board";
 
   return (
     <section
@@ -210,13 +207,19 @@ function DashboardSummaryBand({
         accent={TEAL}
       />
       <SummaryMetricCard
-        eyebrow="Exposure"
-        value={formatDashboardCurrency(metrics.totalStakedUsdc)}
-        title="Amount staked"
-        detail={exposureContext}
+        eyebrow="Global rank"
+        value={formatDashboardRank(metrics.globalRank)}
+        title="Where you stand"
+        detail={rankDetail}
         accent={R}
       />
-      <FundingActionCard walletBalance={metrics.walletBalance} walletAddress={walletAddress} />
+      <SummaryMetricCard
+        eyebrow="Season"
+        value={formatDashboardScore(metrics.seasonScore)}
+        title="Season score"
+        detail={scoreDetail}
+        accent={TEAL}
+      />
     </section>
   );
 }
@@ -280,123 +283,6 @@ function SummaryMetricCard({
     </div>
   );
 }
-
-function FundingActionCard({
-  walletBalance,
-  walletAddress,
-}: {
-  walletBalance: DashboardViewModel["metrics"]["walletBalance"];
-  walletAddress: DashboardViewModel["profile"]["walletAddress"];
-}) {
-  const hasPrivy = hasPrivyClientConfig();
-
-  return (
-    <div
-      style={{
-        position: "relative",
-        overflow: "hidden",
-        minHeight: "132px",
-        padding: "18px 18px 16px",
-        border: `1px solid rgba(225,6,0,0.24)`,
-        background:
-          "linear-gradient(135deg, rgba(225,6,0,0.12) 0%, rgba(255,255,255,0.02) 100%)",
-      }}
-    >
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          inset: "0 auto auto 0",
-          width: "100%",
-          height: "1px",
-          background: "linear-gradient(90deg, #E10600 0%, rgba(255,255,255,0) 85%)",
-        }}
-      />
-      <p style={{ ...sectionLabel, color: "rgba(255,255,255,0.58)", margin: 0 }}>Wallet rail</p>
-      <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "8px" }}>
-        <span
-          style={{
-            fontSize: "24px",
-            fontWeight: 900,
-            letterSpacing: "0.01em",
-            textTransform: "uppercase",
-            color: "#fff",
-          }}
-        >
-          Add money
-        </span>
-        <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>
-          Open your embedded wallet funding flow and top up before the next league stake.
-        </span>
-      </div>
-
-      <div
-        style={{
-          marginTop: "16px",
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "space-between",
-          gap: "12px",
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <span
-            style={{ fontSize: "10px", color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.18em" }}
-            title="Your current USDC wallet balance available for league entries"
-          >
-            Wallet balance
-          </span>
-          <span
-            style={{
-              fontSize: "clamp(28px,3vw,36px)",
-              fontWeight: 900,
-              letterSpacing: "-0.02em",
-              lineHeight: 0.96,
-              color: "#fff",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {formatDashboardCurrency(walletBalance)}
-          </span>
-        </div>
-        {hasPrivy ? (
-          <PrivyAddMoneyButton style={summaryCtaButton} walletAddress={walletAddress} />
-        ) : (
-          <WalletFallbackLink />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function WalletFallbackLink() {
-  return (
-    <WalletOverlayButton style={summaryCtaButton}>
-      Add money
-    </WalletOverlayButton>
-  );
-}
-
-const summaryCtaButton: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minWidth: "160px",
-  height: "46px",
-  padding: "0 22px",
-  border: "1px solid rgba(225,6,0,0.45)",
-  background: R,
-  boxShadow: "0 10px 24px rgba(225,6,0,0.22)",
-  color: "#fff",
-  cursor: "pointer",
-  fontFamily: "inherit",
-  fontSize: "12px",
-  fontWeight: 900,
-  letterSpacing: "0.16em",
-  textDecoration: "none",
-  textTransform: "uppercase",
-};
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /* Hero card                                                                    */
@@ -586,18 +472,19 @@ function ActionStrip({
 }) {
   const tiles = [
     {
-      href: "/wallet",
-      label: formatDashboardCurrency(metrics.walletBalance),
+      href: "/predict",
+      label: nextRace ? "Lock Your Podium" : "Review Your Sheets",
       labelTeal: true,
-      sub: `${formatDashboardCurrency(metrics.walletBalance)} in wallet · Deposit USDC`,
+      sub: nextRace
+        ? "Call P1, P2, P3 before qualifying locks"
+        : "Revisit your predictions and results",
       arrowTeal: true,
-      tooltip: "Add USDC to your wallet to fund league entry fees and prize pools",
     },
     {
       href: "/leagues/create",
       label: "Create League",
       labelTeal: false,
-      sub: "Set rules, entry fee, invite friends",
+      sub: "Set the rules, invite your friends, settle it on track",
       arrowTeal: false,
     },
     {
@@ -605,7 +492,7 @@ function ActionStrip({
       label: "Global Standings",
       labelTeal: false,
       sub: metrics.globalRank
-        ? `You're #${formatDashboardRank(metrics.globalRank)} · ${formatDashboardScore(metrics.seasonScore)} pts this season`
+        ? `You're ${formatDashboardRank(metrics.globalRank)} · ${formatDashboardScore(metrics.seasonScore)} pts this season`
         : nextRace
           ? `Score a race to rank · ${formatDashboardScore(metrics.seasonScore)} pts`
           : "Check the final standings",
@@ -631,8 +518,9 @@ function ActionStrip({
           textAlign: "left",
           width: "100%",
         };
-        const tileContent = (
-          <>
+
+        return (
+          <Link key={t.href} href={t.href} style={tileStyle}>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <span style={{
                 fontSize: "clamp(18px,2vw,22px)",
@@ -656,25 +544,6 @@ function ActionStrip({
             >
               →
             </span>
-          </>
-        );
-
-        return t.href === "/wallet" ? (
-          <WalletOverlayButton
-            key={t.href}
-            title={"tooltip" in t ? t.tooltip : undefined}
-            style={tileStyle}
-          >
-            {tileContent}
-          </WalletOverlayButton>
-        ) : (
-          <Link
-            key={t.href}
-            href={t.href}
-            title={"tooltip" in t ? t.tooltip : undefined}
-            style={tileStyle}
-          >
-            {tileContent}
           </Link>
         );
       })}
@@ -721,7 +590,7 @@ function MyLeaguesSection({ leagues }: { leagues: DashboardLeaguePreviewItem[] }
       ) : (
         leagues.map((league) => (
           <Link key={league.id} href={`/leagues/${league.id}`} style={{
-            display: "grid", gridTemplateColumns: "1fr auto auto",
+            display: "grid", gridTemplateColumns: "1fr auto",
             alignItems: "center", gap: "16px",
             padding: "16px 20px",
             borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -733,11 +602,6 @@ function MyLeaguesSection({ leagues }: { leagues: DashboardLeaguePreviewItem[] }
                 {leagueSubline(league)}
               </div>
             </div>
-            {league.prizePool > 0 && (
-              <span style={{ fontSize: "13px", fontWeight: 900, color: TEAL, letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>
-                {formatDashboardCurrency(league.prizePool)}
-              </span>
-            )}
             <span style={{
               display: "inline-flex", alignItems: "center", height: "28px", padding: "0 12px",
               border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.07)",

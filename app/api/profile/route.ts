@@ -27,7 +27,7 @@ export async function GET() {
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, username, avatar_url, balance_usdc, is_admin, created_at, wallet_address")
+      .select("id, username, avatar_url, is_admin, created_at")
       .eq("id", user.id)
       .single(),
     supabase

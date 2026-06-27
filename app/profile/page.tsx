@@ -12,11 +12,9 @@ type Profile = {
   id: string;
   username: string | null;
   avatar_url: string | null;
-  balance_usdc: number;
   is_admin: boolean;
   email: string;
   created_at: string;
-  wallet_address: string | null;
 };
 
 type RaceScore = {
@@ -148,11 +146,6 @@ export default function ProfilePage() {
             <span className="profile-stat-num">{predictionsCount}</span>
             <span className="profile-stat-lbl">Races Predicted</span>
           </div>
-          <div className="profile-stat-divider" />
-          <div className="profile-stat-block">
-            <span className="profile-stat-num">${Number(profile?.balance_usdc ?? 0).toFixed(2)}</span>
-            <span className="profile-stat-lbl">USDC Balance [Beta]</span>
-          </div>
         </div>
 
         {/* Identity card */}
@@ -191,17 +184,6 @@ export default function ProfilePage() {
               <span className="profile-field-note">Managed by your sign-in provider — cannot be changed here.</span>
             </div>
           </div>
-
-          {/* Wallet address */}
-          {profile?.wallet_address && (
-            <div className="profile-field-group">
-              <label className="profile-field-label">Wallet Address</label>
-              <div className="profile-field-static profile-wallet-addr">
-                <span className="profile-wallet-text">{profile.wallet_address}</span>
-                <span className="profile-field-note">Embedded Solana wallet (Privy)</span>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Race scores history */}

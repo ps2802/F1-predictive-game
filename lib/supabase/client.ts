@@ -8,13 +8,8 @@ export function createSupabaseBrowserClient() {
     return null;
   }
 
-  // flowType: 'implicit' is required for the Privy → Supabase session bridge.
-  // The bridge calls admin.generateLink() server-side and then verifyOtp() on
-  // the client. With PKCE (the default in @supabase/ssr), verifyOtp() fails
-  // because no PKCE code_verifier was stored by the client — it was never
-  // part of a client-initiated sign-in flow. Implicit flow bypasses PKCE,
-  // which is safe here because Privy handles the primary identity layer.
-  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
-    auth: { flowType: "implicit" },
-  });
+  // Default flow is PKCE (the @supabase/ssr default), which is what Google
+  // OAuth needs: signInWithOAuth() stores a code_verifier cookie that the
+  // /auth/callback route reads via exchangeCodeForSession().
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }

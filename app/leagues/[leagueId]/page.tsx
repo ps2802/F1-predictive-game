@@ -13,18 +13,10 @@ type League = {
   name: string;
   type: string;
   invite_code: string;
-  entry_fee_usdc: number;
-  prize_pool: number;
   member_count: number;
   max_users: number;
   creator_id: string;
-  payout_model: string;
-  payout_config: PayoutConfig | null;
 };
-
-interface PayoutConfig {
-  tiers?: { place: number; percent: number }[];
-}
 
 type MemberScore = {
   user_id: string;
@@ -39,17 +31,7 @@ type NavProfile = {
   is_admin: boolean;
 };
 
-type Membership = {
-  stake_amount_usdc: number;
-};
-
 type ActiveTab = "leaderboard" | "predictions" | "races";
-
-const DEFAULT_PAYOUT_TIERS = [
-  { place: 1, percent: 50 },
-  { place: 2, percent: 30 },
-  { place: 3, percent: 20 },
-];
 
 function getRaceCountdown(raceId: string | null): string {
   if (!raceId) return "TBD";
@@ -64,23 +46,14 @@ function getRaceCountdown(raceId: string | null): string {
   return `${hours}h ${mins}m`;
 }
 
-function getNextOpenRace() {
+function getNextOpenRace(): (typeof races)[number] | null {
   const now = new Date();
   return races.find(
     (race) => race.status === "upcoming" && new Date(race.date) > now
   ) ?? races.find((race) => race.status === "upcoming") ?? null;
 }
 
-function hasMissingStakeColumn(message: string | undefined): boolean {
-  if (!message) return false;
-  return (
-    /Could not find the 'stake_amount_usdc' column of 'league_members'/i.test(message) ||
-    /column\s+league_members\.stake_amount_usdc\s+does not exist/i.test(message) ||
-    /column\s+"stake_amount_usdc"\s+of relation\s+"league_members"\s+does not exist/i.test(message)
-  );
-}
-
-export default function LeaguePage() {
+export default function LeaguePage(): React.ReactElement | null {
   const params = useParams();
   const router = useRouter();
   const leagueId = params?.leagueId as string;
@@ -88,12 +61,9 @@ export default function LeaguePage() {
   const [league, setLeague] = useState<League | null>(null);
   const [members, setMembers] = useState<MemberScore[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [membership, setMembership] = useState<Membership | null>(null);
-  const [joinStake, setJoinStake] = useState("5");
+  const [isMember, setIsMember] = useState(false);
   const [joining, setJoining] = useState(false);
-  const [addingStake, setAddingStake] = useState(false);
   const [joinError, setJoinError] = useState("");
-  const [stakeSuccess, setStakeSuccess] = useState("");
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [countdown, setCountdown] = useState("TBD");
@@ -110,7 +80,7 @@ export default function LeaguePage() {
   }, [league?.race_id]);
 
   useEffect(() => {
-    async function load() {
+    async function load(): Promise<void> {
       const supabase = createSupabaseBrowserClient();
       if (!supabase) return;
 
@@ -135,53 +105,22 @@ export default function LeaguePage() {
 
       if (!leagueData) { router.push("/leagues"); return; }
       setLeague(leagueData);
-      setJoinStake(String(Number(leagueData.entry_fee_usdc ?? 5)));
       const nextRace = leagueData.race_id
         ? races.find((race) => race.id === leagueData.race_id) ?? null
         : getNextOpenRace();
       setCountdown(getRaceCountdown(nextRace?.id ?? null));
 
-      let membershipResult = await supabase
+      const { data: membershipData } = await supabase
         .from("league_members")
-        .select("id, stake_amount_usdc")
+        .select("id")
         .eq("league_id", leagueId)
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (membershipResult.error && hasMissingStakeColumn(membershipResult.error.message)) {
-        membershipResult = await supabase
-          .from("league_members")
-          .select("id")
-          .eq("league_id", leagueId)
-          .eq("user_id", user.id)
-          .maybeSingle();
-      }
-
-      if (!membershipResult.data) {
+      const member = Boolean(membershipData);
+      setIsMember(member);
+      if (!member) {
         setActiveTab("predictions");
-      }
-
-      if (membershipResult.data) {
-        const { data: transactionsData } = await supabase
-          .from("transactions")
-          .select("amount")
-          .eq("user_id", user.id)
-          .eq("reference_id", leagueId)
-          .eq("type", "entry_fee");
-
-        const totalStakeFromTransactions = (transactionsData ?? []).reduce(
-          (sum, transaction) => sum + Math.abs(Number(transaction.amount ?? 0)),
-          0
-        );
-
-        setMembership({
-          stake_amount_usdc:
-            totalStakeFromTransactions > 0
-              ? totalStakeFromTransactions
-              : Number((membershipResult.data as { stake_amount_usdc?: number | null }).stake_amount_usdc ?? leagueData.entry_fee_usdc ?? 0),
-        });
-      } else {
-        setMembership(null);
       }
 
       const leaderboardRes = await fetch(`/api/leagues/${leagueId}/leaderboard`, {
@@ -209,7 +148,7 @@ export default function LeaguePage() {
     load();
   }, [leagueId, router]);
 
-  function copyInvite() {
+  function copyInvite(): void {
     if (!league) return;
     const link = `${window.location.origin}/join/${league.invite_code}`;
     navigator.clipboard.writeText(link).then(() => {
@@ -218,19 +157,15 @@ export default function LeaguePage() {
     });
   }
 
-  async function handleJoinLeague() {
+  async function handleJoinLeague(): Promise<void> {
     if (!league) return;
     setJoining(true);
     setJoinError("");
-    setStakeSuccess("");
 
     const res = await fetch("/api/leagues/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        invite_code: league.invite_code,
-        stake_amount_usdc: Number(joinStake),
-      }),
+      body: JSON.stringify({ invite_code: league.invite_code }),
     });
 
     const data = await res.json();
@@ -240,56 +175,12 @@ export default function LeaguePage() {
       return;
     }
 
-    setMembership({ stake_amount_usdc: Number(data.stakeAmountUsdc ?? joinStake) });
+    setIsMember(true);
     setLeague((prev) =>
-      prev
-        ? {
-            ...prev,
-            prize_pool: Number(prev.prize_pool ?? 0) + Number(data.stakeAmountUsdc ?? joinStake) * 0.9,
-            member_count: prev.member_count + 1,
-          }
-        : prev
+      prev ? { ...prev, member_count: prev.member_count + 1 } : prev
     );
     setJoining(false);
     router.refresh();
-  }
-
-  async function handleIncreaseStake() {
-    if (!league || !membership) return;
-    setAddingStake(true);
-    setJoinError("");
-    setStakeSuccess("");
-
-    const res = await fetch("/api/leagues/stake", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        league_id: league.id,
-        additional_stake_usdc: Number(joinStake),
-      }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      setJoinError(data.error ?? "Failed to increase stake.");
-      setAddingStake(false);
-      return;
-    }
-
-    const addedAmount = Number(data.addedStakeUsdc ?? joinStake);
-    setMembership({
-      stake_amount_usdc: Number(membership.stake_amount_usdc ?? 0) + addedAmount,
-    });
-    setLeague((prev) =>
-      prev
-        ? {
-            ...prev,
-            prize_pool: Number(prev.prize_pool ?? 0) + addedAmount * 0.9,
-          }
-        : prev
-    );
-    setStakeSuccess(`Added $${addedAmount.toFixed(2)} USDC to the prize pool.`);
-    setAddingStake(false);
   }
 
   if (loading) {
@@ -304,15 +195,10 @@ export default function LeaguePage() {
 
   if (!league) return null;
 
-  const payoutTiers: { place: number; percent: number }[] =
-    (league.payout_config as PayoutConfig)?.tiers ?? DEFAULT_PAYOUT_TIERS;
-  const pool = Number(league.prize_pool);
   const leagueRace = races.find((race) => race.id === league.race_id);
   const targetRace = leagueRace ?? getNextOpenRace();
   const leagueRaceSchedule = leagueRace ? [leagueRace] : races.filter((race) => race.status === "upcoming");
-  const isSkillWeighted = league.payout_model === "skill_weighted";
   const countdownDisplay = countdown === "TBD" ? "Schedule Soon" : countdown;
-  const stakeWindowClosed = countdown === "Locked";
   const racesLeft = races.filter(
     (r) => r.status === "upcoming" && new Date(r.date) > new Date()
   ).length;
@@ -336,22 +222,16 @@ export default function LeaguePage() {
           </div>
 
           <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start", flexWrap: "wrap" }}>
-            {league.type === "private" && membership && (
+            {league.type === "private" && isMember && (
               <button
                 className="gla-race-btn"
                 style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.12)" }}
-                onClick={() => {
-                  const link = `${window.location.origin}/join/${league.invite_code}`;
-                  navigator.clipboard.writeText(link).then(() => {
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  });
-                }}
+                onClick={copyInvite}
               >
                 {copied ? "Copied!" : "Share →"}
               </button>
             )}
-            {targetRace && membership && (
+            {targetRace && isMember && (
               <Link href={`/predict/${targetRace.id}`} className="gla-race-btn">
                 {nextRacePredStatus === "none" ? "Make Picks →" : nextRacePredStatus === "draft" ? "Finish Picks →" : "Edit Picks →"}
               </Link>
@@ -360,28 +240,31 @@ export default function LeaguePage() {
         </div>
 
         {/* Join CTA banner for non-members */}
-        {!membership && !loading && (
+        {!isMember && (
           <div className="league-join-cta-banner">
             <p>You&apos;re not in this league yet.</p>
-            <button className="gla-race-btn" onClick={() => setActiveTab("predictions")}>
-              Join &amp; Stake →
+            <button
+              className="gla-race-btn"
+              disabled={joining}
+              onClick={handleJoinLeague}
+            >
+              {joining ? "Joining..." : "Join League →"}
             </button>
           </div>
         )}
+        {!isMember && joinError && <p className="league-join-error">{joinError}</p>}
 
         {/* Stats row */}
         <div className="league-stats-row">
           <div className="league-stats-card">
-            <span className="league-stats-label">Prize Pool</span>
-            <span className="league-stats-value" data-testid="league-prize-pool">
-              ${pool > 0 ? pool.toFixed(2) : "0"}
-            </span>
-          </div>
-          <div className="league-stats-card">
-            <span className="league-stats-label">Participants</span>
+            <span className="league-stats-label">Players</span>
             <span className="league-stats-value" data-testid="league-member-count">
               {league.member_count}
             </span>
+          </div>
+          <div className="league-stats-card">
+            <span className="league-stats-label">Capacity</span>
+            <span className="league-stats-value">{league.max_users}</span>
           </div>
           <div className="league-stats-card">
             <span className="league-stats-label">Races Left</span>
@@ -390,7 +273,7 @@ export default function LeaguePage() {
         </div>
 
         {/* Private league invite */}
-        {league.type === "private" && membership && (
+        {league.type === "private" && isMember && (
           <div className="league-invite-box" style={{ marginBottom: "1.5rem" }}>
             <span className="league-invite-label">Invite Code</span>
             <code className="league-invite-code" data-testid="league-invite-code">
@@ -492,10 +375,9 @@ export default function LeaguePage() {
               )}
             </div>
 
-            {/* Stats + Prize Pool */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginTop: '1.5rem' }}>
-              {/* Your Stats */}
-              {membership && (
+            {/* Your Stats */}
+            {isMember && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginTop: '1.5rem' }}>
                 <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1.25rem' }}>
                   <h3 style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)', margin: '0 0 1rem' }}>Your Stats</h3>
                   {(() => {
@@ -512,36 +394,15 @@ export default function LeaguePage() {
                           <span style={{ color: '#fff' }}>{myEntry ? `${Number(myEntry.total_score).toFixed(1)} pts` : '—'}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>Your Stake</span>
-                          <span style={{ color: 'rgba(0,210,170,1)' }}>${Number(membership.stake_amount_usdc).toFixed(2)} USDC</span>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>Races Scored</span>
+                          <span style={{ color: 'rgba(0,210,170,1)' }}>{myEntry ? myEntry.races_played : 0}</span>
                         </div>
                       </div>
                     );
                   })()}
                 </div>
-              )}
-              {/* Prize Pool */}
-              {pool > 0 && (
-                <div style={{ background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.2) 0%, rgba(180, 83, 9, 0.2) 100%)', border: '1px solid rgba(217, 119, 6, 0.3)', borderRadius: '12px', padding: '1.25rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                    <span>🏆</span>
-                    <h3 style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.8)', margin: 0 }}>Prize Pool</h3>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>Total Pool</span>
-                    <span style={{ color: '#fff', fontSize: '1.4rem', fontWeight: 800 }}>${pool.toFixed(2)}</span>
-                  </div>
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {payoutTiers.map((tier) => (
-                      <div key={tier.place} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                        <span style={{ color: 'rgba(255,255,255,0.6)' }}>{tier.place === 1 ? '1st' : tier.place === 2 ? '2nd' : '3rd'} Place</span>
-                        <span style={{ color: '#fff' }}>${(pool * tier.percent / 100).toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -549,23 +410,17 @@ export default function LeaguePage() {
         {activeTab === "predictions" && (
           <div style={{ marginTop: "1.5rem" }}>
             {/* Membership / join section */}
-            {!membership ? (
+            {!isMember ? (
               <div className="league-join-box">
                 <h3 className="league-join-title">Join This League</h3>
+                <p className="league-entry-summary">
+                  Jump in, lock your podium picks, and race your friends up the board.
+                </p>
                 <div className="league-join-form">
-                  <input
-                    className="league-join-input"
-                    type="number"
-                    min={Number(league.entry_fee_usdc)}
-                    step="1"
-                    value={joinStake}
-                    onChange={(e) => setJoinStake(e.target.value)}
-                    placeholder="Stake in USDC"
-                  />
                   <button
                     type="button"
                     className="gla-race-btn"
-                    disabled={joining || Number(joinStake) < Number(league.entry_fee_usdc)}
+                    disabled={joining}
                     onClick={handleJoinLeague}
                   >
                     {joining ? "Joining..." : "Join League"}
@@ -575,42 +430,10 @@ export default function LeaguePage() {
               </div>
             ) : (
               <div className="league-join-box" style={{ marginBottom: "1.5rem" }}>
-                <h3 className="league-join-title">Your Entry</h3>
+                <h3 className="league-join-title">You&apos;re In</h3>
                 <p className="league-entry-summary">
-                  You&apos;re entered with ${Number(membership.stake_amount_usdc).toFixed(2)} USDC.
+                  You&apos;re competing in this league. Make your picks before lock to climb the board.
                 </p>
-                {!stakeWindowClosed ? (
-                  <>
-                    <div className="league-join-form">
-                      <input
-                        className="league-join-input"
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={joinStake}
-                        onChange={(e) => setJoinStake(e.target.value)}
-                        placeholder="Add more USDC"
-                      />
-                      <button
-                        type="button"
-                        className="gla-race-btn"
-                        disabled={addingStake || Number(joinStake) <= 0}
-                        onClick={handleIncreaseStake}
-                      >
-                        {addingStake ? "Adding..." : "Add to Prize Pool"}
-                      </button>
-                    </div>
-                    <p className="league-entry-note">
-                      Increase your stake any time before the race lock.
-                    </p>
-                  </>
-                ) : (
-                  <p className="league-entry-note">
-                    Stake window closed — this league has reached its lock window.
-                  </p>
-                )}
-                {joinError && <p className="league-join-error">{joinError}</p>}
-                {stakeSuccess && <p className="league-join-success">{stakeSuccess}</p>}
               </div>
             )}
 
@@ -634,18 +457,18 @@ export default function LeaguePage() {
                   </span>
                   {nextRacePredStatus === "active" ? (
                     <>
-                      <strong>Your picks for {targetRace.name} are active.</strong>
+                      <strong>Your picks for {targetRace.name} are locked in.</strong>
                       <span>They&apos;ll score once the race is settled.</span>
                     </>
                   ) : nextRacePredStatus === "draft" ? (
                     <>
-                      <strong>Picks saved — not entered yet.</strong>
-                      <span>Join this league to activate your prediction for {targetRace.name}.</span>
+                      <strong>Picks saved — finish them up.</strong>
+                      <span>Complete your podium for {targetRace.name} before lock.</span>
                     </>
                   ) : (
                     <>
                       <strong>No prediction yet for {targetRace.name}.</strong>
-                      <span>Your prediction sheet powers the global board and this league once the race settles.</span>
+                      <span>Your podium picks power the global board and this league once the race settles.</span>
                     </>
                   )}
                 </div>
@@ -660,40 +483,6 @@ export default function LeaguePage() {
                     ? "Finish Picks →"
                     : `Edit ${targetRace.name} →`}
                 </Link>
-              </div>
-            )}
-
-            {/* Payout overview */}
-            {(pool > 0 || league.entry_fee_usdc > 0) && (
-              <div className="league-payout-section" style={{ marginTop: "2rem" }}>
-                <div className="league-payout-header">
-                  <h3 className="league-section-title">Payout Distribution</h3>
-                  <span className="league-payout-mode">
-                    {isSkillWeighted ? "Score Weighted" : "Fixed Tiers"}
-                  </span>
-                </div>
-                {isSkillWeighted ? (
-                  <p className="league-payout-copy" style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.5)", marginTop: "0.5rem" }}>
-                    Payouts scale with performance. Higher-scoring players take a larger share of the pool.
-                  </p>
-                ) : (
-                  <div className="league-payout-tiers">
-                    {payoutTiers.map((tier) => (
-                      <div key={tier.place} className="league-payout-tier">
-                        <span className="league-payout-place">
-                          {tier.place === 1 ? "1st" : tier.place === 2 ? "2nd" : tier.place === 3 ? "3rd" : `${tier.place}th`}
-                        </span>
-                        <div className="league-payout-bar-bg">
-                          <div className="league-payout-bar" style={{ width: `${tier.percent}%` }} />
-                        </div>
-                        <span className="league-payout-pct">{tier.percent}%</span>
-                        {pool > 0 && (
-                          <span className="league-payout-amt">${(pool * tier.percent / 100).toFixed(2)}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
           </div>

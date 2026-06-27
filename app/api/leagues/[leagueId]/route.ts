@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { MINIMUM_LEAGUE_STAKE_USDC } from "@/lib/gameRules";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ leagueId: string }> }
-) {
+): Promise<NextResponse> {
   const { leagueId } = await params;
   const normalizedCode = leagueId.trim().toUpperCase();
 
@@ -24,9 +23,7 @@ export async function GET(
 
   const { data: league, error } = await admin
     .from("leagues")
-    .select(
-      "id, race_id, name, type, invite_code, entry_fee_usdc, prize_pool, member_count, max_users, is_active"
-    )
+    .select("id, race_id, name, type, member_count, max_users, is_active")
     .eq("invite_code", normalizedCode)
     .maybeSingle();
 
@@ -60,12 +57,13 @@ export async function GET(
 
   return NextResponse.json({
     league: {
-      ...league,
-      minimum_stake_usdc: Math.max(
-        Number(league.entry_fee_usdc ?? 0),
-        MINIMUM_LEAGUE_STAKE_USDC
-      ),
+      id: league.id,
+      name: league.name,
+      member_count: league.member_count,
+      max_users: league.max_users,
       is_member: isMember,
+      type: league.type,
+      race_id: league.race_id,
     },
   });
 }

@@ -1,9 +1,9 @@
 /**
  * /signup — redirects to the root auth entry.
  *
- * New and returning users both go through /. Privy's modal handles the
- * distinction between first-time signups and returning logins internally.
- * This page exists only to handle legacy links.
+ * New and returning users both go through /, which hosts Google sign-in.
+ * Google handles the distinction between first-time signups and returning
+ * logins. This page exists only to handle legacy links.
  */
 import { redirect } from "next/navigation";
 
